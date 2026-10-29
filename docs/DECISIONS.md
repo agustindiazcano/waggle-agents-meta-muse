@@ -127,3 +127,45 @@ Decision:
 - There is no rule that guard and court use different providers. Everything fails closed, so an outage of one provider degrades to escalation, never to approval. This is tested for each provider with the mock provider.
 
 Consequences: a correlated court may agree on a mistake, and E4 reports how often. A guard outage raises the escalation rate.
+
+## ADR-018: Sensing model and predictive caution
+
+Status: proposed. Designed, not implemented.
+
+Context: a fast layer that reads ground truth hides what a real robot cannot see around a blind corner. The detector that scores E1 must stay exact.
+
+Decision:
+- Robots perceive through a simulated 2D lidar: ray casting against walls, racks and moving entities, with range, angular resolution, noise, dropout and occlusion, all seeded. The fast layer reads only what the lidar detects. The exact detector keeps using ground truth and never feeds the control code.
+- Optional variant: human beacons that are visible around corners.
+- Prediction: constant velocity extrapolation of each detected object, then the closest point of approach (time and distance) compared with the robot's stopping distance. Prediction can only add restrictions earlier. The worst-case separation envelope of the fast layer stays the floor.
+- No learned model. Camera and vision stay out of the control loop.
+- Lidar dropout or a stale scan makes the layer assume the worst case (conservative default, watchdog).
+
+Consequences: E1 compares ground truth, lidar only and lidar with beacons, and envelope only against envelope with prediction. The lidar needs array math, so numpy as a runtime dependency of `waggle.sim` was approved by the maintainer (PENDING 22).
+
+## ADR-019: Missions and handoff
+
+Status: proposed. Designed, not implemented.
+
+Context: a repair needs a part carried by one robot to a technician robot. Two robots and two tasks must agree on one delivery.
+
+Decision:
+- A mission is a small task graph with dependency edges. A task is eligible only when its dependencies are done.
+- A handoff is an event with an idempotency key at a rendezvous zone (capacity one, lease with fencing token). The dependent task becomes eligible exactly once, however many times the delivery is reported.
+- If the carrier dies, its lease expires, the task is reassigned, and the fencing check blocks the stale carrier.
+- Inter-robot messages stay schema-validated, screened as untrusted and bounded by turns and budget.
+
+Consequences: E2 gains a handoff chaos test with a no-fencing baseline. Threat T14 covers spoofed or duplicated handoffs.
+
+## ADR-020: Failure history and purchase orders
+
+Status: proposed. Designed, not implemented.
+
+Context: diagnosis improves with similar past cases, and a zero-stock part needs an order.
+
+Decision:
+- A synthetic failure log (`failure_history`), generated separately from the simulator's degradation dynamics. The two never share parameters. It serves retrieval of similar cases in diagnosis and offline calibration of the predictor.
+- MCP tool `create_purchase_order` writes to a simulated procurement table (`purchase_orders`) when stock is zero. It is idempotent per failure event. The part number is verified against the catalog in code before any order.
+- Retrieved cases are untrusted text. They inform the ticket and never widen access.
+
+Consequences: E6 reports diagnosis accuracy with and without the history, wrong part orders and duplicate purchase orders. Threat T16 covers duplicates.
