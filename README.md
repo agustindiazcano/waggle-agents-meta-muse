@@ -17,18 +17,19 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick | No |
 | Coordination | Zone leases with monotonic fencing tokens, checked inside the tool in one transaction | No |
 | Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit | No |
-| Input screening | Prompt Guard plus deterministic sanitizers on all untrusted input | Classifier only |
-| Task review | Unanimous court of three model families, any reject or split goes to the operator | Yes, advisory |
+| Input screening | Deterministic sanitizers, then an LLM guard classifier (Muse Glimmer) on all untrusted input, fails closed | Yes, first screen only |
+| Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
 | Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) | Yes, bounded |
+| Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback | Yes, optional |
 | Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part | RAG text only |
 
 ## Models used
 
-- Meta Model API: Muse Spark (director, diagnosis, court member, per-robot advisors).
-- Muse Spark Open 1026 on Baseten (court member, fast advisors).
-- Muse Voice Transcribe (voice command input).
-- Muse Spark with image input (label and obstruction verification).
-- A third model family (court diversity). Which one and why: see [docs/DECISIONS.md](docs/DECISIONS.md).
+- Meta Model API: Muse Spark (director, fleet planner, diagnosis, court member 1), Muse Voice Transcribe, and Muse Spark with image input (label and obstruction verification).
+- Muse Spark Open 1026 on Baseten (court member 2, per-robot advisors, organizer).
+- Muse Glimmer 30B on Modal (court member 3 and the input guard).
+- Vertex AI (Gemini): secondary backup only, and the non-Muse member of one E4 configuration.
+- The court members are related models, so correlated errors are expected. See [docs/DECISIONS.md](docs/DECISIONS.md), ADR-015 to ADR-017.
 
 ## Results
 
@@ -94,12 +95,34 @@ Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-de
 
 Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
 
+## Environment variables
+
+Names only live in `.env.example`. Values go in `.env`, which git ignores.
+
+| Variable | Description | Default |
+|---|---|---|
+| `META_API_KEY`, `META_API_BASE_URL` | Meta Model API access | none |
+| `META_MODEL_ID`, `META_VOICE_MODEL_ID` | Model ids, read from the API model list (`GET /v1/models`) | none |
+| `META_USE_CONTRIBUTOR_TIER` | Use the cheaper contributor tier. Allowed only because all data is synthetic | false |
+| `BASETEN_API_KEY`, `BASETEN_MODEL_ID` | Baseten access and the Muse Spark Open 1026 id | none |
+| `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`, `MODAL_ENDPOINT_URL` | Modal access and endpoint | none |
+| `MODAL_GLIMMER_MODEL_ID`, `MODAL_SPARK_OPEN_MODEL_ID` | Model ids served on Modal (guard and court member 3; fallback host for Muse Spark Open) | none |
+| `VERTEX_PROJECT_ID`, `VERTEX_LOCATION`, `VERTEX_MODEL_ID`, `GOOGLE_APPLICATION_CREDENTIALS` | Vertex AI backup, service account file | none |
+| `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD`, `VERTEX_SPEND_CAP_USD` | Hard cap per provider in USD. A missing or invalid value blocks calls | none |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL` | Database | none |
+| `MESHY_API_KEY`, `LANGFUSE_*` | 3D assets and optional tracing | none |
+| `WAGGLE_IMAGE_TAG` | Tag of the service images in compose | dev |
+
+## Model license notice
+
+Built with Muse Spark Open. Muse Spark Open is used under its license, which asks for an attribution notice in products and services. The exact text is to be confirmed against the license (see PENDING.md).
+
 ## Disclosure
 
 | Area | Detail |
 |---|---|
 | AI tools used to build this repository | Claude Code, used for code, tests and documentation under maintainer review. |
-| Models used by the product | Muse Spark, Muse Spark Open 1026, Muse Voice Transcribe and Muse Spark with image input (Meta); a third-family open-weight model on Modal. See [docs/DECISIONS.md](docs/DECISIONS.md). |
+| Models used by the product | Muse Spark, Muse Spark Open 1026, Muse Voice Transcribe and Muse Spark with image input (Meta); Muse Glimmer 30B on Modal; Vertex AI only as a declared backup. See [docs/DECISIONS.md](docs/DECISIONS.md). |
 | Libraries | Listed in `pyproject.toml` and pinned in `uv.lock`. Notable ones are named in this README. |
 | Prior code | None. See PRIOR_WORK.md. |
 | Assets | See ASSETS.md for the source and rights of every asset. |

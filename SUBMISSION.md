@@ -17,7 +17,11 @@ Deadline: Wed Nov 4, 2026, 9:00 PM ET (23:00 in Argentina). Confirm the time zon
 
 - [ ] Claim $150 Meta Model API credits (form, deadline Nov 4, 9 PM ET) and add a payment method to use them.
 - [ ] Baseten credits requested. Use model id `meta-models/muse-spark-open-1026`, not the id shown in the docs.
-- [ ] Modal credits requested (if used).
+- [ ] Modal credits requested ($101 reported; Muse Glimmer 30B for court member 3 and the guard).
+- [ ] Vertex AI credits checked (secondary backup, amount to be confirmed).
+- [ ] Balances, expiry dates and rate limits verified in each console.
+- [ ] Model ids taken from the Meta models list, not hardcoded.
+- [ ] The video end card and the README show "Built with Muse Spark Open".
 - [ ] Spend caps set per provider.
 - [ ] Questions about unclear rules asked in Discord #questions or #office-hours (10 to 11 AM ET on weekdays).
 
