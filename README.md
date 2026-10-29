@@ -81,7 +81,18 @@ tests/                   unit, property, integration, chaos
 
 ## Run
 
-TBD after Phase 0. Target: `docker compose up --build`, then open the operator UI.
+Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker.
+
+```
+cp .env.example .env        # fill in values locally, never commit .env
+uv sync
+uv run ci                   # ruff, mypy --strict, pytest with coverage, import-linter
+docker compose up --build   # db, api, worker, mcp_server, web (Phase 0 placeholders)
+```
+
+Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`. The experiment targets are placeholders until Phase 1.
+
+Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
 
 ## License
 
