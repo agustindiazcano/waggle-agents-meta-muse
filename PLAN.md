@@ -20,7 +20,7 @@ Tasks
 - New empty repository, first commit on Oct 27.
 - CI: ruff, mypy --strict, pytest, coverage report.
 - Docker Compose: postgres with pgvector, api, worker, mcp server, frontend.
-- PRIOR_WORK.md, ASSETS.md, AGENTS.md, DECISIONS.md committed.
+- PRIOR_WORK.md, ASSETS.md, AGENTS.md, docs/DECISIONS.md committed.
 - Claim Meta Model API credits (deadline Nov 4, 9 PM ET). Request Baseten and Modal credits. Add a card to the Meta account.
 - Set a hard spending cap per provider, including the third model family.
 - Confirm in Discord office hours: Prompt Guard counts or not as a Meta model for Stage One; Baseten model id `meta-models/muse-spark-open-1026`.
@@ -38,7 +38,7 @@ Tasks
 - Exact collision and separation-violation detector (swept geometry), independent of the control code.
 - Machine telemetry generator with hidden failure onset.
 - 2D debug map over WebSocket.
-- Scenario catalog S01 to S30 (see EXPERIMENTS.md), each with a seed and a declared target layer.
+- Scenario catalog S01 to S30 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer.
 
 Exit
 - Same seed produces the same trajectory (test).

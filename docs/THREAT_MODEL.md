@@ -40,7 +40,7 @@ All of these are treated as data. None can change identity, allowlists, schemas 
 | T12 | Adversarial human path at a blind corner | Fast layer |
 | T13 | Sensor dropout on a machine | Conservative default, watchdog |
 
-Each scenario in the corpus declares its target layer in advance. Layers are evaluated by ablation (see EXPERIMENTS.md E3).
+Each scenario in the corpus declares its target layer in advance. Layers are evaluated by ablation (see [EXPERIMENTS.md](EXPERIMENTS.md) E3).
 
 ## Control mapping
 

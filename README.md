@@ -1,6 +1,6 @@
-# AegisFleet
+# Waggle Hive
 
-Safety, reliability and predictive maintenance control plane for LLM-directed robot fleets, demonstrated in a seeded warehouse simulation with 10 robots, scripted and adversarial human workers, and industrial machines that emit telemetry.
+Safety and reliability control plane for LLM-directed warehouse robot fleets. It includes predictive maintenance, demonstrated in a seeded warehouse simulation with 10 robots, scripted and adversarial human workers, and industrial machines that emit telemetry.
 
 Meta Global AI Developer Hackathon. Track: Indie Developer. Problem statement: Push the Frontier.
 
@@ -28,11 +28,11 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 - Muse Spark Open 1026 on Baseten (court member, fast advisors).
 - Muse Voice Transcribe (voice command input).
 - Muse Spark with image input (label and obstruction verification).
-- A third model family (court diversity). Which one and why: see DECISIONS.md.
+- A third model family (court diversity). Which one and why: see [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Results
 
-All results come from seeded, reproducible scripts. See EXPERIMENTS.md for protocol, seeds, baselines and ablations.
+All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) for protocol, seeds, baselines and ablations.
 
 | Experiment | Metric | Without layer | With layer | Status |
 |---|---|---|---|---|
@@ -57,16 +57,26 @@ Scaling to thousands of agents is reported as an extrapolation from a stub calib
 ## Repository layout
 
 ```
-README.md            this file
-PLAN.md              phases, tasks, exit criteria
-ARCHITECTURE.md      components, data model, interfaces
-THREAT_MODEL.md      assets, adversaries, controls, residual risk
-EXPERIMENTS.md       protocol for every measurement
-DECISIONS.md         architecture decision records
-AGENTS.md            development workflow and rules for coding agents
-PRIOR_WORK.md        declaration of prior work
-ASSETS.md            provenance and rights of every asset
-SUBMISSION.md        hackathon submission checklist
+README.md                this file
+PLAN.md                  phases, tasks, exit criteria
+AGENTS.md                development workflow and rules for coding agents
+PRIOR_WORK.md            declaration of prior work
+ASSETS.md                provenance and rights of every asset
+SUBMISSION.md            hackathon submission checklist
+docs/
+  ARCHITECTURE.md        components, data model, interfaces
+  THREAT_MODEL.md        assets, adversaries, controls, residual risk
+  EXPERIMENTS.md         protocol for every measurement
+  DECISIONS.md           architecture decision records
+src/waggle/              Python package: sim, control, coordination, mcp_server,
+                         governance, maintenance, multimodal, llm, api, db
+web/                     frontend
+experiments/             seeded experiment scripts
+results/                 result files produced by experiments
+data/                    synthetic manuals and SOPs
+assets/                  3D assets and media
+tests/                   unit, property, integration, chaos
+.github/workflows/       CI
 ```
 
 ## Run

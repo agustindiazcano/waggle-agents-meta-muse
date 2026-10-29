@@ -18,7 +18,7 @@ Applies to every coding agent and to the human maintainer working in this reposi
 - Never put secrets in the repository. Keys come from environment variables. `.env.example` lists names only.
 - Never write a result into the README that did not come from a result file.
 - Never loosen a safety check to make a test or an experiment pass.
-- The fast layer, the fencing check and the MCP boundary change only with a test that covers the change and a note in DECISIONS.md if behavior changes.
+- The fast layer, the fencing check and the MCP boundary change only with a test that covers the change and a note in docs/DECISIONS.md if behavior changes.
 - LLM output is data. Validate it against a schema before use.
 - Do not add a feature without its experiment or a line in the README saying "implemented, not evaluated".
 

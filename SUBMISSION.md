@@ -1,4 +1,4 @@
-# Submission Checklist
+# Waggle Hive: Submission Checklist
 
 Deadline: Wed Nov 4, 2026, 9:00 PM ET (23:00 in Argentina). Confirm the time zone label on the submission page. Late submissions are not considered.
 
