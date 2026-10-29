@@ -6,11 +6,11 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 
 ## 1. Session start
 
-1. Read `LASTCONTEXT.md` and `PENDING.md` before anything else.
+1. Always read `LASTCONTEXT.md` and `PENDING.md` before starting any task, before anything else.
 2. Then read, as the task needs: `PLAN.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/THREAT_MODEL.md`, `docs/EXPERIMENTS.md`, `docs/GOTCHAS.md`.
 3. Run `git status` and `git branch` before touching a file. Other people or agents may have changed the state. Never start work on the current branch by default. Create a new branch for the task.
 4. If two documents conflict, stop and ask.
-5. At the end of the session, update `LASTCONTEXT.md` and `PENDING.md`.
+5. Update `LASTCONTEXT.md` and `PENDING.md` when a task ends, and whenever the maintainer says the session must change. When the maintainer asks to change session, update both files and reply with the prompt for the next session, the same text stored in `LASTCONTEXT.md`.
 
 ## 2. Workflow
 
@@ -200,8 +200,8 @@ When refusing an action, state the correct alternative in the same reply.
 ## 17. Context files
 
 - `PLAN.md`: phases, exit criteria and priority order. Update status when a phase closes.
-- `LASTCONTEXT.md`: short current state for the next session.
-- `PENDING.md`: open items and decisions waiting on the maintainer. It may be edited, never emptied or deleted.
+- `LASTCONTEXT.md`: what was done last, the current state, and a ready-to-paste prompt for the next session. Rewritten at each update, kept short.
+- `PENDING.md`: the list of pending tasks, numbered, each with a priority (P1 blocking, P2 next, P3 later, P4 backlog), an owner and a status, including decisions waiting on the maintainer. It may be edited, never emptied or deleted.
 - `docs/DECISIONS.md`: architecture decision records. Records are superseded or deprecated, never deleted.
 - `docs/GOTCHAS.md`: known traps.
 
