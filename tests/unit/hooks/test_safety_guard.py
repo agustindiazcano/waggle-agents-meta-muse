@@ -74,12 +74,16 @@ def decide(event: dict[str, Any], staged: Callable[[], list[str]] | None = None)
 
 
 DENY_COMMANDS = [
-    "git push",
-    "git push origin feat/x",
     "git push --force",
     "git push --force-with-lease origin x",
     "git push -f",
     "git push origin --delete old",
+    "git push origin :old",
+    "git push origin +feat/x",
+    "git push origin main",
+    "git push -u origin master",
+    "git push origin HEAD:main",
+    "git push origin feat/x:refs/heads/main",
     "git merge main",
     "gh pr merge 12 --squash",
     "git reset --hard",
@@ -100,11 +104,11 @@ DENY_COMMANDS = [
     r"git add C:\projects\x\.env",
     "git add results/e1/heldout/run1.json",
     "git rm PENDING.md",
-    "git status && git push",
-    "cd src; git push",
-    "git add a.py | git push",
-    "git -C other push",
-    "bash -c 'git push'",
+    "git status && git push --force",
+    "cd src; git push -f",
+    "git add a.py | git push origin main",
+    "git -C other push --delete origin x",
+    "bash -c 'git push -f'",
     'powershell -Command "git push --force"',
     "echo SECRET > .env",
     "echo SECRET >> .env",
@@ -162,6 +166,12 @@ ALLOW_COMMANDS = [
     "echo hi > notes.txt",
     "Get-Content PENDING.md",
     "gh pr view 3",
+    "git push",
+    "git push origin feat/x",
+    "git push -u origin chore/agents-push-and-pr",
+    "git push --set-upstream origin docs/x",
+    "git push origin HEAD:feat/x",
+    "gh pr create --base main --title x --body y",
     "git log --format=%H > hashes.txt",
 ]
 
@@ -185,7 +195,7 @@ def test_benign_commands_pass(command: str) -> None:
 
 
 def test_deny_wins_over_ask_in_one_command() -> None:
-    assert decide(bash("git rebase main && git push")) == "deny"
+    assert decide(bash("git rebase main && git push --force")) == "deny"
     assert decide(bash("git commit --amend --no-verify")) == "deny"
 
 
@@ -302,7 +312,7 @@ def test_malformed_event_asks_never_allows(raw: str) -> None:
 
 def test_leading_bom_on_stdin_is_tolerated() -> None:
     bom = chr(0xFEFF)
-    assert decide_raw(bom + json.dumps(bash("git push"))) == "deny"
+    assert decide_raw(bom + json.dumps(bash("git push -f"))) == "deny"
     assert decide_raw(bom + json.dumps(bash("git status"))) == "allow"
 
 

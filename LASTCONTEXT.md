@@ -1,13 +1,13 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-29.
+Updated: 2026-10-29 (rule change on chore/agents-push-and-pr).
 
 ## Done last
 - `docs/design-extensions` (cut from `chore/final-check`): ADR-018 sensing and predictive caution, ADR-019 missions and handoff, ADR-020 failure history and purchase orders (all proposed). ARCHITECTURE (new sections, data model, tool list, diagram), PLAN (Phases 1, 2, 3, 6), EXPERIMENTS (E1, E2, E6, S31 to S36), THREAT_MODEL (T14 to T16) and README updated. Every new element is marked "designed, not implemented". Test: `tests/unit/test_design_extensions_docs.py`.
 - `chore/agents-push-and-pr` (cut from `chore/final-check`, separate branch): rule change ADR-022. Agents push task branches and open PRs with `gh pr create`. The guard still denies force push, ref deletion, push to `main` and merge.
 
 ## Current state
-- The maintainer pushes `main` and `chore/final-check`, merges that PR, and enables branch protection (steps in the maintainer message). Neither new branch is pushed yet.
+- PR 1 (`chore/final-check` into main) and PR 2 (`chore/agents-push-and-pr`) are merged. PR 3 (`docs/design-extensions`) and PR 4 (`docs/phase1-conventions`) are open and stacked. The maintainer merges.
 - ADR numbers: ADR-021 is reserved for "Simulation conventions" (Phase 1 prompt below). The push rule is ADR-022.
 - Open maintainer decisions: PENDING 22 (numpy). The maintainer approved numpy for `waggle.sim` in the Phase 1 prompt; record it in README and PENDING when it is added.
 
