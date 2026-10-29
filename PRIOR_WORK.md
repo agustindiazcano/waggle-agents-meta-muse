@@ -1,4 +1,4 @@
-# Prior Work Declaration
+# Waggle Hive: Prior Work Declaration
 
 This repository was created on October 27, 2026, during the hackathon building period. Its history starts with the first commit.
 

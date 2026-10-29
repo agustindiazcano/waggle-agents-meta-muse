@@ -1,4 +1,4 @@
-# Assets
+# Waggle Hive: Assets
 
 All assets are generated during the hackathon building period (Oct 27 to Nov 4, 2026). Fill one row per asset at generation time.
 

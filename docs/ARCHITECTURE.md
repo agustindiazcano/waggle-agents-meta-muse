@@ -1,4 +1,4 @@
-# Architecture
+# Waggle Hive: Architecture
 
 ## Principles
 

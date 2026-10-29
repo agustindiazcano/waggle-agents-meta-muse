@@ -1,4 +1,4 @@
-# Architecture Decision Records
+# Waggle Hive: Architecture Decision Records
 
 Format: context, decision, consequences. Status: accepted unless noted.
 

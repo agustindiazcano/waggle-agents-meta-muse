@@ -1,4 +1,4 @@
-# Project Plan
+# Waggle Hive: Project Plan
 
 Build window: Oct 27 to Nov 3, 2026. Buffer and submission: Nov 4. Submission deadline: Wed Nov 4, 9:00 PM ET (23:00 in Argentina, since US daylight time ends Nov 1). Confirm the exact time on the submission platform.
 

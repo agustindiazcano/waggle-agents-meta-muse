@@ -1,4 +1,4 @@
-# Pending
+# Waggle Hive: Pending
 
 ## Waiting on the maintainer
 | Item | Status |

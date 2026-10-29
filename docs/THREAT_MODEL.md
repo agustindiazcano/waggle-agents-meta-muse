@@ -1,4 +1,4 @@
-# Threat Model
+# Waggle Hive: Threat Model
 
 ## Assets
 

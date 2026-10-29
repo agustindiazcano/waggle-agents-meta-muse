@@ -1,4 +1,4 @@
-# Experiments Protocol
+# Waggle Hive: Experiments Protocol
 
 Principle: measured, not assumed. Every table in the README comes from a script in `experiments/` that runs from a seed and writes a result file. `/experiments` renders those files.
 
