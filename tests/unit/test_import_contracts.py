@@ -18,7 +18,11 @@ from waggle.tasks import venv_tool
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests" / "importlint_fixtures"
 
-CONTRACT_IDS = ["sim-control-no-llm-side", "mcp-server-no-governance"]
+CONTRACT_IDS = [
+    "sim-control-no-llm-side",
+    "mcp-server-no-governance",
+    "control-no-ground-truth",
+]
 
 
 def _lint(contract: str | None, cwd: Path, config: Path) -> subprocess.CompletedProcess[str]:
