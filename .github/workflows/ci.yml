@@ -31,3 +31,17 @@ jobs:
         with:
           name: coverage
           path: coverage.xml
+
+  protected_paths:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: List protected paths touched by this pull request
+        run: |
+          git diff --name-only "origin/${BASE_REF}...HEAD" | python3 tools/hooks/protected_report.py >> "$GITHUB_STEP_SUMMARY"
