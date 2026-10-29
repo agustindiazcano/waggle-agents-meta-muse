@@ -1,0 +1,22 @@
+[importlinter]
+root_package = fixture_pkg
+
+[importlinter:contract:sim-control-no-llm-side]
+name = fixture: sim and control must not import llm, governance, maintenance or mcp_server
+type = forbidden
+source_modules =
+    fixture_pkg.sim
+    fixture_pkg.control
+forbidden_modules =
+    fixture_pkg.llm
+    fixture_pkg.governance
+    fixture_pkg.maintenance
+    fixture_pkg.mcp_server
+
+[importlinter:contract:mcp-server-no-governance]
+name = fixture: mcp_server must not import governance
+type = forbidden
+source_modules =
+    fixture_pkg.mcp_server
+forbidden_modules =
+    fixture_pkg.governance
