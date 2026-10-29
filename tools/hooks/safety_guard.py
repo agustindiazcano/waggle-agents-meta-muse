@@ -325,7 +325,7 @@ def main(
         staged_files=staged_files or (lambda: git_staged_files(project)),
     )
     try:
-        event = json.loads(stdin.read())
+        event = json.loads(stdin.read().lstrip(chr(0xFEFF)))
         verdict = evaluate(event, ctx)
     except (json.JSONDecodeError, MalformedEventError) as err:
         verdict = Verdict("ask", f"safety guard could not read the event: {err}")

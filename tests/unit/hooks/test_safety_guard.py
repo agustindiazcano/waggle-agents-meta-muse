@@ -300,6 +300,16 @@ def test_malformed_event_asks_never_allows(raw: str) -> None:
     assert reason
 
 
+def test_leading_bom_on_stdin_is_tolerated() -> None:
+    bom = chr(0xFEFF)
+    assert decide_raw(bom + json.dumps(bash("git push"))) == "deny"
+    assert decide_raw(bom + json.dumps(bash("git status"))) == "allow"
+
+
+def decide_raw(raw: str) -> str:
+    return run_guard(raw)[0]
+
+
 def test_crash_in_the_guard_asks_and_logs(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(*_: object, **__: object) -> object:
         raise RuntimeError("bug")
