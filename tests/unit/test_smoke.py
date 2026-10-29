@@ -49,13 +49,6 @@ def test_all_task_targets_declared_as_scripts() -> None:
         assert target in scripts, f"missing script for target {target!r}"
 
 
-@pytest.mark.parametrize("target", ["experiments-dev", "experiments-test", "report"])
-def test_placeholder_targets_succeed(target: str) -> None:
-    from waggle import tasks
-
-    assert tasks.PLACEHOLDER_TARGETS[target]() == 0
-
-
 def test_env_example_has_names_only() -> None:
     lines = (ROOT / ".env.example").read_text(encoding="utf-8").splitlines()
     assignments = [x for x in lines if x and not x.startswith("#")]

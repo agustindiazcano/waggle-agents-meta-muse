@@ -66,7 +66,7 @@ def test_unregistered_marker_is_rejected(tmp_path: Path) -> None:
 
 def test_ci_and_workflow_exclude_the_same_markers() -> None:
     assert tasks.MARKER_EXPR == "not heavy and not llm"
-    assert ["-m", tasks.MARKER_EXPR] == tasks.TEST[0][-2:]
+    assert tasks.TEST[0][-2:] == ["-m", tasks.MARKER_EXPR]
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     match = re.search(r'pytest .*-m "([^"]+)"', workflow)
     assert match is not None, "ci.yml pytest step has no marker expression"
