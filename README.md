@@ -94,6 +94,16 @@ Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-de
 
 Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
 
+## Disclosure
+
+| Area | Detail |
+|---|---|
+| AI tools used to build this repository | Claude Code, used for code, tests and documentation under maintainer review. |
+| Models used by the product | Muse Spark, Muse Spark Open 1026, Muse Voice Transcribe and Muse Spark with image input (Meta); a third-family open-weight model on Modal. See [docs/DECISIONS.md](docs/DECISIONS.md). |
+| Libraries | Listed in `pyproject.toml` and pinned in `uv.lock`. Notable ones are named in this README. |
+| Prior code | None. See PRIOR_WORK.md. |
+| Assets | See ASSETS.md for the source and rights of every asset. |
+
 ## License
 
 MIT.
