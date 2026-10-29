@@ -1,0 +1,87 @@
+[project]
+name = "waggle"
+version = "0.1.0"
+description = "Waggle Hive: safety and reliability control plane for LLM-directed warehouse robot fleets"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.scripts]
+lint = "waggle.tasks:lint"
+type = "waggle.tasks:typecheck"
+test = "waggle.tasks:test"
+ci = "waggle.tasks:ci"
+experiments-dev = "waggle.tasks:experiments_dev"
+experiments-test = "waggle.tasks:experiments_test"
+report = "waggle.tasks:report"
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+    "hypothesis",
+    "import-linter",
+    "pre-commit",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "waggle"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["tests/importlint_fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests", "tools"]
+exclude = ["tests/importlint_fixtures"]
+mypy_path = "src:tests/support:tools/hooks"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "heavy: long-running tests (seed sweeps, chaos runs); cloud workflow only",
+    "llm: tests that call a paid provider API; cloud workflow only",
+]
+pythonpath = ["src", "tests/support", "tools/hooks"]
+
+[tool.coverage.run]
+source = ["src/waggle"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.importlinter]
+root_package = "waggle"
+
+[[tool.importlinter.contracts]]
+id = "sim-control-no-llm-side"
+name = "waggle.sim and waggle.control must not import llm, governance, maintenance or mcp_server"
+type = "forbidden"
+source_modules = ["waggle.sim", "waggle.control"]
+forbidden_modules = [
+    "waggle.llm",
+    "waggle.governance",
+    "waggle.maintenance",
+    "waggle.mcp_server",
+]
+
+[[tool.importlinter.contracts]]
+id = "mcp-server-no-governance"
+name = "waggle.mcp_server must not import waggle.governance"
+type = "forbidden"
+source_modules = ["waggle.mcp_server"]
+forbidden_modules = ["waggle.governance"]

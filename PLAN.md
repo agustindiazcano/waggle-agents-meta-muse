@@ -1,8 +1,21 @@
-# Project Plan
+# Waggle Hive: Project Plan
 
 Build window: Oct 27 to Nov 3, 2026. Buffer and submission: Nov 4. Submission deadline: Wed Nov 4, 9:00 PM ET (23:00 in Argentina, since US daylight time ends Nov 1). Confirm the exact time on the submission platform.
 
-The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Nothing is cut from scope. Phase order is build order, not priority.
+The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 2.
+
+## Priority order
+
+Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 2.
+
+1. Simulator, exact detector, fast layer, E1, end-to-end slice.
+2. Leases, fencing tokens, E2.
+3. MCP boundary and injection matrix, E3.
+4. Director, item resolution, court, E4.
+5. README, video, deploy, submission.
+6. Predictive maintenance, E6.
+7. Per-robot advisors, E5.
+8. 3D scene, voice, vision, E7. If voice is cut, the video uses text commands.
 
 ## Rules
 
@@ -20,10 +33,10 @@ Tasks
 - New empty repository, first commit on Oct 27.
 - CI: ruff, mypy --strict, pytest, coverage report.
 - Docker Compose: postgres with pgvector, api, worker, mcp server, frontend.
-- PRIOR_WORK.md, ASSETS.md, AGENTS.md, DECISIONS.md committed.
+- PRIOR_WORK.md, ASSETS.md, AGENTS.md, docs/DECISIONS.md committed.
 - Claim Meta Model API credits (deadline Nov 4, 9 PM ET). Request Baseten and Modal credits. Add a card to the Meta account.
-- Set a hard spending cap per provider, including the third model family.
-- Confirm in Discord office hours: Prompt Guard counts or not as a Meta model for Stage One; Baseten model id `meta-models/muse-spark-open-1026`.
+- Set a hard spending cap per provider (Meta, Baseten, Modal, Vertex), balance minus a 10 percent reserve. Partner credits are used first (ADR-015).
+- Verify model ids through the Meta models list, the Baseten model id `meta-models/muse-spark-open-1026`, and Muse Glimmer availability and price per hour on Modal and Baseten.
 - Fill the judging rubric weights in SUBMISSION.md (the participant guide tables arrived empty).
 
 Exit: CI green on smoke tests, `docker compose up` starts all services.
@@ -38,7 +51,7 @@ Tasks
 - Exact collision and separation-violation detector (swept geometry), independent of the control code.
 - Machine telemetry generator with hidden failure onset.
 - 2D debug map over WebSocket.
-- Scenario catalog S01 to S30 (see EXPERIMENTS.md), each with a seed and a declared target layer.
+- Scenario catalog S01 to S30 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer.
 
 Exit
 - Same seed produces the same trajectory (test).
@@ -86,7 +99,7 @@ Tasks
 - Rate limit per client and tool, computed from the audit table.
 - Audit: an intent row before forwarding (fail closed) and a correlated result row after. Insert-only by code convention, database role restriction documented.
 - Per-call timeouts so a rejected request cannot hang the client.
-- Prompt Guard plus deterministic sanitizers (length, charset, delimiter escaping) on every untrusted input: voice transcript, package label, SOP text, manual text, messages between robots. Fail closed on untrusted input.
+- Deterministic sanitizers (length, charset, delimiter escaping), then the guard classifier (Muse Glimmer on Modal, strict structured output: benign, injection or uncertain, plus a reason code) on every untrusted input: voice transcript, package label, SOP text, manual text, messages between robots. Fail closed on untrusted input. The guard is the first screen, not the boundary.
 - Injection corpus: labels, SOP text, manual text, inter-robot messages, voice transcripts. Each case has a declared target layer.
 
 Exit
@@ -99,13 +112,13 @@ Tasks
 - Director on Muse Spark with strict structured output: task type, item id, destination, priority. Nothing else.
 - Deterministic item resolution against inventory. Unknown or ambiguous item asks the operator, never guesses.
 - Deterministic robot assignment: nearest free robot with battery and payload fit.
-- Court: Muse Spark, Muse Spark Open 1026, third family. Unanimous approve executes. Any reject, split, timeout or parse failure goes to the operator inbox. The court never approves over a rejection.
+- Court: Muse Spark, Muse Spark Open 1026, Muse Glimmer (related models, correlated errors expected). Unanimous approve executes. Any reject, split, timeout or parse failure goes to the operator inbox. The court never approves over a rejection.
 - Operator inbox with the full reasoning per reviewer.
 - Labeled review set (benign, risky, ambiguous) built before running, split dev and test.
 - Token and cost logging per call.
 
 Exit
-- E4: correct blocks, false blocks, escalation rate, reviewer correlation (same-family pair vs cross-family pair), cost per task.
+- E4: correct blocks, false blocks, escalation rate, configurations A to D (D adds a non-Muse member on Vertex, run once on held-out), pairwise error correlation, cost per task.
 - E8 partial: LLM latency distributions per model.
 
 ## Phase 5B: Per-robot advisors
@@ -116,9 +129,10 @@ Tasks
 - Message limits: max turns and max budget per task, loop detection.
 - Inter-robot messages are untrusted input and pass the same screening.
 - Degraded mode: if the LLM is slow or down, robots keep the fast layer and finish or hold the current task.
+- Fleet planner (optional): event-driven and low frequency, proposes assignments, batching and reroutes. A deterministic validator checks feasibility, leases and bounds before anything is applied. If it fails or times out, the deterministic assigner is used (ADR-016).
 
 Exit
-- E5: ablation with and without each advisor, same seeds. Report near-misses, false stops, throughput cost, tasks per hour against the code-only assigner, calls and cost per task. If an advisor shows no effect, report that.
+- E5: ablation with and without each advisor and with the fleet planner as an extra configuration, same seeds. Report near-misses, false stops, throughput cost, tasks per hour against the code-only assigner, calls and cost per task. If an advisor shows no effect, report that.
 
 ## Phase 6: Predictive maintenance
 

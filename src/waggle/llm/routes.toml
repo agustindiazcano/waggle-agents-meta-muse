@@ -1,0 +1,85 @@
+# Role routing table (ADR-015, ADR-016, ADR-017).
+# Model ids are never written here. Each route names the environment variable that
+# holds the id, so ids come from the provider model list and can change without code.
+# A role without a [roles.<name>.fallback] table has no declared fallback.
+
+[roles.guard]
+tier = "fast"
+[roles.guard.primary]
+provider = "modal"
+model_env = "MODAL_GLIMMER_MODEL_ID"
+[roles.guard.fallback]
+provider = "vertex"
+model_env = "VERTEX_MODEL_ID"
+
+[roles.director]
+tier = "planning"
+[roles.director.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.planner]
+tier = "planning"
+[roles.planner.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.diagnosis]
+tier = "planning"
+[roles.diagnosis.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.court_1]
+tier = "planning"
+[roles.court_1.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.court_2]
+tier = "planning"
+[roles.court_2.primary]
+provider = "baseten"
+model_env = "BASETEN_MODEL_ID"
+[roles.court_2.fallback]
+provider = "modal"
+model_env = "MODAL_SPARK_OPEN_MODEL_ID"
+
+[roles.court_3]
+tier = "planning"
+[roles.court_3.primary]
+provider = "modal"
+model_env = "MODAL_GLIMMER_MODEL_ID"
+[roles.court_3.fallback]
+provider = "vertex"
+model_env = "VERTEX_MODEL_ID"
+
+[roles.advisor]
+tier = "fast"
+[roles.advisor.primary]
+provider = "baseten"
+model_env = "BASETEN_MODEL_ID"
+[roles.advisor.fallback]
+provider = "modal"
+model_env = "MODAL_SPARK_OPEN_MODEL_ID"
+
+[roles.organizer]
+tier = "fast"
+[roles.organizer.primary]
+provider = "baseten"
+model_env = "BASETEN_MODEL_ID"
+[roles.organizer.fallback]
+provider = "modal"
+model_env = "MODAL_SPARK_OPEN_MODEL_ID"
+
+[roles.voice]
+tier = "planning"
+[roles.voice.primary]
+provider = "meta"
+model_env = "META_VOICE_MODEL_ID"
+
+[roles.vision]
+tier = "planning"
+[roles.vision.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"

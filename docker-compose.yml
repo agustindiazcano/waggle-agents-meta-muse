@@ -1,0 +1,75 @@
+# Phase 0 placeholders. Services start and answer a health check; real logic comes later.
+# Compose reads .env automatically for ${...} interpolation. Values are never printed here.
+
+name: waggle-hive
+
+x-python-service: &python-service
+  build: .
+  image: waggle-hive:${WAGGLE_IMAGE_TAG:-dev}
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    <<: *python-service
+    command: ["python", "-m", "waggle.api"]
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+
+  worker:
+    <<: *python-service
+    command: ["python", "-m", "waggle.coordination"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+
+  mcp_server:
+    <<: *python-service
+    command: ["python", "-m", "waggle.mcp_server"]
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+
+  web:
+    image: python:3.12-slim
+    restart: unless-stopped
+    command: ["python", "-m", "http.server", "3000", "--directory", "/srv/web"]
+    volumes:
+      - ./web:/srv/web:ro
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+
+volumes:
+  pgdata:

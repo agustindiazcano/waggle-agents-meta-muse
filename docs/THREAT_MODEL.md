@@ -1,4 +1,4 @@
-# Threat Model
+# Waggle Hive: Threat Model
 
 ## Assets
 
@@ -31,7 +31,7 @@ All of these are treated as data. None can change identity, allowlists, schemas 
 | T3 | Poisoned manual naming a wrong part | Catalog check in code |
 | T4 | Voice command that resolves to a wrong item | Read-back, item resolution |
 | T5 | Inter-robot message that tries to command another robot | Message schema, MCP identity |
-| T6 | Court prompt injection to force approval | Unanimity, three families |
+| T6 | Court prompt injection to force approval | Unanimity (members are related Muse models, correlated errors expected) |
 | T7 | Stale worker resumes after lease expiry | Fencing token |
 | T8 | Duplicate delivery of the same task | Idempotency key |
 | T9 | Ticket flood from repeated telemetry spikes | Idempotency key per failure event |
@@ -40,7 +40,7 @@ All of these are treated as data. None can change identity, allowlists, schemas 
 | T12 | Adversarial human path at a blind corner | Fast layer |
 | T13 | Sensor dropout on a machine | Conservative default, watchdog |
 
-Each scenario in the corpus declares its target layer in advance. Layers are evaluated by ablation (see EXPERIMENTS.md E3).
+Each scenario in the corpus declares its target layer in advance. Layers are evaluated by ablation (see [EXPERIMENTS.md](EXPERIMENTS.md) E3).
 
 ## Control mapping
 
@@ -51,7 +51,7 @@ Each scenario in the corpus declares its target layer in advance. Layers are eva
 | Fencing tokens in the tool | T7, T8 |
 | MCP identity and allowlist | T1, T2, T5 |
 | Strict schemas with physical bounds | T2, T11 |
-| Prompt Guard and sanitizers | T1 to T6 (first screen) |
+| Sanitizers and LLM guard classifier | T1 to T6 (first screen) |
 | Unanimous court | T6, ambiguous tasks |
 | Read-back and item resolution | T4 |
 | Catalog check in code | T3 |
@@ -61,7 +61,8 @@ Each scenario in the corpus declares its target layer in advance. Layers are eva
 
 ## Residual risk (stated, not hidden)
 
-- Prompt Guard is a classifier and can miss attacks. It is the first screen, not the boundary. The boundary is identity and schema.
+- The LLM guard can miss attacks and can be talked into answering benign. It is the first screen, not the boundary. The boundary is identity and schema.
+- A guard and a court member can share a provider. An outage of one escalates, never approves.
 - An injected instruction can still influence which allowed tool a robot picks and with which in-bounds arguments. Bounds, the court, and the fast layer limit the damage.
 - Court members from different families can still fail together. Correlation is measured and reported, not assumed away.
 - The audit table is insert-only by code convention. A database superuser can alter it.

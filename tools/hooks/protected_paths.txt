@@ -1,0 +1,12 @@
+# Single source of protected paths. One entry per line.
+# A trailing slash means a directory. Used by the PreToolUse guard, CODEOWNERS
+# coverage test and the protected_paths CI job.
+src/waggle/control/
+src/waggle/coordination/
+src/waggle/mcp_server/
+tests/importlint_fixtures/
+.github/workflows/
+AGENTS.md
+CODEOWNERS
+.claude/
+tools/hooks/

@@ -1,0 +1,12 @@
+# Owners of the protected paths in tools/hooks/protected_paths.txt.
+# This is a weak control in a single-maintainer repository: it only takes effect
+# when branch protection requires code owner review, which the maintainer sets by hand.
+/src/waggle/control/ @agustindiazcano
+/src/waggle/coordination/ @agustindiazcano
+/src/waggle/mcp_server/ @agustindiazcano
+/tests/importlint_fixtures/ @agustindiazcano
+/.github/workflows/ @agustindiazcano
+/AGENTS.md @agustindiazcano
+/CODEOWNERS @agustindiazcano
+/.claude/ @agustindiazcano
+/tools/hooks/ @agustindiazcano

@@ -1,0 +1,70 @@
+name: Waggle Hive heavy and llm tests
+
+# Cloud-only runs for tests marked heavy or llm (AGENTS.md section 3).
+# The maintainer starts this by hand and commits the uploaded result files.
+
+on:
+  workflow_dispatch:
+    inputs:
+      marker:
+        description: "Pytest marker to run: heavy or llm"
+        required: true
+        default: "heavy"
+      seed_set:
+        description: "Seed set: dev or heldout"
+        required: true
+        default: "dev"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: waggle
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: waggle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U waggle -d waggle"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      MARKER: ${{ inputs.marker }}
+      SEED_SET: ${{ inputs.seed_set }}
+      DATABASE_URL: postgresql://waggle:ci-only-password@localhost:5432/waggle
+      META_API_KEY: ${{ secrets.META_API_KEY }}
+      BASETEN_API_KEY: ${{ secrets.BASETEN_API_KEY }}
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Validate inputs
+        run: |
+          case "$MARKER" in heavy|llm) ;; *) echo "marker must be heavy or llm" >&2; exit 1 ;; esac
+          case "$SEED_SET" in dev|heldout) ;; *) echo "seed_set must be dev or heldout" >&2; exit 1 ;; esac
+      - name: Install
+        run: uv sync --locked
+      - name: Run marked tests
+        # Exit code 5 means no tests were selected. It is accepted only until the
+        # first heavy test exists; remove this allowance then (see PENDING.md).
+        run: |
+          set +e
+          uv run pytest -m "$MARKER"
+          code=$?
+          if [ "$code" -eq 5 ]; then echo "no tests selected for marker $MARKER" >&2; exit 0; fi
+          exit "$code"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ inputs.marker }}-${{ inputs.seed_set }}
+          path: results/**/*.json
+          if-no-files-found: ignore
