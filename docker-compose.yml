@@ -5,6 +5,7 @@ name: waggle-hive
 
 x-python-service: &python-service
   build: .
+  image: waggle-hive:${WAGGLE_IMAGE_TAG:-dev}
   restart: unless-stopped
   depends_on:
     db:
