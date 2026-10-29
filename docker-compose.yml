@@ -1,6 +1,8 @@
 # Phase 0 placeholders. Services start and answer a health check; real logic comes later.
 # Compose reads .env automatically for ${...} interpolation. Values are never printed here.
 
+name: waggle-hive
+
 x-python-service: &python-service
   build: .
   restart: unless-stopped
