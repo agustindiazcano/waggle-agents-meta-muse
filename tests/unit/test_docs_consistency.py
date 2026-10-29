@@ -10,7 +10,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 THIS_FILE = Path(__file__).resolve()
 
-TENTATIVE_NAMES = ["AegisFleet", "waggle-agents-fleet"]
+# Built from fragments so this file does not contain the names it forbids elsewhere.
+TENTATIVE_NAMES = ["Aegis" + "Fleet", "waggle-agents-" + "fleet"]
 READ_ORDER = [
     "AGENTS.md",
     "PLAN.md",
