@@ -3,10 +3,13 @@
 Updated: 2026-10-29.
 
 ## Done last
+- `docs/phase1-conventions` (branch 0 of Phase 1, stacked on `docs/design-extensions`): ADR-021 (dt = 0.025 s, lidar 10 Hz, seeded streams, determinism scan, canonical hash, detector conventions), PLAN moves telemetry generator and S19 to S36 to Phase 6, seed split in EXPERIMENTS, reproduction scope in README, import-linter contract `control-no-ground-truth` with fixture, stub modules in `waggle.sim`. `uv run ci`: 502 tests, 3 contracts kept.
 - `docs/design-extensions` (cut from `chore/final-check`): ADR-018 sensing and predictive caution, ADR-019 missions and handoff, ADR-020 failure history and purchase orders (all proposed). ARCHITECTURE (new sections, data model, tool list, diagram), PLAN (Phases 1, 2, 3, 6), EXPERIMENTS (E1, E2, E6, S31 to S36), THREAT_MODEL (T14 to T16) and README updated. Every new element is marked "designed, not implemented". Test: `tests/unit/test_design_extensions_docs.py`.
 - `chore/agents-push-and-pr` (cut from `chore/final-check`, separate branch): rule change ADR-022. Agents push task branches and open PRs with `gh pr create`. The guard still denies force push, ref deletion, push to `main` and merge.
 
 ## Current state
+- Phase 1 stack so far: `docs/design-extensions` then `docs/phase1-conventions`. Next is `feat/sim-core`. Branches are local. The maintainer pushes `chore/final-check`, `chore/agents-push-and-pr` and `docs/design-extensions` from their own terminal (bootstrap exception). After they are merged into main and the maintainer says so: fetch, rebase the unpushed Phase 1 branches onto origin/main, run `uv run ci` on each, push each and open its PR (first against main, each next against the previous branch).
+- Push guard conditions to implement in a later chore branch: explicit `type/short-description` branch only, no bare push, no tags, no push from main, pre-push script (`uv run ci` green on HEAD plus gitleaks), deny diffs touching `results/**/heldout/`, same gate for `gh pr create`. The current hook on `chore/agents-push-and-pr` is looser than that.
 - The maintainer pushes `main` and `chore/final-check`, merges that PR, and enables branch protection (steps in the maintainer message). Neither new branch is pushed yet.
 - ADR numbers: ADR-021 is reserved for "Simulation conventions" (Phase 1 prompt below). The push rule is ADR-022.
 - Open maintainer decisions: PENDING 22 (numpy). The maintainer approved numpy for `waggle.sim` in the Phase 1 prompt; record it in README and PENDING when it is added.
