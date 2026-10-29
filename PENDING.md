@@ -4,7 +4,7 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 
 | # | Priority | Task | Owner | Status |
 |---|---|---|---|---|
-| 1 | P1 | Push the stacked branches in order and open each PR against the previous branch | M | pending |
+| 1 | P1 | Push `main`, then each stacked branch in the order listed in LASTCONTEXT.md with `git push -u origin <branch>`, and open each PR against the previous branch. Push after every finished branch from now on | M | pending |
 | 2 | P1 | Confirm `ci.yml` runs green on GitHub | M | pending |
 | 3 | P1 | Review the 11 stacked branches and merge them in order with merge commits | M | pending |
 | 4 | P1 | Verify balances, expiry dates and rate limits in each provider console (Meta, Baseten, Modal, Vertex) | M | pending |
@@ -24,3 +24,5 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 18 | P4 | Tag demo images with the commit in the deploy script (compose uses `dev` locally) | A | backlog |
 | 19 | P2 | Set branch protection on the repository by hand: require pull request review and code owner review, block force pushes. CODEOWNERS is a weak control until then | M | pending |
 | 20 | P2 | Open /hooks in Claude Code to review and trust the project hooks in .claude/settings.json | M | pending |
+| 21 | P1 | Next agent task: branch `docs/design-extensions` (sensing, missions, failure history). Prompt in LASTCONTEXT.md | A | next |
+| 22 | P2 | Approve or reject numpy as a runtime dependency for `waggle.sim`. The agent asks again in `docs/design-extensions` and does not add it before approval | M | pending |
