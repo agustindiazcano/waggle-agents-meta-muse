@@ -24,5 +24,5 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 18 | P4 | Tag demo images with the commit in the deploy script (compose uses `dev` locally) | A | backlog |
 | 19 | P2 | Set branch protection on the repository by hand: require pull request review and code owner review, block force pushes. CODEOWNERS is a weak control until then | M | pending |
 | 20 | P2 | Open /hooks in Claude Code to review and trust the project hooks in .claude/settings.json | M | pending |
-| 21 | P1 | Next agent task: branch `docs/design-extensions` (sensing, missions, failure history). Prompt in LASTCONTEXT.md | A | next |
-| 22 | P2 | Approve or reject numpy as a runtime dependency for `waggle.sim`. The agent asks again in `docs/design-extensions` and does not add it before approval | M | pending |
+| 21 | P1 | Phase 1 part 1: first present the plan (branches, order, risks) and wait for approval. Prompt in LASTCONTEXT.md. `docs/design-extensions` is done | A | next |
+| 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim` (Phase 1 prompt). Agent adds it with uv pin, README line and this row updated when branch 1 is built | A | approved |

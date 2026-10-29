@@ -51,7 +51,8 @@ Tasks
 - Exact collision and separation-violation detector (swept geometry), independent of the control code.
 - Machine telemetry generator with hidden failure onset.
 - 2D debug map over WebSocket.
-- Scenario catalog S01 to S30 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer.
+- Simulated 2D lidar (ray casting with range, angular resolution, noise, dropout, occlusion) and the optional human beacon variant (ADR-018). The exact detector keeps using ground truth.
+- Scenario catalog S01 to S36 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer.
 
 Exit
 - Same seed produces the same trajectory (test).
@@ -67,10 +68,12 @@ Tasks
 - Heartbeat watchdog: a robot with no heartbeat stops.
 - Telemetry threshold to geofence, directly in the fast layer.
 - Override rule: the fast layer verifies every motion command and can only reduce motion.
-- Baseline run with the layer disabled, same seeds.
+- Closest point of approach predictor on lidar detections: constant velocity extrapolation, can only restrict, the envelope stays the floor (ADR-018).
+- Baseline run with the layer disabled, same seeds. E1 configurations: ground truth, lidar only, lidar with beacons; envelope only against envelope with prediction.
 - Loop latency measured and reported as code latency.
 
 Exit
+- E1 ablation reported.
 - E1 run on development seeds, then held-out seeds: collisions and violations with and without the layer.
 - Zero collisions with humans in held-out seeds is a target, not a promise. Report the real number and every failing seed.
 
@@ -83,6 +86,7 @@ Tasks
 - Fault injection: kill worker mid-task, drop network, delay the database, expire leases early, duplicate delivery.
 - Property tests with Hypothesis on lease invariants.
 - Baseline without fencing (lease check outside the tool) to show the failure it prevents.
+- Task dependencies (mission graph) and the handoff at a rendezvous zone with an idempotency key and a fencing token (ADR-019), with a handoff chaos test.
 - Thin end-to-end slice: scripted command to one robot moving under the fast layer.
 
 Exit
@@ -145,6 +149,8 @@ Tasks
 - MCP tools: `reserve_part` (checks stock in the database), `dispatch_tech`, with an idempotency key per failure event so one failure opens one ticket.
 - Parts-runner flow: fetch the part, deliver to a safe point near the machine, reroute the affected package.
 - Part number is verified against the catalog by code before any order.
+- Synthetic failure log generated separately from the simulator dynamics, history-based diagnosis (retrieval of similar cases) and offline predictor calibration (ADR-020).
+- MCP tool `create_purchase_order` against a simulated procurement table when stock is zero, idempotent per failure event.
 
 Exit
 - E6: three failure modes on one machine, seeded onset. Report lead time before failure, false alarms, missed failures, wrong part orders, against a fixed-threshold baseline.

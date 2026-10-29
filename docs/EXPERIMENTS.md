@@ -25,14 +25,27 @@ Difficulty is raised on purpose so that ablations can show differences.
 | S19 to S24 | Combined faults | Machine overheats while a worker dies and a human crosses |
 | S25 to S28 | Failures of dependencies | LLM latency spike, LLM outage, database delay, duplicate delivery |
 | S29 to S30 | Sensor faults | Telemetry dropout, stuck sensor |
+| S31 to S36 | Coordinated handoff | See the table below |
 
 Each scenario has: seed, map, entities, scripted events, declared target layer, expected outcome.
+
+Coordinated handoff (designed, not implemented):
+
+| ID | Scenario | Target layer |
+|---|---|---|
+| S31 | Runner killed mid delivery | Lease expiry, fencing token |
+| S32 | Duplicate delivery of the same handoff | Idempotency key |
+| S33 | Technician waiting at the rendezvous while the part is late | Task dependency, safe hold |
+| S34 | Rendezvous contention: two runners for one zone | Lease with capacity one |
+| S35 | Stale runner resumes after reassignment and tries to deliver | Fencing token |
+| S36 | Handoff message with a forged mission id | Message schema, MCP identity |
 
 ## E1: Fast control layer
 
 - Question: how many human collisions and separation violations happen with and without the fast layer.
 - Method: N scenarios (S01 to S18) times seeds. Detector is the independent exact detector from Phase 1.
-- Metrics: collisions with humans, collisions between robots, separation violations, throughput (tasks per hour), loop latency.
+- Configurations (designed, not implemented): sensing is ground truth, lidar only, or lidar with beacons; control is envelope only or envelope with prediction. Contribution is measured by ablation.
+- Metrics: collisions with humans, collisions between robots, near-misses, separation violations, false stops, throughput (tasks per hour), loop latency. Proportions with Wilson 95% intervals and raw counts.
 - Baseline: no envelope, no e-stop.
 - Report: counts, intervals, every failing seed, latency as code latency.
 
@@ -42,6 +55,7 @@ Each scenario has: seed, map, entities, scripted events, declared target layer, 
 - Method: 500 concurrent tasks, kill workers at random points, expire leases early, duplicate deliveries, delay the database.
 - Metrics: double assignments, two robots in a one-lane zone, stale-token writes accepted, tasks recovered, tasks stuck, recovery time.
 - Baseline: lease check outside the tool, no token. Expected to show failures. Report them.
+- Handoff chaos test (designed, not implemented): S31 to S35 under random kills. Counts of double deliveries and double repair starts. Baseline without fencing, expected to show nonzero counts.
 - Property tests with Hypothesis: token monotonicity, mutual exclusion, no accepted write with a stale token.
 
 ## E3: Injection matrix
@@ -78,6 +92,7 @@ Each scenario has: seed, map, entities, scripted events, declared target layer, 
 - Question: how early and how reliably does the system act on machine degradation.
 - Setup: one machine, three failure modes (for example bearing wear, lubrication loss, misalignment), seeded hidden onset, noise. Simulator dynamics differ from the predictor model.
 - Metrics: lead time between first action and failure, false alarms per 100 machine-hours, missed failures, wrong part orders, tickets per failure event, robots stopped before entering the hazard zone.
+- Designed, not implemented: diagnosis accuracy among the three failure modes with and without the failure history, wrong part orders, duplicate purchase orders (idempotency key per failure event).
 - Baseline: fixed threshold on temperature and vibration, no model, no manual sheet.
 - Circularity check: predictor parameters are never shared with the generator.
 

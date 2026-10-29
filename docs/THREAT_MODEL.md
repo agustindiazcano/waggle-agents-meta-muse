@@ -39,6 +39,9 @@ All of these are treated as data. None can change identity, allowlists, schemas 
 | T11 | Malformed or oversized LLM output | Schema validation, fail closed |
 | T12 | Adversarial human path at a blind corner | Fast layer |
 | T13 | Sensor dropout on a machine | Conservative default, watchdog |
+| T14 | Spoofed or duplicated handoff | Idempotency key, fencing token |
+| T15 | Lidar dropout or occlusion | Conservative default, watchdog |
+| T16 | Duplicate purchase order | Idempotency key per failure event |
 
 Each scenario in the corpus declares its target layer in advance. Layers are evaluated by ablation (see [EXPERIMENTS.md](EXPERIMENTS.md) E3).
 
@@ -46,16 +49,16 @@ Each scenario in the corpus declares its target layer in advance. Layers are eva
 
 | Control | Covers |
 |---|---|
-| Fast envelope and e-stop | T12, T13 |
+| Fast envelope and e-stop | T12, T13, T15 |
 | Telemetry geofence | T13, machine faults |
-| Fencing tokens in the tool | T7, T8 |
+| Fencing tokens in the tool | T7, T8, T14 |
 | MCP identity and allowlist | T1, T2, T5 |
 | Strict schemas with physical bounds | T2, T11 |
 | Sanitizers and LLM guard classifier | T1 to T6 (first screen) |
 | Unanimous court | T6, ambiguous tasks |
 | Read-back and item resolution | T4 |
 | Catalog check in code | T3 |
-| Idempotency keys | T8, T9 |
+| Idempotency keys | T8, T9, T14, T16 |
 | Audit with result rows | Incident reconstruction |
 | Degraded mode | T10 |
 
