@@ -56,7 +56,7 @@ def test_plan_phases_carry_the_new_work() -> None:
     plan = _read("PLAN.md")
     pattern = r"^## Phase (\w+):.*?\n(.*?)(?=^## |\Z)"
     phase = {m.group(1): m.group(2).lower() for m in re.finditer(pattern, plan, re.S | re.M)}
-    assert "lidar" in phase["1"] and "s01 to s36" in phase["1"]
+    assert "lidar" in phase["1"] and "s01 to s18" in phase["1"]
     assert "closest point of approach" in phase["2"] and "e1 ablation reported" in phase["2"]
     assert "handoff" in phase["3"]
     assert "failure log" in phase["6"] and "create_purchase_order" in phase["6"]

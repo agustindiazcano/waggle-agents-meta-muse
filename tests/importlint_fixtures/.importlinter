@@ -20,3 +20,15 @@ source_modules =
     fixture_pkg.mcp_server
 forbidden_modules =
     fixture_pkg.governance
+
+[importlinter:contract:control-no-ground-truth]
+name = fixture: control must not import ground truth, sensors or the detector
+type = forbidden
+source_modules =
+    fixture_pkg.control
+forbidden_modules =
+    fixture_pkg.sim.world
+    fixture_pkg.sim.entities
+    fixture_pkg.sim.engine
+    fixture_pkg.sim.detector
+    fixture_pkg.sim.sensors

@@ -109,6 +109,23 @@ Parameters per robot class (simulator assumptions, to be calibrated and document
 | parts runner | 1.8 | 1.5 | 0.10 |
 | tech repair | 1.2 | 1.5 | 0.10 |
 
+Kinematics are non-holonomic (assumptions to calibrate, no claim of any standard):
+
+| Class | Model | Parameter |
+|---|---|---|
+| forklift | bicycle model | minimum turning radius 2.5 m, wheelbase 1.6 m |
+| carrier | differential drive | maximum angular speed 1.5 rad/s |
+| parts runner | differential drive | maximum angular speed 1.8 rad/s |
+| tech repair | differential drive | maximum angular speed 1.2 rad/s |
+
+The footprint is an oriented rectangle that sweeps along the curved path. The detector uses the swept footprint. A robot cannot exceed its minimum turning radius or maximum angular speed, so a forklift at full speed cannot clear a blind corner that a carrier can.
+
+Optional forklift parameter `load_raised`: multiplies max speed by 0.6 and the decel limit by 0.7. Both factors are assumptions to calibrate.
+
+## Route planner
+
+Deterministic, no LLM (designed, not implemented). A* on the aisle graph with a fixed tie-break. One-lane aisles are zones with capacity one, reserved through leases with fencing tokens. A robot that cannot get a lease waits or replans. A deadlock counter is reported in E2.
+
 Formulas:
 - Stopping distance: `S_stop = v*t_r + v^2/(2a)`.
 - Separation to a human: `S_sep = v_h*(t_r + v/a) + S_stop + C`, with `v_h` the assumed human approach speed and `C` a margin.

@@ -85,3 +85,19 @@ name = "waggle.mcp_server must not import waggle.governance"
 type = "forbidden"
 source_modules = ["waggle.mcp_server"]
 forbidden_modules = ["waggle.governance"]
+
+# Control reads only waggle.sim.observations. waggle.sim.__init__ and observations import
+# nothing from the project: import-linter also flags indirect chains, so any import there
+# of a ground-truth module would make every control import of observations a violation.
+[[tool.importlinter.contracts]]
+id = "control-no-ground-truth"
+name = "waggle.control must not import ground truth, sensors or the detector"
+type = "forbidden"
+source_modules = ["waggle.control"]
+forbidden_modules = [
+    "waggle.sim.world",
+    "waggle.sim.entities",
+    "waggle.sim.engine",
+    "waggle.sim.detector",
+    "waggle.sim.sensors",
+]

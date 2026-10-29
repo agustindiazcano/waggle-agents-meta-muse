@@ -170,6 +170,23 @@ Decision:
 
 Consequences: E6 reports diagnosis accuracy with and without the history, wrong part orders and duplicate purchase orders. Threat T16 covers duplicates.
 
+## ADR-021: Simulation conventions
+
+Status: proposed.
+
+Context: Phase 1 builds the simulator that every experiment depends on. Reproducible runs and a clean split between ground truth and what control sees are the base of E1.
+
+Decision:
+- Units and step: SI units (meters, seconds, radians). The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D (Three.js) and the FPV vision check renders the 3D scene. Fixed step dt = 0.025 s (40 Hz), one constant that every layer reads, never a wall clock. Every actuation delay must be an integer multiple of dt (the forklift 0.15 s is 6 ticks). The loader rejects a config that breaks this. The lidar runs at 10 Hz, every 4 ticks.
+- Seeds: one root seed per run. Independent streams per entity and per subsystem come from numpy `SeedSequence.spawn`, so adding an entity does not change the other streams. A generator is built only from a spawned child, with `default_rng(child)`.
+- Determinism scan: a test parses the sources of `waggle.sim` and `waggle.control` with `ast` and rejects global `random`, `time`, `datetime`, network, `os.urandom`, `uuid`, `secrets`, global numpy random functions, `np.random.seed`, `default_rng` without a `SeedSequence` child, builtin `hash()` on strings, and iteration over a set when building state or the hash.
+- State hash: a canonical serialization with sorted keys and floats rounded to a fixed number of decimals (documented next to the code). No golden hash values are committed. Determinism tests compare two runs in the same process. Every result file records the numpy version and the platform.
+- Reproduction scope: exact reproduction holds on the same platform and numpy version. Published results come from the cloud run (Linux).
+- Ground truth versus observation: `waggle.control` never reads ground truth. It reads only the types in `waggle.sim.observations`. That module is a leaf: it imports nothing from the project, and `waggle/sim/__init__.py` imports nothing, because import-linter also flags indirect chains. The contract `control-no-ground-truth` forbids `waggle.control` from importing `world`, `entities`, `engine`, `detector` and `sensors` in `waggle.sim`.
+- Detector conventions: closed sets, so an exact touch counts as contact. Contact is a collision. Separation below the declared margin is a violation. The human footprint is a disc or an oriented rectangle, declared per scenario.
+
+Consequences: results are comparable run to run on one platform and are not claimed bit-identical across platforms. The lidar rate and the delay rule are checked at load time, not at run time.
+
 ## ADR-022: Agents push task branches and open pull requests
 
 Status: accepted (maintainer decision, 2026-10-29). It supersedes the "the maintainer pushes" part of AGENTS.md section 2.
