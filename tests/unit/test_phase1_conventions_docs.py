@@ -103,3 +103,37 @@ def test_readme_states_the_reproduction_scope() -> None:
     text = _read("README.md").lower()
     assert "same platform and numpy version" in text
     assert "cloud run" in text and "linux" in text
+
+
+def test_adr_021_states_2d_floor_plane_and_3d_rendering() -> None:
+    adr = _adr(21)
+    for term in ("floor plane", "Height is not modeled", "Three.js", "FPV"):
+        assert term in adr, term
+    readme = _read("README.md")
+    assert "floor plane" in readme and "Height is not modeled" in readme
+
+
+def test_robot_table_has_kinematic_parameters() -> None:
+    text = _read("docs/ARCHITECTURE.md")
+    for term in (
+        "bicycle model",
+        "minimum turning radius",
+        "differential drive",
+        "maximum angular speed",
+        "load_raised",
+        "swept footprint",
+    ):
+        assert term in text, term
+
+
+def test_route_planner_is_recorded_in_plan_architecture_and_e2() -> None:
+    plan = _phase("3").lower()
+    assert "a*" in plan and "capacity one" in plan and "fencing" in plan
+    assert "without deadlock" in plan and "s13 to s18" in plan
+    assert "route planner" in _read("docs/ARCHITECTURE.md").lower()
+    assert "deadlock" in _read("docs/EXPERIMENTS.md").lower()
+
+
+def test_phase_1_lists_kinematics() -> None:
+    phase = _phase("1").lower()
+    assert "non-holonomic" in phase and "swept footprint" in phase and "load_raised" in phase
