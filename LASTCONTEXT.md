@@ -1,4 +1,4 @@
-# Last context
+# Waggle Hive: Last context
 
 Updated: 2026-10-29. Phase 0 (Foundation) code work is done on local branches, not pushed.
 
@@ -9,6 +9,10 @@ Updated: 2026-10-29. Phase 0 (Foundation) code work is done on local branches, n
 - Import contracts: 2, both tested against real code (pass) and against `tests/importlint_fixtures/` (fail).
 - Compose: db (pgvector/pgvector:pg16), api, worker, mcp_server, web. All reported healthy locally. Placeholders only.
 - CI workflow written at `.github/workflows/ci.yml`; its commands were run locally, never on GitHub.
+
+## Branch work after Phase 0
+- `docs/name-consistency`: tests for project name, CLAUDE.md read order and markdown links; Waggle Hive applied to every doc title, workflow name and compose project name.
+- Next in the stack: `docs/agents-rules`, `docs/providers-and-credits`, `chore/final-check`. `AGENTS.md` (new version) is still uncommitted and goes in `docs/agents-rules`.
 
 ## Next
 - Maintainer reviews, pushes and merges the branches in order, then confirms CI is green on GitHub.
