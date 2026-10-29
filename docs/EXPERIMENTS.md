@@ -54,7 +54,7 @@ Coordinated handoff (designed, not implemented):
 
 - Question: do fencing tokens prevent double assignment and stale writes under failures.
 - Method: 500 concurrent tasks, kill workers at random points, expire leases early, duplicate deliveries, delay the database.
-- Metrics: double assignments, two robots in a one-lane zone, stale-token writes accepted, tasks recovered, tasks stuck, recovery time.
+- Metrics: double assignments, two robots in a one-lane zone, stale-token writes accepted, tasks recovered, tasks stuck, recovery time, deadlocks (robots that stop making progress on a cycle of waits; counted in the S13 to S18 density scenarios).
 - Baseline: lease check outside the tool, no token. Expected to show failures. Report them.
 - Handoff chaos test (designed, not implemented): S31 to S35 under random kills. Counts of double deliveries and double repair starts. Baseline without fencing, expected to show nonzero counts.
 - Property tests with Hypothesis: token monotonicity, mutual exclusion, no accepted write with a stale token.

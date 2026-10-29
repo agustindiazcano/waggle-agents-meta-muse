@@ -46,7 +46,7 @@ Exit: CI green on smoke tests, `docker compose up` starts all services.
 Tasks
 - Deterministic tick loop (fixed dt, seeded RNG, no wall-clock dependence).
 - World: grid or polygon map, racks, aisles, narrow one-way aisles, blind corners, stations, depots, machines.
-- Robot classes with kinematics: carrier, heavy forklift, parts runner, tech repair. Speed, deceleration and actuation delay per class.
+- Robot classes with non-holonomic kinematics: carrier, heavy forklift, parts runner, tech repair. Speed, deceleration and actuation delay per class. Forklift: bicycle model with a minimum turning radius. Others: differential drive with a maximum angular speed. The footprint sweeps along the curved path and the detector uses the swept footprint. Optional `load_raised` on the forklift lowers max speed and decel limit by documented factors.
 - Humans: scripted paths, random walkers, adversarial paths (step out at a blind corner at the worst time).
 - Exact collision and separation-violation detector (swept geometry), independent of the control code.
 - 2D debug map over WebSocket.
@@ -81,6 +81,7 @@ Exit
 
 Tasks
 - PostgreSQL schema: zones with monotonic fencing token, tasks with state machine, task events.
+- Deterministic route planner: A* on the aisle graph, one-lane aisles as zones with capacity one, reservation through leases with fencing tokens.
 - Task queue on PostgreSQL (`FOR UPDATE SKIP LOCKED`), workers, expiry sweeper.
 - Lease manager: acquire increments the token, tools carry (zone, token), the tool checks inside one transaction with row lock.
 - Fault injection: kill worker mid-task, drop network, delay the database, expire leases early, duplicate delivery.
@@ -90,6 +91,7 @@ Tasks
 - Thin end-to-end slice: scripted command to one robot moving under the fast layer.
 
 Exit
+- Robots reach their targets in the S13 to S18 density scenarios without deadlock, and a deadlock counter is reported in E2.
 - E2: 500 tasks with workers killed at random points: 0 double assignments, 0 two robots in a one-lane aisle, 0 stale-token writes accepted. The no-fencing baseline shows nonzero counts.
 - Thin slice runs from a script.
 

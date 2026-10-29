@@ -54,6 +54,7 @@ Scaling to thousands of agents is reported as an extrapolation from a stub calib
 
 - Simulation only. Latencies of the fast layer are code latencies inside the simulator, not real-time guarantees on hardware.
 - The separation formula is inspired by speed and separation monitoring. This project does not claim compliance with any standard.
+- The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D and the FPV vision check renders the 3D scene.
 - Exact reproduction of a run holds on the same platform and numpy version. Published results come from the cloud run (Linux).
 - The lidar is simulated (designed, not implemented). Failure history and purchase orders are synthetic (designed, not implemented).
 - Vision inputs are synthetic renders, not in the control loop, so ground truth is known by construction.
