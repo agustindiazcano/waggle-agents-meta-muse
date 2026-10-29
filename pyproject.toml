@@ -44,9 +44,9 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.mypy]
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "tools"]
 exclude = ["tests/importlint_fixtures"]
-mypy_path = "src:tests/support"
+mypy_path = "src:tests/support:tools/hooks"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -55,7 +55,7 @@ markers = [
     "heavy: long-running tests (seed sweeps, chaos runs); cloud workflow only",
     "llm: tests that call a paid provider API; cloud workflow only",
 ]
-pythonpath = ["src", "tests/support"]
+pythonpath = ["src", "tests/support", "tools/hooks"]
 
 [tool.coverage.run]
 source = ["src/waggle"]
