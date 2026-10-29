@@ -1,6 +1,6 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-29.
+Updated: 2026-10-29 (rule change on chore/agents-push-and-pr).
 
 ## Done last
 - Phase 0 foundation, then a stack of 11 local branches. Verified on `chore/final-check`: `uv sync --locked && uv run ci` (458 tests, ruff, mypy --strict, 2 import contracts kept) and `docker compose up --build -d` with all 5 services healthy.
@@ -11,13 +11,13 @@ Updated: 2026-10-29.
 ## Current state
 - Nothing is pushed. Branches are stacked in this order: `docs/restructure`, `feat/python-tooling`, `feat/docker-compose`, `feat/ci`, `docs/context-files`, `docs/name-consistency`, `docs/gotchas-and-prior-work`, `docs/agents-rules`, `docs/providers-and-credits`, `chore/hooks-and-owners`, `chore/final-check`. `main` has the two initial commits.
 - The empty branch `docs/design-extensions` points at the `docs/providers-and-credits` commit.
-- The maintainer pushes (AGENTS.md section 2). The push order is in PENDING 1.
+- Rule change (ADR-022): agents now push task branches and open PRs with `gh pr create`; they still never merge or push to `main`. Done on `chore/agents-push-and-pr`, not yet pushed. The 11 stacked branches are still unpushed; the next agent session pushes them in order (PENDING 1).
 
 ## Prompt for the next session
 ```
 Continue Waggle Hive. Read AGENTS.md, then LASTCONTEXT.md and PENDING.md. Run git status, git branch and git worktree list.
 
-Task: branch docs/design-extensions. Design documents only, no code. Tests first where a test applies (links and style tests must pass). Do not push.
+Task: branch docs/design-extensions. Design documents only, no code. Tests first where a test applies (links and style tests must pass). Push the branch and open the PR when done (ADR-022).
 Base: chore/final-check. The maintainer asked for "on top of docs/providers-and-credits", which chore/final-check contains. A branch cut from providers lacks tools/hooks/, and the project hooks then block Write and Edit. An empty docs/design-extensions already exists at the providers commit: delete it (git branch -d) and recreate it from chore/final-check. If the maintainer has merged the stack, base it on main instead.
 
 1. docs/DECISIONS.md, status proposed:
