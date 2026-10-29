@@ -104,4 +104,7 @@ make report             # regenerate tables and /experiments from result files
 
 ## Result file schema
 
-`results/<experiment>/<run_id>.json`: commit, date, seed set, configuration, model ids, raw counts, derived metrics, failing seeds, notes.
+Held-out results: `results/<experiment>/heldout/<run_id>.json` with `"seed_set": "heldout"`.
+Development results: `results/<experiment>/dev/<run_id>.json` with `"seed_set": "dev"`.
+
+Each file records: commit, date, seed set, configuration, model ids, raw counts, derived metrics, failing seeds, notes. A test checks that every JSON under a `heldout/` folder has seed_set heldout and every one under `dev/` has dev. Agents never write under `heldout/`; the safety guard denies it.

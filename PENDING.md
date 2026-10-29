@@ -22,3 +22,5 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 16 | P3 | Run `pre-commit install` in the local clone | M | pending |
 | 17 | P4 | Optional: mutation testing for `waggle.control` only, if time remains | A | backlog |
 | 18 | P4 | Tag demo images with the commit in the deploy script (compose uses `dev` locally) | A | backlog |
+| 19 | P2 | Set branch protection on the repository by hand: require pull request review and code owner review, block force pushes. CODEOWNERS is a weak control until then | M | pending |
+| 20 | P2 | Open /hooks in Claude Code to review and trust the project hooks in .claude/settings.json | M | pending |

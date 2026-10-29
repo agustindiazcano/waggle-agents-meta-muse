@@ -77,8 +77,15 @@ results/                 result files produced by experiments
 data/                    synthetic manuals and SOPs
 assets/                  3D assets and media
 tests/                   unit, property, integration, chaos
+tools/hooks/             Claude Code hook scripts (safety guard, lint check, session start)
 .github/workflows/       CI
 ```
+
+## Repository safeguards
+
+Claude Code hooks in `.claude/settings.json` run scripts from `tools/hooks/`: a PreToolUse safety guard (denies push, merge, force options, `git add -A`, staged `.env` and held-out result writes; asks first for branch deletion, rebase, amend and protected paths), a PostToolUse lint check and a SessionStart context loader. `tools/hooks/protected_paths.txt` is the single list of protected paths, and `CODEOWNERS` covers every entry.
+
+This is a weak control in a single-maintainer repository. The hooks help an agent stay inside the rules, but the maintainer can change them, and CODEOWNERS has an effect only when branch protection requires code owner review. Branch protection is a repository setting that the maintainer sets by hand.
 
 ## Run
 
