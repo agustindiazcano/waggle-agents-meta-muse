@@ -49,10 +49,10 @@ Tasks
 - Robot classes with kinematics: carrier, heavy forklift, parts runner, tech repair. Speed, deceleration and actuation delay per class.
 - Humans: scripted paths, random walkers, adversarial paths (step out at a blind corner at the worst time).
 - Exact collision and separation-violation detector (swept geometry), independent of the control code.
-- Machine telemetry generator with hidden failure onset.
 - 2D debug map over WebSocket.
 - Simulated 2D lidar (ray casting with range, angular resolution, noise, dropout, occlusion) and the optional human beacon variant (ADR-018). The exact detector keeps using ground truth.
-- Scenario catalog S01 to S36 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer.
+- Scenario catalog S01 to S18 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer. Development and held-out seeds are fixed once in `data/seeds.json`.
+- Conventions of ADR-021: dt = 0.025 s (40 Hz), lidar at 10 Hz, seeded streams, canonical state hash, contract `control-no-ground-truth`.
 
 Exit
 - Same seed produces the same trajectory (test).
@@ -141,6 +141,7 @@ Exit
 ## Phase 6: Predictive maintenance
 
 Tasks
+- Machine telemetry generator with hidden failure onset, and scenario families S19 to S36 (combined faults, dependency failures, sensor faults, coordinated handoff), built when the layers they exercise exist.
 - Machine physics in the simulator: bearing temperature and vibration as a function of load and a hidden fault state. Different dynamics from the predictor, with sensor noise and hidden onset.
 - Predictor: first-order thermal model fit online on telemetry, outputs estimated time to limit.
 - Structured manual sheet per machine, extracted once from the manual and validated by schema: limits, failure modes, part numbers, procedures. Missing sheet means a conservative default limit.

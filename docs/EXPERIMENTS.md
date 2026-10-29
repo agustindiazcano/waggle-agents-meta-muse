@@ -44,6 +44,7 @@ Coordinated handoff (designed, not implemented):
 
 - Question: how many human collisions and separation violations happen with and without the fast layer.
 - Method: N scenarios (S01 to S18) times seeds. Detector is the independent exact detector from Phase 1.
+- Seeds: S01 to S18 with 5 development seeds and 12 held-out seeds each, fixed once in `data/seeds.json`, disjoint and never regenerated. That is 90 development runs and 216 held-out runs per configuration. With 216 runs and zero collisions the Wilson 95% upper bound is about 1.7%. With 100 runs it would be 3.7%.
 - Configurations (designed, not implemented): sensing is ground truth, lidar only, or lidar with beacons; control is envelope only or envelope with prediction. Contribution is measured by ablation.
 - Metrics: collisions with humans, collisions between robots, near-misses, separation violations, false stops, throughput (tasks per hour), loop latency. Proportions with Wilson 95% intervals and raw counts.
 - Baseline: no envelope, no e-stop.
