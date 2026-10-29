@@ -30,11 +30,13 @@ flowchart TB
     end
 
     subgraph SLOW["Async governance pipeline"]
-        GUARD[Prompt Guard and sanitizers on untrusted input]
+        GUARD[Guard classifier and sanitizers on untrusted input]
         DIR[Director: Muse Spark]
         DIAG[Diagnosis: manual sheet plus RAG for procedure and part]
-        COURT[Unanimous court: Muse Spark, Muse Spark Open, third family]
+        COURT[Unanimous court: Muse Spark, Muse Spark Open, Muse Glimmer]
         ADV[Per-robot advisors: safety, organizer]
+        PLANNER[Fleet planner: optional, event driven]
+        VALID[Deterministic validator: feasibility, leases, bounds]
     end
 
     subgraph MCP["Isolated MCP server"]
@@ -55,6 +57,8 @@ flowchart TB
     COURT -->|unanimous approve| AUTH --> TOOLS --> LEASE
     COURT -->|any reject, split, timeout| INBOX
     ADV --> AUTH
+    WORLD -.->|context change| PLANNER
+    PLANNER -->|proposal| VALID --> AUTH
     WORLD -->|telemetry| THRESH --> ENV
     THRESH -.->|event, parallel| DIAG --> DIR
     LEASE --> ENV
@@ -89,6 +93,26 @@ Formulas:
 
 Inspired by speed and separation monitoring. No compliance with any standard is claimed.
 
+## Model tiers and roles
+
+Every model role uses a Meta Muse model. Providers and fallbacks are declared in `src/waggle/llm/routes.toml`; model ids come from environment variables. See ADR-015, ADR-016 and ADR-017 in [DECISIONS.md](DECISIONS.md).
+
+| Tier | Roles | Model and provider | Trigger |
+|---|---|---|---|
+| Reflex | Fast control loop, fencing | Deterministic code, no LLM | Every tick |
+| Fast LLM | Per-robot safety advisor, per-robot organizer | Muse Spark Open 1026 on Baseten | Context change, never per tick |
+| Fast LLM | Guard classifier | Muse Glimmer on Modal | Each untrusted input, after sanitizers |
+| Planning LLM | Director, fleet planner, diagnosis, court member 1, voice, vision | Muse Spark on the Meta API | A command, an event, or every N seconds |
+| Planning LLM | Court member 2 | Muse Spark Open 1026 on Baseten | Each reviewed task |
+| Planning LLM | Court member 3 | Muse Glimmer on Modal | Each reviewed task |
+
+Fallbacks, only through the routing table and disabled in held-out runs: Modal hosting Muse Spark Open when Baseten fails, and Vertex AI as secondary backup for the guard and court member 3.
+
+Fleet planner (optional): event-driven and low frequency. It proposes assignments, batching and reroutes. A deterministic validator checks feasibility, leases and bounds before anything is applied. If the planner fails or times out, the deterministic assigner is used. In E5 it is an extra configuration; the code-only baseline stays.
+
+Guard classifier: deterministic sanitizers run first (length, charset, delimiter escaping). The classifier returns a label (benign, injection or uncertain) and a reason code as strict structured output, with the input fenced as untrusted data. A parse failure, a timeout or uncertain rejects and escalates. It is the first screen, not the boundary. Identity and schemas are the boundary.
+
+Budget: a guard in `waggle.llm` checks accumulated cost plus the call estimate against the provider cap before every call, and per-task call and cost caps apply.
 ## Leases and fencing tokens
 
 - `zones(zone_id, holder, fencing_token, expires_at)`.
@@ -117,7 +141,7 @@ Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `rese
 ## Court
 
 - Inputs: structured task, item resolution result, current world summary, relevant SOP excerpts (screened).
-- Members: Muse Spark, Muse Spark Open 1026, third family. Same prompt, structured verdict with reason code.
+- Members: Muse Spark, Muse Spark Open 1026, Muse Glimmer (related models, correlated errors expected, see ADR-017). Same prompt, structured verdict with reason code.
 - Decision: execute only if all three approve with no parse or timeout failure. Anything else goes to the operator inbox. No path approves over a rejection.
 - Logged per call: model, tokens, latency, cost, verdict.
 

@@ -49,21 +49,27 @@ Each scenario has: seed, map, entities, scripted events, declared target layer, 
 - Question: which layer blocks which attack and what passes when a layer is off.
 - Corpus: labels, SOP text, manual text, inter-robot messages, voice transcripts, court-targeted injections. Includes benign near-lookalikes to measure false rejection.
 - Method: each case runs with all layers on, then with each layer ablated one at a time: guard off, MCP identity off, schema bounds off, court off.
+- The guard is the Muse Glimmer classifier after deterministic sanitizers. The label policy is fixed before the run. Report misses and false rejections on benign near-lookalikes.
 - Metrics: attempts that reach a side effect, attempts rejected per layer, false rejections on benign cases.
 - Each case declares its target layer before the run.
 
 ## E4: Court
 
-- Question: does a cross-family unanimous court reduce unsafe approvals, and at what cost in false blocks.
+- Question: does a unanimous court of related Muse models reduce unsafe approvals, and at what cost in false blocks.
 - Dataset: labeled tasks (benign, risky, ambiguous) with labels written before the run. Dev and test split.
-- Configurations: single Muse Spark, two same-family members, three-family unanimous.
-- Metrics: false approvals, false blocks, escalation rate, agreement and correlation between pairs (same family vs cross family), latency, cost per task.
+- Configurations:
+  - A: single Muse Spark
+  - B: two Muse members
+  - C: default Muse court (Muse Spark, Muse Spark Open, Muse Glimmer)
+  - D: Muse Spark, Muse Spark Open and a non-Muse member on Vertex, run once on the held-out set within the Vertex cap
+- The default court for the live demo is whatever the held-out results support.
+- Metrics: false approvals, false blocks, escalation rate, agreement and pairwise error correlation (Muse pairs, and Muse versus non-Muse in D), latency, cost per task.
 - Repeats per case, reported as repeats.
 
 ## E5: Per-robot advisors
 
 - Question: do the safety advisor and the organizer improve outcomes beyond the code-only system.
-- Configurations: none, safety advisor only, organizer only, both. Same seeds.
+- Configurations: none, safety advisor only, organizer only, both, and the fleet planner as an extra configuration (never a replacement for the code-only baseline). Same seeds.
 - Metrics: near-miss count (separation below a threshold but above collision), false stops, tasks per hour, mean task time, LLM calls and cost per task, behavior under LLM outage.
 - If an advisor does not change outcomes, that is the result.
 
