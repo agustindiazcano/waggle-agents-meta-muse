@@ -16,11 +16,10 @@ ROOT = Path(__file__).resolve().parents[2]
 THIS_FILE = Path(__file__).resolve()
 
 EM_DASH = chr(0x2014)
-BOM = "﻿"
-EMOJI = re.compile(
-    "[☀-➿⭐⭕⌚⌛⏩-⏳⏸-⏺"
-    "\U0001f000-\U0001faff]"
-)
+BOM = chr(0xFEFF)
+EMOJI_RANGES = [(0x2600, 0x27BF), (0x2B50, 0x2B50), (0x2B55, 0x2B55), (0x231A, 0x231B)]
+EMOJI_RANGES += [(0x23E9, 0x23F3), (0x23F8, 0x23FA), (0x1F000, 0x1FAFF)]
+EMOJI = re.compile("[" + "".join(f"{chr(a)}-{chr(b)}" for a, b in EMOJI_RANGES) + "]")
 BANNED_WORDS = [
     "ro" + "bust",
     "rigo" + "rous",
@@ -78,8 +77,8 @@ def _tracked_text_files() -> list[Path]:
     ("sample", "kind"),
     [
         (f"a {EM_DASH} b", "em dash"),
-        ("done \U0001f680", "emoji"),
-        ("ok ✅", "emoji"),
+        ("done " + chr(0x1F680), "emoji"),
+        ("ok " + chr(0x2705), "emoji"),
         *[(f"this is {word} text", "banned word") for word in BANNED_WORDS],
         (f"{BANNED_STEM}t answer", "banned stem"),
         (f"{BANNED_STEM}tly", "banned stem"),
