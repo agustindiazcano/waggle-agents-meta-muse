@@ -17,3 +17,4 @@
 | Compose `web` service serves a static page with `python -m http.server` | Replaced in Phase 7. |
 | Hard spending cap per provider (AGENTS.md) | Variable names exist in `.env.example`; enforcement code comes with the LLM client in Phase 5. |
 | Coverage is 67% | Placeholder `__main__` modules are not exercised by unit tests; verified by compose health checks instead. |
+| `AGENTS.md` new version is uncommitted | It is committed unchanged in `docs/agents-rules`. The style test lands in that branch, so style rules were checked by hand on new files until then. |

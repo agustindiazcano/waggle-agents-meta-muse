@@ -12,6 +12,7 @@ Updated: 2026-10-29. Phase 0 (Foundation) code work is done on local branches, n
 
 ## Branch work after Phase 0
 - `docs/name-consistency`: tests for project name, CLAUDE.md read order and markdown links; Waggle Hive applied to every doc title, workflow name and compose project name.
+- `docs/gotchas-and-prior-work`: `docs/GOTCHAS.md` with 12 entries (created here, so `docs/agents-rules` only keeps it and does not recreate it); `PRIOR_WORK.md` links the earlier repository and states ideas only.
 - Next in the stack: `docs/agents-rules`, `docs/providers-and-credits`, `chore/final-check`. `AGENTS.md` (new version) is still uncommitted and goes in `docs/agents-rules`.
 
 ## Next
