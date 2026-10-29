@@ -51,6 +51,10 @@ mypy_path = "src"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = [
+    "heavy: long-running tests (seed sweeps, chaos runs); cloud workflow only",
+    "llm: tests that call a paid provider API; cloud workflow only",
+]
 pythonpath = ["src"]
 
 [tool.coverage.run]

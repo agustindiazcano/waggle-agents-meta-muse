@@ -30,8 +30,9 @@ LINT: list[Command] = [
     _module("ruff", "format", "--check", "."),
 ]
 TYPE: list[Command] = [_module("mypy")]
+MARKER_EXPR = "not heavy and not llm"
 TEST: list[Command] = [
-    _module("pytest", "--cov", "--cov-report=term-missing", "--cov-report=xml"),
+    _module("pytest", "--cov", "--cov-report=term-missing", "--cov-report=xml", "-m", MARKER_EXPR),
 ]
 
 
