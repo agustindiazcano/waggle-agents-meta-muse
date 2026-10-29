@@ -22,4 +22,4 @@ If two documents conflict, stop and ask. `LASTCONTEXT.md` and `PENDING.md` are u
 
 - Python 3.12 with uv. Run tasks as `uv run <target>`: `lint`, `type`, `test`, `ci`, `experiments-dev`, `experiments-test`, `report`. `make` is not available on this machine.
 - Import contract violation fixtures live in `tests/importlint_fixtures/`, never under `src/`.
-- Do not push or change remotes. The maintainer pushes and merges.
+- Agents push their task branch and open the PR with `gh pr create`. Never push to `main`, never force push, do not change remotes. The maintainer merges.

@@ -127,11 +127,7 @@ def _git_rules(args: list[str], ctx: Context) -> Verdict:
             "deny", "Hooks and CI are never skipped. Run the commit without --no-verify."
         )
     if sub == "push":
-        extra = " (force options are never allowed)" if _forces(long_flags, short) else ""
-        return Verdict(
-            "deny",
-            f"git push{extra} is reserved for the maintainer. Tell them the branch is ready.",
-        )
+        return _git_push(rest, long_flags, short)
     if sub == "merge":
         return Verdict("deny", "Agents never merge. Ask the maintainer to merge the pull request.")
     if sub == "reset" and "--hard" in long_flags:
@@ -156,6 +152,24 @@ def _git_rules(args: list[str], ctx: Context) -> Verdict:
     if sub == "rebase":
         return Verdict("ask", "Rebase rewrites history. Confirm it is local and unpushed.")
     return ALLOW
+
+
+PROTECTED_BRANCHES = frozenset({"main", "master"})
+
+
+def _git_push(rest: list[str], long_flags: set[str], short: set[str]) -> Verdict:
+    """Allow a plain push of a task branch. Deny force, deletion and pushes to main."""
+    if _forces(long_flags, short):
+        return Verdict("deny", "Force push is never allowed. Push a new commit instead.")
+    if {"--delete", "--mirror", "--prune"} & long_flags or "d" in short:
+        return Verdict("deny", "Deleting remote refs is reserved for the maintainer.")
+    for ref in (a for a in rest if not a.startswith("-")):
+        if ref.startswith(("+", ":")):
+            return Verdict("deny", "Force and delete refspecs are not allowed.")
+        target = ref.rsplit(":", 1)[-1].removeprefix("refs/heads/")
+        if target in PROTECTED_BRANCHES:
+            return Verdict("deny", "Never push to main. Push the task branch and open a PR.")
+    return Verdict("allow", "")
 
 
 def _forces(long_flags: set[str], short: set[str]) -> bool:

@@ -4,7 +4,7 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 
 | # | Priority | Task | Owner | Status |
 |---|---|---|---|---|
-| 1 | P1 | Push `main`, then each stacked branch in the order listed in LASTCONTEXT.md with `git push -u origin <branch>`, and open each PR against the previous branch. Push after every finished branch from now on | M | pending |
+| 1 | P1 | Push `main` (maintainer, once), then push each stacked branch in the order listed in LASTCONTEXT.md and open each PR against the previous branch. Agents may do the branch pushes and PRs since ADR-022; they never push `main`. Push after every finished branch from now on | M, A | pending |
 | 2 | P1 | Confirm `ci.yml` runs green on GitHub | M | pending |
 | 3 | P1 | Review the 11 stacked branches and merge them in order with merge commits | M | pending |
 | 4 | P1 | Verify balances, expiry dates and rate limits in each provider console (Meta, Baseten, Modal, Vertex) | M | pending |

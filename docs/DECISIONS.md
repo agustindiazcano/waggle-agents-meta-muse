@@ -186,3 +186,17 @@ Decision:
 - Detector conventions: closed sets, so an exact touch counts as contact. Contact is a collision. Separation below the declared margin is a violation. The human footprint is a disc or an oriented rectangle, declared per scenario.
 
 Consequences: results are comparable run to run on one platform and are not claimed bit-identical across platforms. The lidar rate and the delay rule are checked at load time, not at run time.
+
+## ADR-022: Agents push task branches and open pull requests
+
+Status: accepted (maintainer decision, 2026-10-29). It supersedes the "the maintainer pushes" part of AGENTS.md section 2.
+
+Context: this is a hackathon with a fixed deadline, and waiting for the maintainer to push each branch and open each PR slows delivery.
+
+Decision:
+- Agents push their own task branch and open the PR with `gh pr create`, using the PR text from AGENTS.md section 2.
+- Unchanged: agents never merge, never push to `main` or `master`, never force push, never delete remote refs, never create or change remote repositories. The maintainer reviews and merges.
+- The PreToolUse guard (`tools/hooks/safety_guard.py`) allows a plain `git push` and denies force flags, `+` and `:` refspecs, delete flags and any push whose target is `main` or `master`. A bare `git push` while checked out on `main` is not detected by the guard, and committing to `main` stays forbidden.
+- Before each push the agent runs `uv run ci` and checks the diff for secrets and held-out results (AGENTS.md section 2, Git rule 11).
+
+Consequences: a pushed secret cannot be taken back by deleting a later commit, so the pre-push check is mandatory. Branch protection (PENDING 19) is now the main control on `main`.
