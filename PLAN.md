@@ -2,7 +2,20 @@
 
 Build window: Oct 27 to Nov 3, 2026. Buffer and submission: Nov 4. Submission deadline: Wed Nov 4, 9:00 PM ET (23:00 in Argentina, since US daylight time ends Nov 1). Confirm the exact time on the submission platform.
 
-The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Nothing is cut from scope. Phase order is build order, not priority.
+The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 2.
+
+## Priority order
+
+Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 2.
+
+1. Simulator, exact detector, fast layer, E1, end-to-end slice.
+2. Leases, fencing tokens, E2.
+3. MCP boundary and injection matrix, E3.
+4. Director, item resolution, court, E4.
+5. README, video, deploy, submission.
+6. Predictive maintenance, E6.
+7. Per-robot advisors, E5.
+8. 3D scene, voice, vision, E7. If voice is cut, the video uses text commands.
 
 ## Rules
 
