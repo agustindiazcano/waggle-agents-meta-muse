@@ -27,35 +27,17 @@ Updated: 2026-10-30 (B9 `chore/guard-gaps-and-rules`, session brief 2).
 - Open maintainer decisions: PENDING 22 (numpy). The maintainer approved numpy for `waggle.sim` in the Phase 1 prompt; record it in README and PENDING when it is added.
 
 ## Prompt for the next session
-The maintainer brief is stored in `docs/PHASE1_BRIEF.md` and replaces the prompt below. Follow its branch order B0 to B8 and its stop points. Its status notes list what already exists.
-
-### Superseded prompt (kept for reference)
 ```
-Phase 1 (simulator and ground truth), part 1 of 2. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, PLAN.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-002, 013, 018, 019, 020), docs/EXPERIMENTS.md first. If two documents conflict, stop and ask.
+Continue Waggle Hive, session brief 2, from B11. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/PHASE1_BRIEF.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-021 to ADR-029), docs/EXPERIMENTS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
 
-Prerequisite: branch docs/design-extensions exists and is closed. If not, stop and tell me.
+State: B9 (PR 19) and B10 (PR 20, stacked on B9) are open and not merged. Base B11 on feat/sim-performance, or on origin/main if both are merged by then. Each PR targets the previous branch. Never merge, never push to main, no force push.
+Decision taken (ADR-025 addendum, PENDING 31): rollout cost accepted at about 5.7 s per 45 s rollout (K = 5, H = 45 s, lidar every 4 ticks), variants for E10 and held-out runs go to the cloud, live-demo reductions are labeled, no more optimization now.
 
-Approvals
-- numpy is approved as a runtime dependency of waggle.sim. Check the current numpy documentation (Generator, SeedSequence, typing) before using it. Pin it through uv. Record it in the README and in PENDING.md.
-- Not approved: any WebSocket or web server dependency, any JS tooling, any other runtime dependency.
+Task, in order, tests first with the failing run shown, Conventional Commits, uv run ci green and gitleaks clean before each push, report every two branches in five lines (done, next, blockers):
+B11 docs/phase2-design (ADR-026 perception and tracking, ADR-027 control interface and limit arbitration, ADR-028 E1 metrics and the eight configurations; update ARCHITECTURE.md, PLAN.md Phase 2, EXPERIMENTS.md E1), as written in brief 2 Part D.
+B12 feat/control-envelope, B13 feat/control-tracking, B14 feat/control-occlusion, B15 feat/control-cpa, B16 feat/control-reflex, B17 feat/e1-harness (development seeds only, eight configurations, uv run report).
+Stop after B17 and report the E1 development results with the tables. Do not start B18 until the maintainer says so.
 
-Give me a short plan (branches, order, risks) and wait for my approval before writing code.
-
-Move the machine telemetry generator and scenarios S19 to S36 from Phase 1 to the phases that need them (Phase 6 and later) in PLAN.md, in the first branch.
-
-ADR-021 "Simulation conventions", status proposed, written first:
-- SI units: meters, seconds, radians. 2D plane. Fixed step dt = 0.02 s (50 Hz), one constant that every layer reads, never a wall clock.
-- One root seed per run. Spawn independent streams per entity and per subsystem with numpy SeedSequence.spawn. No global random, time, datetime, network or os.urandom inside waggle.sim and waggle.control, enforced by a test that parses the sources.
-- Ground truth versus observation: waggle.control never reads ground truth. It reads only the observation types defined in waggle.sim.observations. Add an import-linter contract for this (control must not import the ground-truth modules or the detector), with a fixture and one test per contract, as in Phase 0.
-- Every tick can be hashed with a stable serialization, for replay and determinism tests.
-
-Branches, in order, stacked on docs/design-extensions, tests first (Hypothesis where an invariant exists). After each: uv run ci, update LASTCONTEXT.md and PENDING.md.
-1. feat/sim-core: tick loop, seeded streams, world model, JSON world format.
-2. feat/sim-robots: four classes with the ARCHITECTURE.md parameters, oriented footprints, actuation delay, limits enforced.
-3. feat/sim-humans: scripted paths, seeded walkers, adversarial humans.
-4. feat/sim-detector: exact swept collision and separation detector, independent of control code.
-5. feat/sim-sensors: simulated 2D lidar and the optional beacon variant, output types in waggle.sim.observations.
-6. feat/sim-scenarios: scenario format, generators for S01 to S18, data/seeds.json with disjoint development and held-out seeds, replay runner with per-tick state hash, no-control baseline on development seeds to results/e1/dev/<run_id>.json. Do not run held-out seeds.
-
-After branch 6, stop and report: done, not done, risks, measured numbers (ticks per second, labeled as code speed on this machine), and the push order. Pushing task branches and opening PRs is allowed once chore/agents-push-and-pr is merged (ADR-022). The 2D debug viewer comes in a separate session after the WebSocket dependency decision.
+Constraints: numpy and the standard library only. waggle.control reads only waggle.sim.observations and waggle.sim.params. Pure functions with explicit state, deterministic, fail closed on a missing or stale scan. Never loosen a safety check. Ask before touching the fencing check, the MCP boundary, the audit logic or the .env. No paid API call in this session.
+Reminder: long or paid runs go to the cloud workflow. Rollout timings on this machine vary by 40 percent, so compare only alternating runs in one session.
 ```

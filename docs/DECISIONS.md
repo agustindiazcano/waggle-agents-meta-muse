@@ -282,3 +282,5 @@ Decision:
 - AGENTS.md git rule 3 now reads: every commit passes the fast CI, and a test and the code that makes it pass go in the same commit.
 
 Consequences: intermediate red commits in published history stay.
+
+ADR-025 addendum, maintainer decision on PENDING 31 (2026-10-30, recommended mix): the measured 5.7 s per 45 s rollout is the design basis (K = 5, H = 45 s, lidar every 4 ticks). Variants for E10 and held-out runs run in the cloud. K, H or the lidar rate may be reduced for the live demo only, and the reduction is labeled in the demo. The walkers and driver are not vectorized now.
