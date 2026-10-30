@@ -45,7 +45,7 @@ Reading: the controlled fleet moves at about a fifth of the requested speed in a
 | S08 early stalls | Wall faces read as humans | ADR-030 |
 | S06, S11, S12, S08 tail | A human stops in the only lane, the robot holds at 1.7 to 1.9 m. Correct behavior without replanning. | Phase 5C, E10 |
 | S03 | Two robots head on in a one-lane corridor, both stop forever | Phase 3 corridor locking, E2 |
-| S14, S15, S18 | Thousands of stops in dense scenes, not diagnosed | open, next |
+| S14, S15, S17, S18 (10 and 30 robots) | Robot-robot queues: in 77 to 95 percent of robot-ticks the robot is under 25 percent of its request, and the nearest other robot is 2.0 to 2.5 m away (centre to centre, about nose to tail). Other robots are structure points to the envelope, so a follower treats a moving leader as a wall and waits for a full stopping gap. Speed ratio of these scenes is 0.04 to 0.3 and they hold most of the distance, so they set the aggregate 0.19. | Decided A and C (PENDING 45, ADR-028 addendum): the fast layer is not changed, the cost is reported by scenario, Phase 3 traffic control addresses it |
 
 ## Current state
 - Pending maintainer: merge PR 35, PENDING 25 (gates), 34, 40 (task metric: approved, done by PR 35).
@@ -60,7 +60,7 @@ State: B0 to B17 and ADR-030 are on main. PR 35 (exp/e1-speed-metrics) adds dist
 
 Task, tests first with the failing run shown, uv run ci green before each push:
 1. Split speed ratio and distance by scenario from the run 4 result files (gh run download 41100237070) to see which scenes hold the cost.
-2. Diagnose S14, S15 and S18 (dense scenes with thousands of stops): trace which Limit wins the arbiter and where the robots are, for 2 seeds each, as was done for S08 (wrap waggle.experiments.e1_rig.control_step and print reasons, speeds and the nearest human or robot). Report causes in a table. Any fix is a new branch, never loosens a limit, with an ADR.
+2. S14, S15, S17, S18 are robot-robot queues and the maintainer decided to leave the fast layer as it is (ADR-028 addendum). Do not change how the envelope treats other robots. Add a per-scenario cost table to the README only from result files.
 3. If a control change is made, rerun E1 in the cloud (gh workflow run e1.yml --ref <branch>) and report the table versus run 3.
 Then stop and report. Phase 3 integration, MCP, guard and court only when the maintainer says so.
 Constraints: numpy and the standard library only, waggle.control reads only waggle.sim.observations and waggle.sim.params, fail closed, no paid API call, held-out seeds not run, ask before touching the fencing check, the MCP boundary, the audit logic or .env.
