@@ -10,8 +10,6 @@ from collections.abc import Sequence
 from waggle.control.types import ControlOutput, ControlRequest, Limit, Reason
 from waggle.sim.params import RobotParams
 
-_EPS = 1e-9
-
 _PRIORITY = (
     Reason.ESTOP,
     Reason.INPUT_MISSING,
@@ -53,7 +51,7 @@ def _class_hits(request: ControlRequest, p: RobotParams) -> tuple[float, float, 
 
 def _scale(mag: float, allowed: float, turn: float) -> float:
     """Fraction of the request that survives the tightest cap."""
-    if mag > _EPS:
+    if mag > 0.0:
         return min(1.0, allowed / mag)
     return 0.0 if allowed <= 0.0 and turn != 0.0 else 1.0
 
@@ -85,4 +83,4 @@ def arbitrate(request: ControlRequest, p: RobotParams, limits: Sequence[Limit]) 
 
 def _binds(cap: float, mag: float, turn: float) -> bool:
     """A limit binds when it is below the request, or blocks a pure rotation with a zero cap."""
-    return cap < mag or (mag <= _EPS and cap <= 0.0 and turn != 0.0)
+    return cap < mag or (mag == 0.0 and cap <= 0.0 and turn != 0.0)
