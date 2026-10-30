@@ -16,6 +16,12 @@ DT = 0.025
 LIDAR_PERIOD_TICKS = 4
 """Lidar rate: every 4 ticks, which is 10 Hz at DT = 0.025 s."""
 
+LOAD_RAISED_SPEED_FACTOR = 0.6
+"""Forklift with the load raised: maximum speed is multiplied by this factor (assumption)."""
+
+LOAD_RAISED_DECEL_FACTOR = 0.7
+"""Forklift with the load raised: the deceleration limit is multiplied by this (assumption)."""
+
 _TICK_TOLERANCE = 1e-9
 _KINEMATICS = ("bicycle", "differential")
 
