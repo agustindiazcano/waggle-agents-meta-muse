@@ -109,7 +109,7 @@ uv run ci                   # ruff, mypy --strict, pytest with coverage, import-
 docker compose up --build   # db, api, worker, mcp_server, web (Phase 0 placeholders)
 ```
 
-Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`. The experiment targets are placeholders until Phase 1.
+Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`. `uv run experiments-dev` runs E1 on the development seeds (a full run is a cloud job, see `.github/workflows/e1.yml`) and `uv run report` writes `results/e1/dev/report.md` from the result files. `experiments-test` is still a placeholder.
 
 Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
 
