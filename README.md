@@ -51,6 +51,10 @@ All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](do
 
 Scaling to thousands of agents is reported as an extrapolation from a stub calibrated on measured latency distributions. It is not a claim about real fleets.
 
+## Third-party libraries
+
+- numpy 2.5.4 (pinned): the only runtime dependency, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
+
 ## Scope and limits
 
 - Simulation only. Latencies of the fast layer are code latencies inside the simulator, not real-time guarantees on hardware.

@@ -25,7 +25,7 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 19 | P2 | Set branch protection on the repository by hand: require pull request review and code owner review, block force pushes. CODEOWNERS is a weak control until then | M | pending |
 | 20 | P2 | Open /hooks in Claude Code to review and trust the project hooks in .claude/settings.json | M | pending |
 | 21 | P1 | Superseded by row 23. Was: Phase 1 part 1 plan approval. Prompt in LASTCONTEXT.md. `docs/design-extensions` is done | A | next |
-| 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim` (Phase 1 prompt). Agent adds it with uv pin, README line and this row updated when branch 1 is built | A | approved |
+| 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim`, `waggle.control` and `waggle.validation`. Added as numpy==2.5.4 with uv and listed in the README (B3) | A | done |
 | 23 | P1 | Execute `docs/PHASE1_BRIEF.md` in branch order B0 to B8 (B1 and the contract of B3 partly exist, see its status notes). Stop points: after B0 and after B8 | A | next |
 | 24 | P1 | Review the hooks diff and approve the settings change after B0 (`chore/push-guard-hardening`). Restore `.claude/settings.json` by hand when required | M | pending |
 | 25 | P1 | Gates G1 Oct 30 night, G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night: read the progress report and decide what to cut from the contingency order in AGENTS.md section 18 | M | pending |
