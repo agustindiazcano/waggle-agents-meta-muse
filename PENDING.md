@@ -47,5 +47,5 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 41 | P3 | S03 head-on deadlock belongs to corridor locking (Phase 3, E2) | A | backlog |
 | 42 | P1 | Merge PR 35 (E1 distance and speed ratio) | M | pending |
 | 43 | P2 | S14, S15, S17, S18 stops diagnosed: robot-robot queues. S06, S11, S12 are a human stopped in the only lane (Phase 5C, E10) | A | done |
-| 44 | P2 | Phase 3 running in parallel in feat/coordination-leases (leases, fencing, corridor locking, ADR-031 or higher). Add its rows and ADR number when it reports | A | in progress |
+| 44 | P2 | Phase 3 pure lease and corridor model merged (PR 37, ADR-031), implemented not evaluated. Next: integrate with the simulator for S03, measure E2 in the cloud; the database layer and migrations need the maintainer | A | pure model done |
 | 45 | P1 | Decided A and C by the maintainer, recorded in the ADR-028 addendum: the fast layer keeps robots as static structure, the cost is reported by scenario, and traffic is solved in Phase 3. Original question: how the envelope treats other robots. Today they are static structure, so a follower waits for a full stopping gap behind a moving leader (speed ratio 0.04 in 30-robot scenes). Options were A keep it and report it, B relative velocity of robot tracks, C leave to Phase 3 | M | done |
