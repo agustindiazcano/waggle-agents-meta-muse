@@ -81,6 +81,15 @@ Exit
 - E1 run on development seeds, then held-out seeds: collisions and violations with and without the layer.
 - Zero collisions with humans in held-out seeds is a target, not a promise. Report the real number and every failing seed.
 
+Branches (one PR each, tests first)
+- `docs/phase2-design` (B11): ADR-026 to ADR-028, control layout, E1 configurations.
+- `feat/control-envelope` (B12): control types, envelope, arbiter.
+- `feat/control-tracking` (B13): perception and tracking.
+- `feat/control-occlusion` (B14): occlusion cap.
+- `feat/control-cpa` (B15): CPA predictor.
+- `feat/control-reflex` (B16): heartbeat, geofences, e-stop, telemetry threshold.
+- `feat/e1-harness` (B17): E1 harness, eight configurations on development seeds, `uv run report`. Stop and report. B18 waits for the maintainer.
+
 ## Phase 3: Leases, fencing tokens, tasks, chaos
 
 Tasks
