@@ -156,13 +156,15 @@ class CorridorAdmission:
 
 
 def build_s03_admission(
-    seed: int, *, lease_ticks: int = 4000
+    seed: int, *, lease_ticks: int = 4000, admission_enabled: bool = True
 ) -> tuple[engine.Engine, CorridorAdmission, detector.Detector]:
     """Build the S03 admission variant with exterior staging and one-shot parking routes.
 
     This is a simulator integration fixture, implemented, not evaluated by E2. The fixed
     4000-tick lease is a test assumption, not automatic renewal or a persistence guarantee.
     """
+    if type(admission_enabled) is not bool:
+        raise ValueError("admission_enabled must be a boolean")
     original = scenarios.generate("S03", seed)
     variant = replace(
         original,
@@ -194,5 +196,5 @@ def build_s03_admission(
     sim.state.arrays.update(admission.initial_arrays())
     rig = ControlRig(config, fleet, box)
     sim.systems[0] = driver.system()
-    sim.systems[1:1] = [admission.step, rig.system()]
+    sim.systems[1:1] = ([admission.step] if admission_enabled else []) + [rig.system()]
     return sim, admission, det

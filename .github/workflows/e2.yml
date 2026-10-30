@@ -1,0 +1,27 @@
+name: Waggle Hive E2 simulator admission development runs
+
+# Manual simulator component only. No database chaos, paid calls or held-out inputs.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - name: Compare paired S03 admission configurations
+        run: uv run python -m waggle.experiments.e2_simulator
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2-s03-admission-dev-${{ github.sha }}
+          path: results/e2/dev/s03_admission_*.json
+          if-no-files-found: error
