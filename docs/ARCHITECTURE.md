@@ -252,6 +252,8 @@ Fleet planner (optional): event-driven and low frequency. It proposes assignment
 
 Guard classifier: deterministic sanitizers run first (length, charset, delimiter escaping). The classifier returns a label (benign, injection or uncertain) and a reason code as strict structured output, with the input fenced as untrusted data. A parse failure, a timeout or uncertain rejects and escalates. It is the first screen, not the boundary. Identity and schemas are the boundary.
 
+`waggle.governance.classifier` implements that contract with `GuardClassifier`, `classify_input` and an offline `MockClassifier`. Output is strict JSON with exactly `label` and `reason_code`, no duplicate keys, at most 1024 characters, and a reason code matching `[a-z][a-z0-9_]{0,63}`. The caller sets a positive finite `timeout_s` (default 2 seconds). Adapters must yield to the event loop and cooperate with cancellation; production adapters belong in `waggle.llm` and also need transport timeouts. An expired deadline rejects even if the adapter catches cancellation and returns benign. Only a parsed benign label passes through the existing `screen()` policy. Rejections expose no cleaned text; error logs contain fixed codes, never input or exception text. The caller delivers the returned rejection to the operator inbox. The mock defaults to uncertain and is not a detector. Implemented, not evaluated in E3; no provider call or inbox wiring exists in this interface.
+
 Budget: a guard in `waggle.llm` checks accumulated cost plus the call estimate against the provider cap before every call, and per-task call and cost caps apply.
 ## Leases and fencing tokens
 

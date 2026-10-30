@@ -1,72 +1,28 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (night: B0 to B17, ADR-030, E1 metrics, the A+C decision and the pure Phase 3 model (ADR-031) are on main).
+Updated: 2026-10-30 (guard classifier interface, isolated worktree).
 
 ## Done last
-- `main` has B0 to B17 and PR 34 (ADR-030): a cluster whose points all lie within `map_margin` 0.25 m of a mapped segment is structure, active only when the occlusion cap is on (maintainer option C).
-- PR 35 (`exp/e1-speed-metrics`, open): E1 now also records `distance_m` and `speed_sums` per run, and the report shows "Distance vs no_control" and "Mean speed / request" next to tasks. Reason: tasks fall to 0 when a slowed robot misses its first waypoint in a short scene. No limit or stored result changed. `uv run ci` 1363 passed.
-- E1 dev run 4 (cloud run 41100237070, PR 35 branch) is in the table below. Correction of an earlier reading: the cliff explains single scenes (S01 to S08), but over all 90 runs the speed cost is real. Mean speed over request is 0.16 to 0.19 and distance over no_control is 0.18 to 0.22, in line with the task ratio. Dense scenes with many robots (S13 to S18) weigh most in these sums.
-- Phase 3 pure model (PR 37, ADR-031) is on main: leases, fencing tokens and atomic corridor admission, tests with Hypothesis, import contract for `waggle.coordination`. Implemented, not evaluated.
-
-### E1 development runs (runs with a human collision out of 90 | tasks as ratio to no_control)
-
-| Configuration | Run 1 | Run 2 (filter always on) | Run 3 (option C) |
-|---|---|---|---|
-| no_control | 62 \| 1.00 | 62 \| 1.00 | 62 \| 1.00 |
-| radial_lidar | 12 \| 0.01 | 10 \| 0.01 | 12 \| 0.01 |
-| envelope_oracle | 13 \| 0.34 | 24 \| 0.65 | 13 \| 0.34 |
-| envelope_lidar | 11 \| 0.11 | 21 \| 0.65 | 11 \| 0.11 |
-| envelope_lidar_beacons | 12 \| 0.13 | 36 \| 0.65 | 12 \| 0.13 |
-| envelope_occlusion_lidar | 12 \| 0.05 | 12 \| 0.23 | 12 \| 0.23 |
-| envelope_occlusion_cpa_lidar | 12 \| 0.05 | 12 \| 0.23 | 12 \| 0.23 |
-| envelope_occlusion_cpa_lidar_beacons | 13 \| 0.05 | 12 \| 0.22 | 12 \| 0.22 |
-
-Run 2 showed that without the occlusion cap the filter doubles human collisions, so it is only on with the cap. Run 3 confirmed: configurations without the cap return to run 1, those with it keep 12 collisions and gain throughput. Stop episodes stay near 19000 per configuration and most count as false by definition.
-
-### E1 dev run 4: cost columns (same code as run 3, new columns)
-
-| Configuration | Tasks vs no_control | Distance vs no_control | Mean speed / request |
-|---|---|---|---|
-| radial_lidar | 0.01 | 0.08 | 0.07 |
-| envelope_oracle | 0.34 | 0.19 | 0.17 |
-| envelope_lidar | 0.11 | 0.18 | 0.16 |
-| envelope_lidar_beacons | 0.13 | 0.18 | 0.17 |
-| envelope_occlusion_lidar | 0.23 | 0.22 | 0.19 |
-| envelope_occlusion_cpa_lidar | 0.23 | 0.22 | 0.19 |
-| envelope_occlusion_cpa_lidar_beacons | 0.22 | 0.22 | 0.19 |
-
-Reading: the controlled fleet moves at about a fifth of the requested speed in aggregate. The next step is to split these sums by scenario to see which scenes (the dense ones) hold the cost.
-
-### Why the controlled runs complete few tasks (diagnosed with traces)
-
-| Scenes | Cause | Where it is handled |
-|---|---|---|
-| S01, S05, S07, S08 with the occlusion cap | The cap slows to about 1 m/s with no stops (S01 seed 160488194: mean speed 0.66 of request, same as the envelope alone, 0.63). A slowed robot misses the first waypoint of a long route in a short scene: a cliff in the task metric. | PR 35 metrics |
-| S08 early stalls | Wall faces read as humans | ADR-030 |
-| S06, S11, S12, S08 tail | A human stops in the only lane, the robot holds at 1.7 to 1.9 m. Correct behavior without replanning. | Phase 5C, E10 |
-| S03 | Two robots head on in a one-lane corridor, both stop forever | Phase 3 corridor locking, E2 |
-| S14, S15, S17, S18 (10 and 30 robots) | Robot-robot queues: in 77 to 95 percent of robot-ticks the robot is under 25 percent of its request, and the nearest other robot is 2.0 to 2.5 m away (centre to centre, about nose to tail). Other robots are structure points to the envelope, so a follower treats a moving leader as a wall and waits for a full stopping gap. Speed ratio of these scenes is 0.04 to 0.3 and they hold most of the distance, so they set the aggregate 0.19. | Decided A and C (PENDING 45, ADR-028 addendum): the fast layer is not changed, the cost is reported by scenario, Phase 3 traffic control addresses it |
+- Branch `feat/guard-classifier-interface`, based on `origin/main` at `9a3e00f`, in `C:/Users/agusd/.codex/visualizations/2026/10/30/01a18ea4-b4aa-7941-ae69-1931e66bf8e0/waggle-guard`. Other agents use their own worktrees; do not switch their branches.
+- Added an async guard classifier protocol, bounded strict JSON parsing, sanitization and fencing before classification, and the existing `screen()` label policy. Failures, uncertain and injection reject; only benign exposes cleaned text. The offline mock defaults to uncertain. No network, paid call, new dependency, MCP, audit, migration, fencing or `.env` change.
+- Tests first: collection failed because the classifier module did not exist. A second regression failed because a classifier swallowed deadline cancellation and returned benign; the explicit expiry check fixes it. `uv run pytest tests/unit/governance -q`: 79 passed, including 38 new classifier cases. Changed-file ruff, format and mypy passed.
+- Updated README, architecture, ADR-032 addendum and GOTCHAS. Implemented, not evaluated in E3. The caller still needs to deliver escalations; no production detector is supplied by the mock.
 
 ## Current state
-- ADR-032 (MCP boundary and guard design) is on main (PR 40), with the deterministic sanitizers (PR 42) and E1 dev results (PR 39). The pure allowlist, bounds and schemas (branch a) are in PR 43. Implemented, not evaluated. No database, audit or `.env` change.
-- Pending maintainer: merge PR 35, PENDING 25 (gates), 34, 40 (task metric: approved, done by PR 35).
-- Not done: S14, S15, S18 diagnosis; Phase 3 beyond the first branch; MCP, guard, court, advisors, crisis loop, viewer.
-- Traps: the Bash heredoc breaks on triple quotes, write scripts to the scratchpad; `step.py` imports `limit_command` by name, patch `waggle.control.step.limit_command`; `uv run ci` takes 3 to 6 minutes; a watch on a cloud run can return before the jobs finish, check the status.
+- Main includes B0 to B17, E1 development results (commit `94bacc4`), the pure coordination model, the S03 admission adapter and ADR-032 schemas, identity and sanitizers. Verified ancestor checks for the schema, identity, sanitizer, scope and S03 branches against `origin/main`. PR 48 was open when checked; do not merge it as an agent. Reconcile its context update when merging this task.
+- E1 dev still has human-collision runs and a measured throughput cost. Read `results/e1/dev/report.md` for the figures. Held-out seeds were not run. E2 and E3 were not run.
+- Next work: E3 corpus for T1 to T6, T11 and T18, target layers declared first, labels pending maintainer review; E2 development workflow and cloud evaluation of S03 admission. No scope is cut.
+- PENDING 47 remains maintainer-owned: audit/rate-limit repository, migration and MCP server wiring need approval. PENDING 4, 5, 9 and 12 block paid calls. E2 has no database dependency.
+- Gate dates follow AGENTS.md: G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night. Keep the pre-push CI stamp requirement until the maintainer changes it.
+- Traps: verify the current branch before every commit; do not commit `index (1).html`; use an isolated worktree; use the S03 admission variant for E2 and preserve original S03 for E1. Async classifier adapters must cooperate with cancellation and use transport timeouts. C: filled during setup, then the maintainer freed space. Sandbox access to uv cache and Git metadata required elevated tool execution.
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS.md (ADR-024, ADR-026, ADR-028 with its addendum, ADR-030), docs/EXPERIMENTS.md (E1), docs/GOTCHAS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS.md (ADR-028 addendum, ADR-030, ADR-031 and ADR-032 with their addenda), docs/EXPERIMENTS.md (E1, E2, E3) and docs/GOTCHAS.md. Fetch and inspect status, branches, worktrees and recent PRs. Check merged work reached main with git merge-base --is-ancestor.
 
-State: main has B0 to B17, the map filter (ADR-030, active only with the occlusion cap), the E1 distance and speed columns, and the A+C decision (ADR-028 addendum): the fast layer keeps other robots as static structure, the dense scene cost is reported by scenario, traffic is for Phase 3. E1 dev runs exist only as cloud artifacts (run 41100237070 has the latest files), not in results/e1/dev/. Held-out seeds were not run.
-The Phase 3 pure model is on main (PR 37, ADR-031): waggle.coordination.leases and corridors, deterministic, no clock, no database. It is implemented, not evaluated: no persistence, no integration with the simulator, no E2. The worktree ../waggle-feat-leases may be removed after the merge (git worktree remove, the maintainer decides).
+Use your own worktree and a new type/short-description branch. Never commit or push to main, merge PRs, force push or commit index (1).html. Check git branch --show-current before every commit. Tests first, show the failing run, Conventional Commits with a Co-Authored-By trailer. Keep uv run ci green on HEAD and inspect the diff before each push. Never change hooks to bypass the gate.
 
-Never merge, never push to main, no force push. Do not commit `index (1).html`. Tests first with the failing run shown, Conventional Commits, uv run ci green before each push (3 to 6 minutes, or push and let the CI run decide).
+The guard classifier interface has an offline mock, strict label/reason_code JSON, sanitizer/fence ordering and fail-closed timeout/error handling. It is implemented, not evaluated. Review the task branch/PR status before repeating that work. PR 48 contains a separate handoff; reconcile both context updates. Production detection, E3 and inbox delivery still need implementation.
 
-Tasks, ask the maintainer which first if unsure:
-1. Phase 3 next step: integrate the pure corridor model with the simulator so that S03 is resolved by admission before entry, then measure E2 on development seeds in the cloud. The database layer and any migration need the maintainer first (AGENTS section 15).
-2. Commit the E1 development results from the cloud artifacts into results/e1/dev/ (gh run download 41100237070), in a branch docs/e1-dev-results. Check there is no secret or large file. Held-out files are never committed by an agent.
-3. MCP boundary and guard: the design is ADR-032. Next is branch (b), identity (token hash, constant-time compare, interface only), then the classifier interface. Branch (d) needs a migration approval. Do not write the database layer or a migration, and ask before touching the fencing check, the audit logic or .env.
-4. The LLM smoke test branch needs PENDING 4, 5, 9 and 12 first (balances, caps, HTTP client, Meta credits by Nov 4 9 PM ET). Do not start it until the maintainer confirms them. No paid API call before that.
-Gates: G2 is tonight (fast layer and E1 on development seeds), G3 Nov 1 night (leases, MCP, E2, E3). Report progress against the build order in AGENTS section 18 in a table when asked. Nothing is cut (maintainer decision, 2026-10-30).
-Constraints: numpy and the standard library only, waggle.control reads only waggle.sim.observations and waggle.sim.params, fail closed, held-out seeds not run, ask before touching the fencing check, the MCP boundary, the audit logic or .env.
+Next: E3 corpus for T1 to T6, T11 and T18, with target layers declared before runs and labels pending maintainer review; or E2 development workflow using the S03 admission adapter on/off with matched development seeds, raw counts, Wilson intervals and result metadata. Run experiments in the cloud. No paid call or held-out run. Audit logic, migrations, fencing and MCP boundary changes require maintainer approval. PENDING 4, 5, 9 and 12 still block paid calls. Nothing is cut; report gaps against AGENTS section 18 and the work that closes them.
 ```
