@@ -126,6 +126,14 @@ def lidar_scan(
     ``static`` is (S, 4) segments, ``discs`` is (M, 3) with x, y, radius, and ``boxes`` is
     (K, 4, 2) rectangle corners of the other robots. The robot's own footprint is not passed.
     """
+    solid, human = _first_hits(static, discs, boxes, pose, config)
+    return finish_scan(np.minimum(solid, human), config, rng, tick, robot_index)
+
+
+def _first_hits(
+    static: Floats, discs: Floats, boxes: Floats, pose: Floats, config: LidarConfig
+) -> tuple[Floats, Floats]:
+    """Distance along each ray to the nearest wall, rack or robot, and to the nearest disc."""
     angle_increment = 2 * math.pi / config.n_rays
     local = -math.pi + angle_increment * np.arange(config.n_rays)
     angles = local + pose[2]
@@ -136,11 +144,38 @@ def lidar_scan(
         if len(boxes)
         else np.zeros((0, 4))
     )
-    nearest = np.minimum(
+    return (
         segment_hits(origin, dirs, np.vstack([static, box_segments])),
         _disc_hits(origin, dirs, discs),
     )
-    return finish_scan(nearest, config, rng, tick, robot_index)
+
+
+def oracle_scan(
+    static: Floats,
+    discs: Floats,
+    boxes: Floats,
+    pose: Floats,
+    config: LidarConfig,
+    tick: int = 0,
+    robot_index: int = 0,
+) -> LidarScan:
+    """The scan of the E1 oracle configuration: no noise, no dropout and no occlusion shadow.
+
+    A disc (a human) is returned even when a wall, a rack or a robot is in front of it, so the
+    control code sees every person. It is the same ``LidarScan`` type as ``lidar_scan``, and the
+    arguments are the same, so control code does not change between the two sensing configurations.
+    """
+    solid, human = _first_hits(static, discs, boxes, pose, config)
+    nearest = np.where(np.isfinite(human), human, solid)
+    ranges = np.where(nearest < config.max_range, nearest, config.max_range)
+    return LidarScan(
+        tick=tick,
+        robot_index=robot_index,
+        angle_min=-math.pi,
+        angle_increment=2 * math.pi / config.n_rays,
+        max_range=config.max_range,
+        ranges=np.asarray(ranges, dtype=np.float64),
+    )
 
 
 def finish_scan(
