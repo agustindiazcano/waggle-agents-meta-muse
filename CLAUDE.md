@@ -13,8 +13,9 @@ Waggle Hive is a safety and reliability control plane for LLM-directed warehouse
 5. `docs/THREAT_MODEL.md`
 6. `docs/EXPERIMENTS.md`
 7. [`docs/GOTCHAS.md`](docs/GOTCHAS.md)
-8. `LASTCONTEXT.md`
-9. `PENDING.md`
+8. [`docs/PHASE1_BRIEF.md`](docs/PHASE1_BRIEF.md) (maintainer brief for Phase 1: branch order B0 to B8, specs, gates)
+9. `LASTCONTEXT.md`
+10. `PENDING.md`
 
 If two documents conflict, stop and ask. `LASTCONTEXT.md` and `PENDING.md` are updated when a task ends. Whatever the order above, always read those two before starting any task (AGENTS.md section 1).
 
