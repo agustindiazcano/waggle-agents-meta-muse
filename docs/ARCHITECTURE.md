@@ -132,6 +132,22 @@ Control path (fast, every tick): every motion command, from any source, passes t
 | `scenarios` | Scenario format, generators S01 to S18, seeds, replay |
 | `scripted` | Waypoint-following driver for the no-control baseline and scripted entities, no safety logic |
 
+## Control module layout
+
+Designed, not implemented (ADR-026 to ADR-028). `waggle.control` imports only `waggle.sim.params` and `waggle.sim.observations`. Every function is pure with explicit state.
+
+| Module | Role | Branch |
+|---|---|---|
+| `types` | `ControlInputs`, `ControlOutput`, `ControlState`, reason enum | B12 |
+| `params` | Control assumptions (gaps, gates, margins, `k`), frozen dataclasses | B12 |
+| `envelope` | `S_stop`, `S_sep`, swept path distance, speed cap, reflex stop | B12 |
+| `arbiter` | Minimum over all limits, curvature preserving scaling, reasons | B12 |
+| `perception` | Scan validation, NaN handling, clusters, size class | B13 |
+| `tracking` | Association, velocity estimate, coasting | B13 |
+| `occlusion` | Phantom human cap from occlusion boundaries (ADR-024) | B14 |
+| `cpa` | Constant velocity closest point of approach, can only restrict | B15 |
+| `reflex` | Heartbeat, geofences, e-stop, telemetry threshold | B16 |
+
 ## Fast layer
 
 Parameters per robot class (simulator assumptions, to be calibrated and documented):

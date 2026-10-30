@@ -270,6 +270,75 @@ Not done: kinematics were already vectorized across robots; the human walkers an
 Outcome: 3.1x measured against a 5x minimum and 2.0 s per rollout target. Stopped for the maintainer. Options: accept 5.7 s per rollout, lower K, H or the lidar rate for the live demo only, vectorize the human walkers and driver (about 10 percent more), or run variants in the cloud on more cores.
 
 
+## ADR-026: Perception and tracking
+
+Status: proposed. Designed, not implemented.
+
+Context: `waggle.control` reads only `waggle.sim.observations` and `waggle.sim.params` (ADR-021). It has no map. Everything it knows about humans comes from a `LidarScan`, a `RobotOdometry`, and optionally `BeaconReport` items.
+
+Decision:
+- Input per robot and tick: the latest `LidarScan`, the `RobotOdometry`, the beacon reports, and the class parameters. Output: a list of tracks in the world frame, each with id, position, velocity estimate, an uncertainty radius, a size class and an age.
+- Stale or missing scan: a scan is stale when `tick - scan.tick` exceeds `max_scan_age_ticks` (8 ticks, two lidar periods, assumption). A missing or stale scan, or a scan with more than 20 percent NaN rays, makes the perception result `INVALID`. The layer fails closed: the speed limit is zero and the reason is `SCAN_INVALID`.
+- Dropped rays: a NaN ray takes the smaller of its two nearest valid neighbours within 2 rays. With a valid neighbour on one side only it takes that one. With none it takes range zero. This can only make an obstacle look closer.
+- Points and clusters: each valid ray with a return below `max_range` becomes a world-frame point using the odometry pose. Consecutive points form a cluster while the gap is below `gap_base + gap_per_meter * range` (assumptions, declared in `waggle.control.params`). Rays with no return are not points, and their boundaries are the occlusion boundaries of ADR-024.
+- Size class: a cluster whose extent is at most `human_max_extent` (1.0 m, assumption) is a human candidate. A larger cluster is a structure. The layer has no map, so a robot or a rack end can look like a human candidate. That costs throughput, never safety, and E1 reports it as false stops. A beacon report inside the gate of a cluster marks the cluster as a human.
+- Tracking: nearest neighbour association with a gate of `v_h_max * dt_scan` plus the uncertainty radius (assumption), a constant velocity estimate from the last two associations with exponential smoothing, own motion removed with the odometry. A track that is not seen keeps coasting for `max_coast_scans` and its uncertainty radius grows by `v_h_max` times the time since seen. After that it is dropped and the area is covered by the occlusion cap, not by the track.
+- `v_h_max` is the human speed bound used by the separation formula (1.6 m/s, assumption, to calibrate).
+- Pure function with explicit state: `perceive(state, inputs) -> (state, tracks)`. No wall clock, no global random, deterministic.
+- Static structures are never classified as safe: they stay in the point set and the swept footprint check stops the robot before contact (ADR-027).
+
+Consequences: B13 (`feat/control-tracking`) implements this with tests for stale scans, NaN rays, merge and split of clusters, coasting and gating. The tests use `LidarScan` values built by hand, never the simulator internals.
+
+## ADR-027: Control interface and limit arbitration
+
+Status: proposed. Designed, not implemented.
+
+Context: every motion command passes through the fast layer and can only be reduced. Several limits act at once (envelope, occlusion cap, CPA, geofence, watchdog, advisors later). Their interaction must be order independent and testable.
+
+Decision:
+- Interface: `control_step(state, inputs) -> (state, output)`. `ControlInputs` per robot: the requested command (speed, and steering angle for the forklift or angular speed for the other classes), odometry, scan, beacons, heartbeat tick, active geofences, telemetry flags, the class parameters and the tick. `ControlOutput`: the limited command, the limit that bound, and a `reason` code for every limit that was below the request.
+- Arbitration: the output speed is the minimum over the requested speed, the class maximum, the envelope cap, the occlusion cap, the CPA cap, the geofence cap, the watchdog cap and any advisor cap. A minimum is order independent, and a new limit never raises the result. The layer never raises a limit or the speed above the request. Zero wins over any other value.
+- Direction: a reverse request is limited in magnitude with the same rules. The sign is never changed.
+- Curvature: for the forklift (bicycle model) the curvature depends on the steering angle only, so the speed is reduced and the steering is left alone. For differential drive the curvature is `omega / v`, so the angular speed is scaled by the same factor as the speed, and the path stays the same. A stop keeps the steering and sets the speed to zero.
+- Reflex: when the gap to a human candidate or a structure along the swept path is at most `S_stop`, the output is a stop. The simulator applies the class deceleration limit, so the layer never commands a deceleration the robot cannot do.
+- The layer must fail closed: a missing field, an invalid scan, a stale heartbeat or an exception in a limit function gives a limit of zero with its reason. The exception is logged and not swallowed, and the step still returns an output.
+- Reasons are a closed enum (`REQUEST`, `CLASS_MAX`, `ENVELOPE`, `OCCLUSION`, `CPA`, `GEOFENCE`, `WATCHDOG`, `SCAN_INVALID`, `INPUT_MISSING`, `ESTOP`), recorded per tick in the run log so E1 can attribute each stop.
+- Purity and latency: `control_step` reads no clock. The harness measures its code latency around the call with a monotonic timer and reports it as code latency (ADR-028).
+- Separation formula, per class and human candidate at distance `d` along the swept path: `S_stop = v*t_r + v^2/(2a)` and `S_sep = v_h*(t_r + v/a) + S_stop + C`, with `C` a margin per class (assumption, to calibrate). The cap is full speed at `d >= k*S_sep` (k = 1.5, assumption), linear to zero at `d <= S_sep`, and a stop below `S_stop`.
+
+Consequences: B12 (`feat/control-envelope`) implements types, the envelope and the arbiter with property tests: result at most each limit, invariant to the order of the limits, never above the request, zero wins, same factor on speed and angular speed. The failing run is shown first. B16 adds the reflex items (heartbeat, geofence, e-stop, telemetry threshold) as further limits in the same arbiter.
+
+## ADR-028: E1 metrics and the eight configurations
+
+Status: proposed. Designed, not implemented.
+
+Context: E1 must show what each block contributes by ablation, not by summing blocks (AGENTS.md section 9). The Phase 1 baseline is the first configuration.
+
+Decision:
+- Eight configurations, same seeds, same scenarios S01 to S18:
+
+| # | Name | Control | Sensing |
+|---|---|---|---|
+| 0 | `no_control` | none (scripted driver only) | none |
+| 1 | `radial_lidar` | radial 1D distance to the nearest point | lidar |
+| 2 | `envelope_oracle` | swept footprint envelope | oracle scan |
+| 3 | `envelope_lidar` | swept footprint envelope | lidar |
+| 4 | `envelope_lidar_beacons` | swept footprint envelope | lidar plus beacons |
+| 5 | `envelope_occlusion_lidar` | envelope plus occlusion cap | lidar |
+| 6 | `envelope_occlusion_cpa_lidar` | envelope plus occlusion cap plus CPA | lidar |
+| 7 | `envelope_occlusion_cpa_lidar_beacons` | envelope plus occlusion cap plus CPA | lidar plus beacons |
+
+- The oracle scan is the same `LidarScan` type with zero noise, zero dropout and no occlusion shadow, produced by `waggle.sim.sensors`. The control code does not change between sensing configurations and never reads ground truth.
+- Ablation pairs: 0 against 1 is any control; 1 against 3 is the swept footprint; 2 against 3 is the cost of real sensing; 3 against 4 is beacons; 3 against 5 is the occlusion cap; 5 against 6 is CPA. Envelope with CPA but without the occlusion cap is not run, and the report says so.
+- Metrics: collisions with humans, collisions between robots, near misses, separation violations (episodes, definitions of ADR-021), unavoidable cases listed separately, false stops, throughput, code latency.
+- A false stop is a stop episode (speed limit of zero while the request was above zero, from the reason log) that starts while the true gap to every human is above `false_stop_gap_m` (3.0 m, assumption). The raw count of stop episodes by reason is reported next to it.
+- Throughput is waypoints reached per simulated hour, the proxy for tasks until Phase 3 has tasks. It is reported as a ratio to `no_control` on the same seeds.
+- Latency is code latency of `control_step` per robot tick (median, p99, maximum), measured on this machine or in the cloud runner and labeled so. It is not a real-time guarantee.
+- Proportions with Wilson 95% intervals and raw counts. Every failing seed is listed. Small samples are called small: 90 development runs per configuration, 720 in all.
+- Scope of B17: development seeds only, one run per configuration and seed, results in `results/e1/dev/`. Held-out seeds run once per configuration after the maintainer approves, in the cloud. The full 720 runs are a cloud job (AGENTS.md section 3, rule 8).
+
+Consequences: B17 (`feat/e1-harness`) adds the harness and `uv run report`. Each result file records commit, seed set, numpy version, platform and date.
+
 ## ADR-029: Test tiers, rollout optimization approval and approved dependencies
 
 Context: the maintainer answered PENDING 26, 29, 30 and 31 at the start of Phase 2.
