@@ -373,6 +373,8 @@ Decision:
 
 Consequences: B17 (`feat/e1-harness`) adds the harness and `uv run report`. Each result file records commit, seed set, numpy version, platform and date.
 
+ADR-028 addendum, maintainer decision on PENDING 45 (2026-10-30, options A and C): the fast layer keeps treating other robots as static structure. No relative velocity model for robots is added to `waggle.control`. E1 dev run 4 (cloud run 41100237070) measured the cost: in the 10 and 30 robot scenes (S14, S15, S17, S18) the speed over request is 0.04 to 0.26, because a follower waits for a full stopping gap behind a moving leader, and these scenes carry about 80 percent of the distance of `no_control` (16207 of 19893 m). The README and any E1 table report that number with this cause and do not hide it behind the aggregate. Robot to robot traffic is handled in Phase 3 (leases, zone and corridor locking, E2), not in the fast layer. Revisit only if E2 shows that traffic control does not remove the queues.
+
 ## ADR-029: Test tiers, rollout optimization approval and approved dependencies
 
 Context: the maintainer answered PENDING 26, 29, 30 and 31 at the start of Phase 2.
