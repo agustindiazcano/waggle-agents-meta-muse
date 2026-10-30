@@ -1,6 +1,6 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (B0 to B17 and the map filter on main, E1 dev run 3 done, PR 35 open with the speed metrics, Phase 3 started in parallel by another agent).
+Updated: 2026-10-30 (night: B0 to B17, ADR-030, E1 metrics and the A+C decision are on main; Phase 3 pure logic is on a local branch).
 
 ## Done last
 - `main` has B0 to B17 and PR 34 (ADR-030): a cluster whose points all lie within `map_margin` 0.25 m of a mapped segment is structure, active only when the occlusion cap is on (maintainer option C).
@@ -54,14 +54,18 @@ Reading: the controlled fleet moves at about a fifth of the requested speed in a
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS.md (ADR-024, ADR-026, ADR-030), docs/GOTCHAS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS.md (ADR-024, ADR-026, ADR-028 with its addendum, ADR-030), docs/EXPERIMENTS.md (E1), docs/GOTCHAS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
 
-State: B0 to B17 and ADR-030 are on main. PR 35 (exp/e1-speed-metrics) adds distance and speed ratio to the E1 report; if it is not merged, branch from it. A parallel agent builds Phase 3 in feat/coordination-leases; do not touch src/waggle/coordination/. Never merge, never push to main, no force push. Do not commit `index (1).html`.
+State: main has B0 to B17, the map filter (ADR-030, active only with the occlusion cap), the E1 distance and speed columns, and the A+C decision (ADR-028 addendum): the fast layer keeps other robots as static structure, the dense scene cost is reported by scenario, traffic is for Phase 3. E1 dev runs exist only as cloud artifacts (run 41100237070 has the latest files), not in results/e1/dev/. Held-out seeds were not run.
+A parallel agent built the Phase 3 pure logic in the worktree ../waggle-feat-leases, branch feat/coordination-leases (leases, fencing tokens, corridor locks, 2 commits, not pushed when this was written). Check if it was pushed and if a PR exists. Do not edit that worktree from another session unless the maintainer says so.
 
-Task, tests first with the failing run shown, uv run ci green before each push:
-1. Split speed ratio and distance by scenario from the run 4 result files (gh run download 41100237070) to see which scenes hold the cost.
-2. S14, S15, S17, S18 are robot-robot queues and the maintainer decided to leave the fast layer as it is (ADR-028 addendum). Do not change how the envelope treats other robots. Add a per-scenario cost table to the README only from result files.
-3. If a control change is made, rerun E1 in the cloud (gh workflow run e1.yml --ref <branch>) and report the table versus run 3.
-Then stop and report. Phase 3 integration, MCP, guard and court only when the maintainer says so.
-Constraints: numpy and the standard library only, waggle.control reads only waggle.sim.observations and waggle.sim.params, fail closed, no paid API call, held-out seeds not run, ask before touching the fencing check, the MCP boundary, the audit logic or .env.
+Never merge, never push to main, no force push. Do not commit `index (1).html`. Tests first with the failing run shown, Conventional Commits, uv run ci green before each push (3 to 6 minutes, or push and let the CI run decide).
+
+Tasks, ask the maintainer which first if unsure:
+1. Review the Phase 3 branch if a PR exists: pure functions only, no clock, no database, a failure-path test per function, ADR number not clashing with ADR-030. Add its PENDING rows to PENDING.md.
+2. Commit the E1 development results from the cloud artifacts into results/e1/dev/ (gh run download 41100237070), in a branch docs/e1-dev-results. Check there is no secret or large file. Held-out files are never committed by an agent.
+3. Next block of the contingency order (AGENTS section 18, item 3): the MCP boundary and the guard. Design first, as an ADR: per-chassis token, SHA-256 hash with constant time compare, allowlist per tool, strict schemas with physical bounds, audit intent row before forwarding. Do not write the database layer or a migration, and ask before touching the fencing check, the MCP boundary code beyond the design, the audit logic or .env.
+4. The LLM smoke test branch needs PENDING 4, 5, 9 and 12 first (balances, caps, HTTP client, Meta credits by Nov 4 9 PM ET). Do not start it until the maintainer confirms them. No paid API call before that.
+Gates: G2 is tonight (fast layer and E1 on development seeds), G3 Nov 1 night (leases, MCP, E2, E3). Report progress against AGENTS section 18 in a table when asked.
+Constraints: numpy and the standard library only, waggle.control reads only waggle.sim.observations and waggle.sim.params, fail closed, held-out seeds not run, ask before touching the fencing check, the MCP boundary, the audit logic or .env.
 ```
