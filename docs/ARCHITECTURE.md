@@ -94,6 +94,7 @@ flowchart TB
 Designed, not implemented (ADR-018).
 
 - The simulator owns ground truth. Robots perceive through a simulated 2D lidar: rays against walls, racks and moving entities, with range, angular resolution, noise, dropout and occlusion, all seeded. Optional human beacons are visible around corners.
+- Lidar defaults (assumptions to calibrate, `waggle.sim.sensors.LidarConfig`): 10 Hz (every 4 ticks), 360 rays, 12 m maximum range, range noise sigma 0.02 m, dropout probability 0.01. A ray with no return gives the maximum range, a dropped ray gives NaN. The scan is a pure function over geometry arrays, with one noise draw and one dropout draw per ray whatever the geometry. Odometry adds seeded noise to the pose and speeds. The human beacon variant (off by default) reports positions with noise and a delay, without occlusion.
 - The fast layer reads detections only. The exact detector in the simulator keeps using ground truth for scoring.
 - Predictor: constant velocity extrapolation of each detected object and the closest point of approach (time and distance), compared with the robot's stopping distance. A predicted conflict lowers the speed cap earlier. It never raises it. The worst-case separation envelope is the floor.
 - Failure mode: a missing or stale scan assumes the worst case and the watchdog stops the robot. No learned model. Camera and vision are not in the control loop.
