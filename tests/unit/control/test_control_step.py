@@ -174,3 +174,45 @@ def test_an_exception_in_perception_is_logged_and_stops_the_robot(
     assert (out.speed, out.reason) == (0.0, Reason.INPUT_MISSING)
     assert state == ControlState()
     assert "boom" in caplog.text
+
+
+SIDE_WALL = [(-5.0, 1.2, 4.0, 3.5)]
+HIDDEN_HUMAN = [(4.5, 2.2, 0.3)]
+
+
+def _occluded_inputs(use_occlusion: bool) -> ControlInputs:
+    scan = make_scan(boxes=SIDE_WALL, discs=HIDDEN_HUMAN)
+    base = _inputs(scan=scan)
+    return ControlInputs(
+        request=base.request,
+        params=base.params,
+        tick=base.tick,
+        odometry=base.odometry,
+        scan=base.scan,
+        use_occlusion=use_occlusion,
+    )
+
+
+def test_without_the_occlusion_cap_a_hidden_human_is_not_seen() -> None:
+    _, out = _run(ControlState(), _occluded_inputs(False))
+    assert (out.speed, out.reason) == (2.0, Reason.REQUEST)
+
+
+def test_the_occlusion_cap_slows_the_robot_for_a_human_behind_a_wall_corner() -> None:
+    _, out = _run(ControlState(), _occluded_inputs(True))
+    assert 0.0 < out.speed < 2.0
+    assert out.reason is Reason.OCCLUSION
+    assert Reason.OCCLUSION in out.limits_hit
+
+
+def test_the_occlusion_cap_is_inactive_on_an_open_floor() -> None:
+    inputs = ControlInputs(
+        request=ControlRequest(2.0, 0.0),
+        params=CARRIER,
+        tick=0,
+        odometry=make_odometry(),
+        scan=make_scan(),
+        use_occlusion=True,
+    )
+    _, out = _run(ControlState(), inputs)
+    assert (out.speed, out.reason) == (2.0, Reason.REQUEST)

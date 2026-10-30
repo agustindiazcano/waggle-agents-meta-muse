@@ -128,6 +128,14 @@ def _runs(linked: NDArray[np.bool_], returns: NDArray[np.bool_], wraps: bool) ->
     return groups
 
 
+def scan_wraps(scan: LidarScan) -> bool:
+    """True when the last ray is the neighbour of the first, a scan over the full circle."""
+    n = len(scan.ranges)
+    return abs(scan.angle_increment * n - 2.0 * math.pi) < (
+        _FULL_CIRCLE_TOLERANCE + scan.angle_increment * 0.5
+    )
+
+
 def clusters_from_scan(scan: LidarScan, pp: PerceptionParams) -> list[Cluster]:
     """Group the returns of a valid scan into clusters in the robot frame."""
     ranges = fill_dropped(np.asarray(scan.ranges, dtype=np.float64), pp.nan_window)
@@ -139,11 +147,7 @@ def clusters_from_scan(scan: LidarScan, pp: PerceptionParams) -> list[Cluster]:
     dist = np.hypot(*(points[nxt] - points).T)
     near = np.minimum(ranges, ranges[nxt])
     linked = returns & returns[nxt] & (dist <= pp.gap_base + pp.gap_per_meter * near)
-    wraps = (
-        abs(scan.angle_increment * n - 2.0 * math.pi)
-        < _FULL_CIRCLE_TOLERANCE + scan.angle_increment * 0.5
-    )
-    groups = _runs(linked, returns, wraps)
+    groups = _runs(linked, returns, scan_wraps(scan))
     return [Cluster(points[g], _extent(points[g])) for g in groups]
 
 
