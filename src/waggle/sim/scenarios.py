@@ -6,6 +6,7 @@ a pure function of the scenario id and the seed. The ``compound`` field is a res
 for the compound crisis templates of E10 and is always None in S01 to S18.
 """
 
+import dataclasses
 import json
 import math
 from collections.abc import Mapping, Sequence
@@ -281,6 +282,12 @@ def _adversarial(
     sid: str, seed: int, kind: RobotKind, how: str, family: str, raised: bool = False
 ) -> Scenario:
     p = params.ROBOT_PARAMS[kind]
+    if raised:  # time the human against the speed and stopping distance the robot really has
+        p = dataclasses.replace(
+            p,
+            max_speed=p.max_speed * params.LOAD_RAISED_SPEED_FACTOR,
+            decel=p.decel * params.LOAD_RAISED_DECEL_FACTOR,
+        )
     fraction = humans.draw_fraction(_rng(seed))
     step_out = how == "step_out"
     crossing = (36.0 if step_out else 26.0, CORRIDOR_Y)
@@ -294,7 +301,7 @@ def _adversarial(
         p, fraction=fraction, crossing=crossing, robot_start=(2.0, CORRIDOR_Y),
         human_start=start, human_speed=HUMAN_WALK_SPEED,
     )  # fmt: skip
-    top = p.max_speed * (0.6 if raised else 1.0)
+    top = p.max_speed
     robot = RobotSpec(kind, (2.0, CORRIDOR_Y, 0.0), ((38.0, CORRIDOR_Y),), top, raised)
     ticks = round((crossing[0] / top + 8.0) / DT)
     event = (plan.start_tick, f"human enters at fraction {fraction:.3f} of the stopping distance")
