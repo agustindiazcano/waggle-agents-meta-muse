@@ -5,13 +5,12 @@ with a reason, and the state is left as it was.
 """
 
 import logging
-import math
 from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
 
-from waggle.control import cpa, occlusion, perception, tracking
+from waggle.control import cpa, frames, occlusion, perception, reflex, tracking
 from waggle.control.arbiter import arbitrate
 from waggle.control.limiter import EnvelopeMode, limit_command
 from waggle.control.params import (
@@ -19,11 +18,14 @@ from waggle.control.params import (
     DEFAULT_CPA_PARAMS,
     DEFAULT_OCCLUSION_PARAMS,
     DEFAULT_PERCEPTION_PARAMS,
+    DEFAULT_REFLEX_PARAMS,
     ControlParams,
     CpaParams,
     OcclusionParams,
     PerceptionParams,
+    ReflexParams,
 )
+from waggle.control.reflex import Geofence, TelemetryReading
 from waggle.control.tracking import Detection, TrackState
 from waggle.control.types import ControlOutput, ControlRequest, Limit, Reason
 from waggle.sim.observations import BeaconReport, LidarScan, RobotOdometry
@@ -51,6 +53,11 @@ class ControlInputs:
     mode: EnvelopeMode = EnvelopeMode.SWEPT
     use_occlusion: bool = False
     use_cpa: bool = False
+    use_reflex: bool = False
+    heartbeat_tick: int | None = None
+    estop: bool = False
+    geofences: tuple[Geofence, ...] = ()
+    telemetry: tuple[TelemetryReading, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,19 +67,6 @@ class ControlState:
     tracks: TrackState = field(default_factory=TrackState)
     structure_world: Points = field(default_factory=_no_points, compare=False)
     scan_tick: int | None = None
-
-
-def _to_world(points: Points, odom: RobotOdometry) -> Points:
-    c, s = math.cos(odom.theta), math.sin(odom.theta)
-    return np.column_stack(
-        [odom.x + c * points[:, 0] - s * points[:, 1], odom.y + s * points[:, 0] + c * points[:, 1]]
-    )
-
-
-def _to_robot(points: Points, odom: RobotOdometry) -> Points:
-    c, s = math.cos(odom.theta), math.sin(odom.theta)
-    dx, dy = points[:, 0] - odom.x, points[:, 1] - odom.y
-    return np.column_stack([c * dx + s * dy, -s * dx + c * dy])
 
 
 def _cluster_detection(world: Points, tick: int) -> Detection:
@@ -107,7 +101,7 @@ def _perceive(state: ControlState, inputs: ControlInputs, pp: PerceptionParams) 
     if new_scan:
         others: list[Points] = []
         for cluster in perception.clusters_from_scan(scan, pp):
-            world = _to_world(cluster.points, odom)
+            world = frames.to_world(cluster.points, odom)
             if perception.is_human_candidate(cluster, pp):
                 human_clusters.append(world)
                 detections.append(_cluster_detection(world, scan.tick))
@@ -122,8 +116,21 @@ def _perceive(state: ControlState, inputs: ControlInputs, pp: PerceptionParams) 
     return ControlState(tracks, structure, scan.tick if new_scan else state.scan_tick)
 
 
-def _stop(inputs: ControlInputs, reason: Reason) -> ControlOutput:
-    return arbitrate(inputs.request, inputs.params, [Limit(0.0, reason)])
+def _basic_reflex(inputs: ControlInputs, rp: ReflexParams) -> list[Limit]:
+    """Watchdog and e-stop: they need no scan and no pose, so they hold when the inputs are bad."""
+    if not inputs.use_reflex:
+        return []
+    found = (
+        reflex.watchdog_limit(inputs.heartbeat_tick, inputs.tick, rp),
+        reflex.estop_limit(inputs.estop),
+    )
+    return [limit for limit in found if limit is not None]
+
+
+def _stop(inputs: ControlInputs, reason: Reason, rp: ReflexParams) -> ControlOutput:
+    return arbitrate(
+        inputs.request, inputs.params, [Limit(0.0, reason), *_basic_reflex(inputs, rp)]
+    )
 
 
 def control_step(
@@ -133,17 +140,18 @@ def control_step(
     pp: PerceptionParams = DEFAULT_PERCEPTION_PARAMS,
     op: OcclusionParams = DEFAULT_OCCLUSION_PARAMS,
     cpap: CpaParams = DEFAULT_CPA_PARAMS,
+    rp: ReflexParams = DEFAULT_REFLEX_PARAMS,
 ) -> tuple[ControlState, ControlOutput]:
     """Limit one motion command. Missing or stale input gives a stop with its reason."""
     reason = perception.check_inputs(inputs.scan, inputs.odometry, inputs.tick, pp)
     if reason is not None:
-        return state, _stop(inputs, reason)
+        return state, _stop(inputs, reason, rp)
     odom = inputs.odometry
     assert odom is not None
     try:
         new_state = _perceive(state, inputs, pp)
-        human = _to_robot(tracking.track_points(new_state.tracks, inputs.tick, pp), odom)
-        structure = _to_robot(new_state.structure_world, odom)
+        human = frames.to_robot(tracking.track_points(new_state.tracks, inputs.tick, pp), odom)
+        structure = frames.to_robot(new_state.structure_world, odom)
         extra: list[Limit] = []
         scan = inputs.scan
         assert scan is not None
@@ -165,10 +173,14 @@ def control_step(
                     cpap,
                 )
             )
+        if inputs.use_reflex:
+            extra.extend(_basic_reflex(inputs, rp))
+            fences = (*inputs.geofences, *reflex.telemetry_geofences(inputs.telemetry, rp))
+            extra.append(reflex.geofence_limit(inputs.request, inputs.params, odom, fences, cp, rp))
         output = limit_command(
             inputs.request, inputs.params, human, structure, odom.speed, cp, inputs.mode, extra
         )
     except Exception:
         logger.exception("control step failed, stopping the robot")
-        return state, _stop(inputs, Reason.INPUT_MISSING)
+        return state, _stop(inputs, Reason.INPUT_MISSING, rp)
     return new_state, output

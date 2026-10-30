@@ -148,7 +148,7 @@ Rows marked B12 or B13 are implemented and tested; the others are designed, not 
 | `step` | `control_step`: perception, tracking, then `limit_command`; fail closed | B13 |
 | `occlusion` | Phantom human cap from occlusion boundaries (ADR-024) | B14 |
 | `cpa` | Constant velocity closest point of approach, can only restrict | B15 |
-| `reflex` | Heartbeat, geofences, e-stop, telemetry threshold | B16 |
+| `reflex` | Heartbeat, geofences, e-stop, telemetry threshold (implemented in B16) | B16 |
 
 ## Fast layer
 

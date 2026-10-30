@@ -138,3 +138,37 @@ class CpaParams:
 
 
 DEFAULT_CPA_PARAMS = CpaParams()
+
+
+@dataclass(frozen=True)
+class ReflexParams:
+    """Reflex layer assumptions (ADR-027). All are assumptions to calibrate.
+
+    ``heartbeat_timeout_ticks`` is the age of the last heartbeat that still counts as alive.
+    ``escape_speed`` is the creep speed of a robot that is already on a geofence, so it can leave.
+    ``edge_spacing`` is the distance between samples of a geofence edge, smaller than the footprint.
+    ``warn_radius`` and ``critical_radius`` size the geofence a telemetry reading sets around its
+    source, and ``polygon_sides`` the polygon that approximates the disc from outside.
+    """
+
+    heartbeat_timeout_ticks: int = 40
+    escape_speed: float = 0.3
+    edge_spacing: float = 0.2
+    warn_radius: float = 1.5
+    critical_radius: float = 3.0
+    polygon_sides: int = 16
+
+    def __post_init__(self) -> None:
+        if self.heartbeat_timeout_ticks < 1:
+            raise ControlParamsError("heartbeat_timeout_ticks must be at least 1")
+        if self.polygon_sides < 8:
+            raise ControlParamsError("polygon_sides must be at least 8")
+        for name in ("escape_speed", "edge_spacing", "warn_radius", "critical_radius"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ControlParamsError(f"{name} must be a finite number above zero")
+        if self.critical_radius < self.warn_radius:
+            raise ControlParamsError("critical_radius must not be below warn_radius")
+
+
+DEFAULT_REFLEX_PARAMS = ReflexParams()

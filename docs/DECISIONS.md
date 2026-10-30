@@ -333,6 +333,15 @@ Decision:
 
 Consequences: B12 (`feat/control-envelope`) implements types, the envelope, the arbiter and `limit_command` (envelope plus arbiter on detections in the robot frame; a swept mode and the radial mode of E1 configuration 1) with property tests, and checks the swept gap against an independent brute-force sweep of the footprint: result at most each limit, invariant to the order of the limits, never above the request, zero wins, same factor on speed and angular speed. The failing run is shown first. B16 adds the reflex items (heartbeat, geofence, e-stop, telemetry threshold) as further limits in the same arbiter.
 
+Reflex layer in B16 (`waggle.control.reflex`), each item one more limit in the same arbiter:
+- Watchdog: the heartbeat tick is valid when `0 <= tick - heartbeat <= heartbeat_timeout_ticks` (40 ticks, 1 s, assumption). A missing, stale or future heartbeat gives zero with reason `WATCHDOG`.
+- E-stop: a boolean input gives zero with reason `ESTOP`.
+- Watchdog and e-stop need no scan and no pose, so they are added also when the scan or the odometry is invalid. The arbiter ranks `ESTOP` and `WATCHDOG` above `SCAN_INVALID` in the reason it reports, and every reason that was below the request stays in `limits_hit`.
+- Geofence: a polygon in the world frame (static or set dynamically by the caller). Its edges are sampled every `edge_spacing` (0.2 m, below the footprint half width) and the cap is the structure rule on the swept path gap to the samples, so the robot stops short of the edge. A robot whose footprint already touches a fence may only creep at `escape_speed` (0.3 m/s, assumption) so it can leave. A fence with fewer than three vertices or a non-finite vertex gives zero. A request that does not move is not limited by a fence, so a rotation in place near an edge is allowed (the swept circle of the rotation is not checked against fences).
+- Telemetry threshold to geofence: a reading at or over `warn` sets a polygon around its source that contains a disc of `warn_radius` (1.5 m), over `critical` or not a number a disc of `critical_radius` (3.0 m). Both radii are assumptions. The polygon has 16 sides and is built outside the disc.
+- Switched on by `ControlInputs.use_reflex`. The inputs are `heartbeat_tick`, `estop`, `geofences` and `telemetry`. With the flag off none of them is read, which keeps the E1 configurations of ADR-028 unchanged.
+- `waggle.control.frames` holds the world and robot frame changes that `control_step` used privately.
+
 ## ADR-028: E1 metrics and the eight configurations
 
 Status: proposed. Designed, not implemented.

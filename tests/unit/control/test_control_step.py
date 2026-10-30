@@ -8,6 +8,7 @@ from control_support import make_odometry, make_scan
 
 from waggle.control import perception, step
 from waggle.control.params import DEFAULT_CONTROL_PARAMS, DEFAULT_PERCEPTION_PARAMS
+from waggle.control.reflex import Geofence, TelemetryReading
 from waggle.control.step import ControlInputs, ControlState
 from waggle.control.types import ControlOutput, ControlRequest, Reason
 from waggle.sim.observations import BeaconReport, LidarScan, RobotOdometry
@@ -246,3 +247,70 @@ def test_cpa_restricts_a_crossing_person_earlier_than_the_envelope() -> None:
     first_without = next((i for i, out in enumerate(without) if out.speed < 2.0), len(without))
     first_with = next(i for i, out in enumerate(with_cpa) if out.speed < 2.0)
     assert first_with < first_without
+
+
+def _reflex_inputs(
+    tick: int = 100,
+    scan_tick: int | None = None,
+    heartbeat: int | None = 100,
+    estop: bool = False,
+    geofences: tuple[Geofence, ...] = (),
+    telemetry: tuple[TelemetryReading, ...] = (),
+    use_reflex: bool = True,
+) -> ControlInputs:
+    return ControlInputs(
+        request=ControlRequest(2.0, 0.0),
+        params=CARRIER,
+        tick=tick,
+        odometry=make_odometry(tick=tick),
+        scan=make_scan(tick=tick if scan_tick is None else scan_tick),
+        use_reflex=use_reflex,
+        heartbeat_tick=heartbeat,
+        estop=estop,
+        geofences=geofences,
+        telemetry=telemetry,
+    )
+
+
+def test_reflex_is_off_by_default() -> None:
+    _, out = _run(ControlState(), _reflex_inputs(heartbeat=None, estop=True, use_reflex=False))
+    assert (out.speed, out.reason) == (2.0, Reason.REQUEST)
+
+
+def test_a_missing_heartbeat_stops_the_robot_with_watchdog() -> None:
+    _, out = _run(ControlState(), _reflex_inputs(heartbeat=None))
+    assert (out.speed, out.reason) == (0.0, Reason.WATCHDOG)
+
+
+def test_a_live_heartbeat_passes_the_request() -> None:
+    _, out = _run(ControlState(), _reflex_inputs())
+    assert (out.speed, out.reason) == (2.0, Reason.REQUEST)
+
+
+def test_estop_wins_over_an_invalid_scan() -> None:
+    inputs = _reflex_inputs(scan_tick=0, estop=True)
+    _, out = _run(ControlState(), inputs)
+    assert (out.speed, out.reason) == (0.0, Reason.ESTOP)
+    assert Reason.SCAN_INVALID in out.limits_hit
+
+
+def test_a_stale_heartbeat_still_stops_when_the_scan_is_invalid() -> None:
+    _, out = _run(ControlState(), _reflex_inputs(scan_tick=0, heartbeat=None))
+    assert out.speed == 0.0
+    assert Reason.WATCHDOG in out.limits_hit
+
+
+def test_a_geofence_ahead_slows_the_robot_with_reason_geofence() -> None:
+    fence = Geofence("g", ((1.5, -1.0), (3.5, -1.0), (3.5, 1.0), (1.5, 1.0)))
+    _, out = _run(ControlState(), _reflex_inputs(geofences=(fence,)))
+    assert 0.0 < out.speed < 2.0
+    assert out.reason is Reason.GEOFENCE
+
+
+def test_a_hot_machine_ahead_sets_a_geofence_from_its_telemetry() -> None:
+    hot = TelemetryReading("m1", 4.0, 0.0, value=99.0, warn=80.0, critical=95.0)
+    cool = TelemetryReading("m1", 4.0, 0.0, value=40.0, warn=80.0, critical=95.0)
+    _, slowed = _run(ControlState(), _reflex_inputs(telemetry=(hot,)))
+    _, free = _run(ControlState(), _reflex_inputs(telemetry=(cool,)))
+    assert slowed.speed < 2.0 and slowed.reason is Reason.GEOFENCE
+    assert free.speed == 2.0
