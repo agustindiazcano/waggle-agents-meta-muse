@@ -38,11 +38,13 @@ def test_claude_md_read_order_mentions_the_brief() -> None:
     assert BRIEF in _read("CLAUDE.md")
 
 
-def test_agents_section_18_uses_contingency_order_and_gates() -> None:
+def test_agents_section_18_is_build_order_and_gates_without_cuts() -> None:
     text = _read("AGENTS.md")
     section = text.split("## 18.")[1].split("## 19.")[0]
-    for term in ("Contingency order", "G1", "G2", "G3", "G4", "I decide", "Reserved and never cut"):
-        assert term in section or term.replace("I decide", "maintainer decides") in section, term
+    for term in ("G1", "G2", "G3", "G4", "Nothing is cut", "Reserved time"):
+        assert term in section, term
+    for banned in ("Contingency", "cut from the bottom", "never cut", "decides what to cut"):
+        assert banned not in section, banned
     assert "Predictive maintenance" in section and "crisis replanning" in section.lower()
 
 

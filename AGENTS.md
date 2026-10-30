@@ -209,21 +209,21 @@ When refusing an action, state the correct alternative in the same reply.
 - `docs/DECISIONS.md`: architecture decision records. Records are superseded or deprecated, never deleted.
 - `docs/GOTCHAS.md`: known traps.
 
-## 18. Priorities when time runs short
+## 18. Build order and gates
 
-Contingency order, cut from the bottom only when the maintainer decides it at a gate. The maintainer applies it, the agent never does.
+The full scope stays. Nothing is cut and no agent proposes cutting. The order below is the build order, the first item first.
 
 1. Simulator with snapshot and fork, exact detector, fast layer with occlusion cap, E1, end-to-end slice.
 2. Leases, atomic corridor locking, fencing, hand-off, E2.
 3. MCP boundary, guard, injection matrix E3, full court E4.
 4. Crisis replanning loop and E10.
 5. Technical viewer with overlays (envelopes, lidar shadows, rollout ghost paths).
-6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7. If voice is cut, the video uses text commands.
+6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7.
 7. E8 extended, E9, GLB models.
 
-Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+Reserved time: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
 
-Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. At each gate the agent reports actual progress against this list and the maintainer decides what to cut. The detailed brief is in `docs/PHASE1_BRIEF.md`.
+Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. At each gate the agent reports actual progress against this list. Nothing is cut: a gap is closed by working on it, and any result that falls short is reported as it is. The detailed brief is in `docs/PHASE1_BRIEF.md`.
 
 ## 19. Token budget
 

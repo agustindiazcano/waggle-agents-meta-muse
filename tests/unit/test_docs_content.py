@@ -20,7 +20,7 @@ def test_plan_states_priority_order_not_equal_scope() -> None:
     assert "Priority order" in plan
     assert "Phase 8 stays reserved from Nov 3 morning" in plan
     agents = _read("AGENTS.md")
-    section = agents.split("## 18. Priorities when time runs short", 1)[1]
+    section = agents.split("## 18. Build order and gates", 1)[1]
     items = re.findall(r"^\d\. (.+)$", section.split("## 19.", 1)[0], flags=re.MULTILINE)
     assert len(items) == 7
     for item in items:

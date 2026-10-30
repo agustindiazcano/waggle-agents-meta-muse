@@ -44,7 +44,7 @@ Deadline: Wed Nov 4, 2026, 9:00 PM ET (23:00 in Argentina). Confirm the time zon
 5. 2:20 to 2:50: measured tables with baselines and what did not work.
 6. 2:50 to 3:00: limits and what is next.
 
-If voice is cut (lowest priority, see PLAN.md), the video shows text commands instead of the voice command, and says so.
+The video shows the voice command and the text commands that give the same orders.
 
 ## Judging rubric weights
 

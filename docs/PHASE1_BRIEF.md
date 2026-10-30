@@ -87,7 +87,7 @@ Protected paths: tools/hooks/ and .claude/ will ask for maintainer approval on e
 
 ### B2 docs/crisis-replanning-design (docs only)
 
-Scope rule: do not shrink any existing module or experiment. E1 to E9 keep their full specifications, baselines and ablations. E4 stays a standalone experiment. E6 keeps the online first-order thermal predictor, manual sheet validation, pgvector retrieval, failure history, and the idempotent reservation and purchase order. E10 is added. The order in item 8 is a contingency list that only the maintainer applies, at the gates.
+Scope rule: do not shrink any existing module or experiment. E1 to E9 keep their full specifications, baselines and ablations. E4 stays a standalone experiment. E6 keeps the online first-order thermal predictor, manual sheet validation, pgvector retrieval, failure history, and the idempotent reservation and purchase order. E10 is added. The order in item 8 is the build order. Nothing is cut.
 
 1. ADR-023 "Crisis replanning with counterexample-guided validation", proposed.
    - Muse Spark receives a structured world summary, retrieved SOP excerpts (fenced as untrusted data), an optional obstacle class from vision, and the operator request or a text incident report. It proposes a plan in the schema of item 2.
@@ -113,7 +113,7 @@ Scope rule: do not shrink any existing module or experiment. E1 to E9 keep their
    - PLAN.md: add phase 5C with its exit criterion, keep every other phase.
    - README layer table: mark each unimplemented layer "designed, not implemented".
 8. AGENTS.md section 18, replace the list with:
-   Contingency order, cut from the bottom only when the maintainer decides it at a gate:
+   Build order, nothing is cut:
    1. simulator with snapshot and fork, exact detector, fast layer with occlusion cap, E1, end-to-end slice
    2. leases, atomic corridor locking, fencing, hand-off, E2
    3. MCP boundary, guard, injection matrix E3, full court E4
@@ -122,9 +122,9 @@ Scope rule: do not shrink any existing module or experiment. E1 to E9 keep their
    6. predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7
    7. E8 extended, E9, GLB models
 
-   Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+   Reserved time: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
 
-   Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. At each gate report actual progress against this list. The maintainer decides what to cut. Update PLAN.md to match.
+   Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. At each gate report actual progress against this list. Nothing is cut. Update PLAN.md to match.
 9. Design notes for later phases (ARCHITECTURE and PLAN).
    - Phase 2: swept curvilinear footprint envelope for S_stop and S_sep along the current arc; occlusion cap from the lidar scan; the control layer reads only waggle.sim.observations and waggle.sim.params.
    - Phase 3: control keeps a local lease view (zone, token, expiry_tick) pushed by the coordination layer. It clamps speed before a zone with no valid grant and fails closed when the view is stale. The authoritative token check stays inside the tool (ADR-004). Control never reads the database. Multi-zone corridors are acquired in one transaction with rows locked in canonical order. Zone state FAULT_OCCUPIED: the sweeper never releases a zone while the last known odometry puts a chassis in it, it marks the zone FAULT_OCCUPIED and triggers replanning. Add it to S31 to S36.
