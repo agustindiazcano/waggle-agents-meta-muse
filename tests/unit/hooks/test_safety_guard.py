@@ -49,6 +49,8 @@ def edit(path: str) -> dict[str, Any]:
 def run_guard(
     raw: str,
     staged: Callable[[], list[str]] | None = None,
+    branch: str = "feat/current",
+    pre_push: Callable[[], list[str]] | None = None,
 ) -> tuple[str, str, str]:
     """Return (decision, reason, stderr) from running the guard on a raw stdin string."""
     out, err = io.StringIO(), io.StringIO()
@@ -59,6 +61,8 @@ def run_guard(
         protected=PROTECTED,
         root=ROOT,
         staged_files=staged or (lambda: []),
+        current_branch=lambda: branch,
+        pre_push=pre_push or (lambda: []),
     )
     assert code == 0, "the guard reports decisions in JSON and exits 0"
     text = out.getvalue().strip()
@@ -69,11 +73,32 @@ def run_guard(
     return spec["permissionDecision"], spec.get("permissionDecisionReason", ""), err.getvalue()
 
 
-def decide(event: dict[str, Any], staged: Callable[[], list[str]] | None = None) -> str:
-    return run_guard(json.dumps(event), staged)[0]
+def decide(
+    event: dict[str, Any],
+    staged: Callable[[], list[str]] | None = None,
+    branch: str = "feat/current",
+    pre_push: Callable[[], list[str]] | None = None,
+) -> str:
+    return run_guard(json.dumps(event), staged, branch, pre_push)[0]
 
 
 DENY_COMMANDS = [
+    "git push",
+    "git push origin",
+    "git push origin feat/x extra",
+    "git push --tags",
+    "git push origin --tags",
+    "git push origin v1.0",
+    "git push origin refs/tags/v1.0",
+    "git push --follow-tags origin feat/x",
+    "git push --no-verify origin feat/x",
+    "git push --all origin",
+    "git push origin Feat/x",
+    "git push origin feat",
+    "git push origin feature/x",
+    "git push origin HEAD",
+    "git push upstream feat/x",
+    "git push -u origin feat/x:feat/y",
     "git push --force",
     "git push --force-with-lease origin x",
     "git push -f",
@@ -166,11 +191,11 @@ ALLOW_COMMANDS = [
     "echo hi > notes.txt",
     "Get-Content PENDING.md",
     "gh pr view 3",
-    "git push",
     "git push origin feat/x",
     "git push -u origin chore/agents-push-and-pr",
     "git push --set-upstream origin docs/x",
-    "git push origin HEAD:feat/x",
+    "git push -u origin ci/pre-push-check",
+    "git push origin exp/e1-dev",
     "gh pr create --base main --title x --body y",
     "git log --format=%H > hashes.txt",
 ]
@@ -192,6 +217,55 @@ def test_risky_commands_ask_first(command: str) -> None:
 @pytest.mark.parametrize("command", ALLOW_COMMANDS)
 def test_benign_commands_pass(command: str) -> None:
     assert decide(bash(command)) == "allow", command
+
+
+PUSH = "git push -u origin feat/sim-core"
+PR_CREATE = "gh pr create --base main --title x --body y"
+
+
+@pytest.mark.parametrize("command", [PUSH, PR_CREATE])
+def test_push_and_pr_create_are_denied_while_on_main(command: str) -> None:
+    assert decide(bash(command), branch="main") == "deny"
+    assert decide(bash(command), branch="master") == "deny"
+
+
+@pytest.mark.parametrize("command", [PUSH, PR_CREATE])
+def test_pre_push_problems_deny_push_and_pr_create(command: str) -> None:
+    decision, reason, _ = run_guard(
+        json.dumps(bash(command)), pre_push=lambda: ["ci stamp does not match HEAD"]
+    )
+    assert decision == "deny"
+    assert "ci stamp does not match HEAD" in reason
+
+
+@pytest.mark.parametrize("command", [PUSH, PR_CREATE])
+def test_a_crash_in_the_pre_push_check_denies(command: str) -> None:
+    def boom() -> list[str]:
+        raise OSError("gitleaks missing")
+
+    assert decide(bash(command), pre_push=boom) == "deny"
+
+
+@pytest.mark.parametrize("command", [PUSH, PR_CREATE])
+def test_clean_pre_push_check_allows_push_and_pr_create(command: str) -> None:
+    assert decide(bash(command), pre_push=lambda: []) == "allow"
+
+
+def test_gh_pr_merge_is_denied_in_every_spelling() -> None:
+    for command in ("gh pr merge 5", "gh pr merge --squash 5", "gh PR Merge 5 --auto"):
+        assert decide(bash(command)) == "deny", command
+
+
+def test_pre_push_check_runs_only_for_push_and_pr_create() -> None:
+    calls: list[int] = []
+
+    def spy() -> list[str]:
+        calls.append(1)
+        return []
+
+    for command in ("git status", "gh pr view 3", "git log --oneline"):
+        decide(bash(command), pre_push=spy)
+    assert calls == []
 
 
 def test_deny_wins_over_ask_in_one_command() -> None:
