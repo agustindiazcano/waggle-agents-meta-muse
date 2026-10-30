@@ -85,10 +85,10 @@ Branches (one PR each, tests first)
 - `docs/phase2-design` (B11): ADR-026 to ADR-028, control layout, E1 configurations.
 - `feat/control-envelope` (B12): control types, envelope, arbiter.
 - `feat/control-tracking` (B13): perception and tracking.
-- `feat/control-occlusion` (B14): occlusion cap.
-- `feat/control-cpa` (B15): CPA predictor.
-- `feat/control-reflex` (B16): heartbeat, geofences, e-stop, telemetry threshold.
-- `feat/e1-harness` (B17): E1 harness, eight configurations on development seeds, `uv run report`. Stop and report. B18 waits for the maintainer.
+- `feat/control-occlusion` (B14): occlusion cap. Done, PR 29.
+- `feat/control-cpa` (B15): CPA predictor. Done, PR 30.
+- `feat/control-reflex` (B16): heartbeat, geofences, e-stop, telemetry threshold. Done, PR 31.
+- `feat/e1-harness` (B17): E1 harness, eight configurations on development seeds, `uv run report`. Done, PR 32. The development run is a cloud job (PENDING 36). Stop and report. B18 waits for the maintainer.
 
 ## Phase 3: Leases, fencing tokens, tasks, chaos
 

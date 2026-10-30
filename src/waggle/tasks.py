@@ -9,7 +9,7 @@ import json
 import shutil
 import subprocess
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -99,18 +99,6 @@ def ci() -> int:
     return code
 
 
-def _placeholder(name: str) -> Callable[[], int]:
-    def run() -> int:
-        print(f"{name}: placeholder, no experiments exist before Phase 1")
-        return 0
-
-    return run
-
-
-experiments_dev = _placeholder("experiments-dev")
-report = _placeholder("report")
-
-
 def _git_commit() -> str:
     git = shutil.which("git")
     if git is None:
@@ -154,9 +142,3 @@ def experiments_test(argv: Sequence[str] | None = None) -> int:
     path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(f"experiments-test: wrote {path}")
     return 0
-
-
-PLACEHOLDER_TARGETS: dict[str, Callable[[], int]] = {
-    "experiments-dev": experiments_dev,
-    "report": report,
-}

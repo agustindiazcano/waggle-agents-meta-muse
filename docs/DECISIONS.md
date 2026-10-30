@@ -134,7 +134,7 @@ E4 stays a standalone experiment with unanimity at full scope. Configurations: A
 
 ## ADR-018: Sensing model and predictive caution
 
-Status: proposed. Designed, not implemented.
+Status: proposed. The lidar (waggle.sim) and tracking (B13) are implemented; the CPA in B15, see the end of this record.
 
 Context: a fast layer that reads ground truth hides what a real robot cannot see around a blind corner. The detector that scores E1 must stay exact.
 
@@ -146,6 +146,15 @@ Decision:
 - Lidar dropout or a stale scan makes the layer assume the worst case (conservative default, watchdog).
 
 Consequences: E1 compares ground truth, lidar only and lidar with beacons, and envelope only against envelope with prediction. The lidar needs array math, so numpy as a runtime dependency of `waggle.sim` was approved by the maintainer (PENDING 22).
+
+Implementation in B15 (`waggle.control.cpa`), with the choices the first text left open:
+- Each track with a velocity estimate is walked forward for `horizon` (3.0 s, assumption) in steps of `step` (0.1 s) at constant velocity, while the robot follows the arc of its requested command at the requested speed. The meeting is the first step at which the person is inside the footprint widened by the body radius and the lateral margin.
+- The cap is the structure rule applied to the room before the meeting: the largest speed with `S_stop(v)` plus the structure margin at most `requested speed * meeting time`. The person's own motion is already in the prediction, so the human reaction term of the envelope is not added. It only restricts, and the envelope stays the floor: the CPA limit is one more item in the arbiter, reason `CPA`.
+- A person already inside the widened footprint gives zero. A track that is not finite gives zero.
+- A track adds no limit when it has no velocity estimate or was not seen within `max_scan_age_ticks`. Unknown is not treated as safe by the CPA, it is left to the envelope ring and the occlusion cap.
+- The velocity is a least squares slope over the track trail (`trail_ticks` 40, at least `velocity_min_ticks` 10, assumptions), clipped to `v_h_max`. Beacon positions arrive every tick with noise, so the two-detection velocity of ADR-026 is not used by the CPA.
+- A speed below the request is not re-predicted: the meeting is computed at the requested speed every tick. A person who would cross after a slower robot is therefore covered by the envelope, not by the CPA. The prediction is not monotone in speed, which is why it is not searched.
+- Switched on by `ControlInputs.use_cpa` (configurations 6 and 7 of ADR-028).
 
 ## ADR-019: Missions and handoff
 
@@ -324,9 +333,18 @@ Decision:
 
 Consequences: B12 (`feat/control-envelope`) implements types, the envelope, the arbiter and `limit_command` (envelope plus arbiter on detections in the robot frame; a swept mode and the radial mode of E1 configuration 1) with property tests, and checks the swept gap against an independent brute-force sweep of the footprint: result at most each limit, invariant to the order of the limits, never above the request, zero wins, same factor on speed and angular speed. The failing run is shown first. B16 adds the reflex items (heartbeat, geofence, e-stop, telemetry threshold) as further limits in the same arbiter.
 
+Reflex layer in B16 (`waggle.control.reflex`), each item one more limit in the same arbiter:
+- Watchdog: the heartbeat tick is valid when `0 <= tick - heartbeat <= heartbeat_timeout_ticks` (40 ticks, 1 s, assumption). A missing, stale or future heartbeat gives zero with reason `WATCHDOG`.
+- E-stop: a boolean input gives zero with reason `ESTOP`.
+- Watchdog and e-stop need no scan and no pose, so they are added also when the scan or the odometry is invalid. The arbiter ranks `ESTOP` and `WATCHDOG` above `SCAN_INVALID` in the reason it reports, and every reason that was below the request stays in `limits_hit`.
+- Geofence: a polygon in the world frame (static or set dynamically by the caller). Its edges are sampled every `edge_spacing` (0.2 m, below the footprint half width) and the cap is the structure rule on the swept path gap to the samples, so the robot stops short of the edge. A robot whose footprint already touches a fence may only creep at `escape_speed` (0.3 m/s, assumption) so it can leave. A fence with fewer than three vertices or a non-finite vertex gives zero. A request that does not move is not limited by a fence, so a rotation in place near an edge is allowed (the swept circle of the rotation is not checked against fences).
+- Telemetry threshold to geofence: a reading at or over `warn` sets a polygon around its source that contains a disc of `warn_radius` (1.5 m), over `critical` or not a number a disc of `critical_radius` (3.0 m). Both radii are assumptions. The polygon has 16 sides and is built outside the disc.
+- Switched on by `ControlInputs.use_reflex`. The inputs are `heartbeat_tick`, `estop`, `geofences` and `telemetry`. With the flag off none of them is read, which keeps the E1 configurations of ADR-028 unchanged.
+- `waggle.control.frames` holds the world and robot frame changes that `control_step` used privately.
+
 ## ADR-028: E1 metrics and the eight configurations
 
-Status: proposed. Designed, not implemented.
+Status: proposed. Harness implemented in B17 (`waggle.experiments`); development seed results come from the cloud workflow.
 
 Context: E1 must show what each block contributes by ablation, not by summing blocks (AGENTS.md section 9). The Phase 1 baseline is the first configuration.
 

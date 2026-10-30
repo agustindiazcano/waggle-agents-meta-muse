@@ -43,7 +43,9 @@ class PerceptionParams:
     """Thresholds of scan checks, clustering and tracking (ADR-026). All are assumptions.
 
     Ticks are simulator ticks of 0.025 s. ``gap_base`` plus ``gap_per_meter`` times the range is
-    the largest gap between two neighbouring returns of one cluster.
+    the largest gap between two neighbouring returns of one cluster. ``trail_ticks`` is how long a
+    track keeps its past positions and ``velocity_min_ticks`` the shortest span that gives a
+    velocity for the CPA: beacon positions are noisy, so one tick is not enough.
     """
 
     max_scan_age_ticks: int = 8
@@ -58,9 +60,18 @@ class PerceptionParams:
     ring_points: int = 12
     beacon_sigma: float = 0.1
     human_speed_bound: float = HUMAN_SPEED_BOUND
+    trail_ticks: int = 40
+    velocity_min_ticks: int = 10
 
     def __post_init__(self) -> None:
-        for name in ("max_scan_age_ticks", "nan_window", "max_coast_ticks", "ring_points"):
+        for name in (
+            "max_scan_age_ticks",
+            "nan_window",
+            "max_coast_ticks",
+            "ring_points",
+            "trail_ticks",
+            "velocity_min_ticks",
+        ):
             if getattr(self, name) < 1:
                 raise ControlParamsError(f"{name} must be at least 1")
         for name in (
@@ -106,3 +117,58 @@ class OcclusionParams:
 
 
 DEFAULT_OCCLUSION_PARAMS = OcclusionParams()
+
+
+@dataclass(frozen=True)
+class CpaParams:
+    """Prediction window of the closest point of approach (ADR-018). Both are assumptions.
+
+    ``horizon`` is how far ahead a constant velocity prediction is trusted, in seconds, and
+    ``step`` the time between predicted positions.
+    """
+
+    horizon: float = 3.0
+    step: float = 0.1
+
+    def __post_init__(self) -> None:
+        for name in ("horizon", "step"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ControlParamsError(f"{name} must be a finite number above zero")
+
+
+DEFAULT_CPA_PARAMS = CpaParams()
+
+
+@dataclass(frozen=True)
+class ReflexParams:
+    """Reflex layer assumptions (ADR-027). All are assumptions to calibrate.
+
+    ``heartbeat_timeout_ticks`` is the age of the last heartbeat that still counts as alive.
+    ``escape_speed`` is the creep speed of a robot that is already on a geofence, so it can leave.
+    ``edge_spacing`` is the distance between samples of a geofence edge, smaller than the footprint.
+    ``warn_radius`` and ``critical_radius`` size the geofence a telemetry reading sets around its
+    source, and ``polygon_sides`` the polygon that approximates the disc from outside.
+    """
+
+    heartbeat_timeout_ticks: int = 40
+    escape_speed: float = 0.3
+    edge_spacing: float = 0.2
+    warn_radius: float = 1.5
+    critical_radius: float = 3.0
+    polygon_sides: int = 16
+
+    def __post_init__(self) -> None:
+        if self.heartbeat_timeout_ticks < 1:
+            raise ControlParamsError("heartbeat_timeout_ticks must be at least 1")
+        if self.polygon_sides < 8:
+            raise ControlParamsError("polygon_sides must be at least 8")
+        for name in ("escape_speed", "edge_spacing", "warn_radius", "critical_radius"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ControlParamsError(f"{name} must be a finite number above zero")
+        if self.critical_radius < self.warn_radius:
+            raise ControlParamsError("critical_radius must not be below warn_radius")
+
+
+DEFAULT_REFLEX_PARAMS = ReflexParams()

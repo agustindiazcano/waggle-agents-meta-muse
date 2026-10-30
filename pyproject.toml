@@ -14,9 +14,9 @@ lint = "waggle.tasks:lint"
 type = "waggle.tasks:typecheck"
 test = "waggle.tasks:test"
 ci = "waggle.tasks:ci"
-experiments-dev = "waggle.tasks:experiments_dev"
+experiments-dev = "waggle.experiments.e1_run:main"
 experiments-test = "waggle.tasks:experiments_test"
-report = "waggle.tasks:report"
+report = "waggle.experiments.e1_report:main"
 
 [dependency-groups]
 dev = [
