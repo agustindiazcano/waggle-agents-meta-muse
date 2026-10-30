@@ -27,7 +27,7 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 
 1. Step 0 before touching any file: `git status`, `git branch` and `git worktree list`. Other people or agents may have changed the state.
 2. Never commit to `main`. The only direct commit to `main` is the initial commit with the docs, made once.
-3. Commits: one concern per commit, and every commit leaves the tests passing. Tests, code and docs go in separate commits when they are separate concerns. Commits made with AI assistance end with a `Co-Authored-By` trailer naming the tool.
+3. Commits: one concern per commit, and every commit passes the fast CI. A test and the code that makes it pass go in the same commit. The failing run of the new test is shown in the session before the implementation. Docs and unrelated concerns go in separate commits. Commits made with AI assistance end with a `Co-Authored-By` trailer naming the tool.
 4. Stage files by name. Do not use `git add -A` or `git add .` blindly. Before each commit read `git diff --staged` and confirm that no secret, `.env`, build output or large file is in it. Held-out result files are committed only by the maintainer.
 5. If a secret reaches a commit, stop, tell the maintainer and do not push. Removing the file in a later commit is not enough, because history keeps it. The key must be rotated.
 6. Stacked branches are allowed when a task depends on one that is not merged yet. The base is the previous branch, named in the PR description, and its PR targets that branch (`gh pr create --base <previous-branch>`). Merge in order and retarget the next PR after each merge.

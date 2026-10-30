@@ -117,6 +117,13 @@ Coordinated handoff (designed, not implemented):
 - Cost per task, by role, from the `llm_calls` table.
 - Extrapolation to large fleets: a stub that samples the measured latency distributions and failure rates. Reported as extrapolation, with the assumptions listed and what is not validated.
 
+## E9: Regression detection
+
+- Question: if a safety check, a threshold or a validator is weakened, do the tests and the experiments notice, and which layer notices first.
+- Setup (designed, not implemented): mutation testing of `waggle.control` and the validator rules with a mutation tool run only in the cloud, plus a hand-written list of planted defects (a margin lowered, a cap that can raise speed, a stale scan accepted, a fencing comparison inverted). Each planted defect declares the test or experiment expected to catch it before the run.
+- Metrics: mutants killed over mutants generated, with the surviving mutants listed, and planted defects caught over planted, with the first detector named for each.
+- Report surviving mutants and undetected defects in full. A mutant that is equivalent to the original is marked as such by hand, not dropped.
+
 ## E10: Crisis replanning
 
 - Question: does an LLM planner with counterexample feedback recover from compound faults better than a strong deterministic baseline, and how often does an accepted plan still fail.

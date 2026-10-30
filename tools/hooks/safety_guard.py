@@ -40,6 +40,18 @@ PRE_PUSH_TIMEOUT = 240
 PROTECTED_BRANCHES = frozenset({"main", "master"})
 TASK_BRANCH = re.compile(r"(feat|fix|test|docs|exp|chore|ci)/[a-z0-9]+(-[a-z0-9]+)*")
 PUSH_FLAGS = frozenset({"-u", "--set-upstream"})
+REMOTE_WRITES = frozenset({"add", "set-url", "remove", "rm", "rename", "set-head", "set-branches"})
+GH_READS = {
+    "repo": frozenset({"view", "list", "clone"}),
+    "secret": frozenset({"list"}),
+    "auth": frozenset({"status"}),
+    "release": frozenset({"list", "view", "download"}),
+}
+GH_API_WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+GH_API_BODY_FLAGS = frozenset({"-f", "-F", "--field", "--raw-field", "--input"})
+INTERPRETERS = frozenset({"python", "python3", "py", "node", "perl", "ruby", "deno", "bun"})
+INTERPRETER_FLAGS = frozenset({"-c", "-e", "-r", "--eval", "-command"})
+GUARDED_TEXT = ("git push", "git remote", "gh api")
 
 
 class MalformedEventError(ValueError):
@@ -168,6 +180,10 @@ def _git_rules(args: list[str], ctx: Context) -> Verdict:
         )
     if sub == "push":
         return _git_push(rest, ctx)
+    if sub == "remote" and rest[:1] and rest[0].lower() in REMOTE_WRITES:
+        return Verdict(
+            "deny", "Remotes are not changed by agents. Only git remote -v and get-url are allowed."
+        )
     if sub == "merge":
         return Verdict("deny", "Agents never merge. Ask the maintainer to merge the pull request.")
     if sub == "reset" and "--hard" in long_flags:
@@ -191,6 +207,50 @@ def _git_rules(args: list[str], ctx: Context) -> Verdict:
         return Verdict("ask", "Removing a worktree can lose uncommitted work.")
     if sub == "rebase":
         return Verdict("ask", "Rebase rewrites history. Confirm it is local and unpushed.")
+    return ALLOW
+
+
+def _gh_api_method(args: list[str]) -> str:
+    """The HTTP method a ``gh api`` call asks for. A body flag makes it POST unless set."""
+    method = ""
+    for i, arg in enumerate(args):
+        low = arg.lower()
+        if low in ("-x", "--method") and i + 1 < len(args):
+            method = args[i + 1].upper()
+        elif low.startswith("--method="):
+            method = arg.split("=", 1)[1].upper()
+        elif arg.startswith("-X") and len(arg) > 2:
+            method = arg[2:].upper()
+    if not method and any(a.split("=", 1)[0] in GH_API_BODY_FLAGS for a in args):
+        return "POST"
+    return method
+
+
+def _gh_rules(args: list[str], ctx: Context) -> Verdict:
+    words = [a.lower() for a in args]
+    group = words[0] if words else ""
+    if group == "pr" and words[1:2] == ["merge"]:
+        return Verdict("deny", "Agents never merge. Ask the maintainer to merge.")
+    if group == "pr" and words[1:2] == ["create"]:
+        return _push_gate(ctx)
+    if group == "api" and _gh_api_method(args[1:]) in GH_API_WRITE_METHODS:
+        return Verdict("deny", "gh api writes are not allowed. Read with GET or use gh pr create.")
+    if group in GH_READS:
+        action = next((w for w in words[1:] if not w.startswith("-")), "")
+        if action not in GH_READS[group]:
+            return Verdict("deny", f"gh {group} {action} is not read-only. Ask the maintainer.")
+    return ALLOW
+
+
+def _interpreter_rules(args: list[str]) -> Verdict:
+    """Best effort: an interpreter one-liner that spells out a guarded command is denied."""
+    if not INTERPRETER_FLAGS & {a.lower() for a in args}:
+        return ALLOW
+    text = " ".join(args).lower()
+    if any(marker in text for marker in GUARDED_TEXT):
+        return Verdict(
+            "deny", "Do not run git push, git remote or gh api through an interpreter one-liner."
+        )
     return ALLOW
 
 
@@ -299,12 +359,12 @@ def _segment_rules(words: list[str], redirects: list[str], ctx: Context, depth: 
         return worst(verdicts)
     if name == "git":
         verdicts.append(_git_rules(args, ctx))
-    elif name == "gh" and [a.lower() for a in args[:2]] == ["pr", "merge"]:
-        verdicts.append(Verdict("deny", "Agents never merge. Ask the maintainer to merge."))
-    elif name == "gh" and [a.lower() for a in args[:2]] == ["pr", "create"]:
-        verdicts.append(_push_gate(ctx))
+    elif name == "gh":
+        verdicts.append(_gh_rules(args, ctx))
     elif name in SHELLS and depth < MAX_SHELL_DEPTH:
         verdicts.append(_nested_shell(args, ctx, depth))
+    if name in INTERPRETERS or name in SHELLS:
+        verdicts.append(_interpreter_rules(args))
     arg_paths = [a.split("=", 1)[-1] if a.startswith("of=") else a for a in args]
     if _is_write(name, args):
         verdicts.append(_write_target_rules(arg_paths, ctx))

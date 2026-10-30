@@ -1,8 +1,9 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (session handoff after Phase 1).
+Updated: 2026-10-30 (B9 `chore/guard-gaps-and-rules`, session brief 2).
 
 ## Done last
+- B9 `chore/guard-gaps-and-rules` (session brief 2, based on origin/main because the old stack is merged): guard denies git remote add, set-url and remove, gh api write methods, gh repo, secret, auth and release writes, and interpreter one-liners that spell out git push, git remote or gh api; 2>&1 and head or tail pipes no longer block an allowed push. AGENTS.md git rule 3 reworded (A3). `uv run ci` takes 1 min 46 s, so no test needed the heavy marker (A4, ADR-029). E9 defined (A5). Next: B10 `feat/sim-performance`, stop point after it.
 - Phase 1 is on `main` (PR 16): push guard and pre-push check (B0), conventions and the crisis replanning design (B1, B2, ADR-021 to ADR-025), and the simulator: sim core, robots, humans, exact detector, lidar, scenarios S01 to S18, fixed seeds, replay by seed (B3 to B8). Details of each branch are in `docs/PHASE1_BRIEF.md` and the merged PRs 5 to 14.
 - No-control baseline on development seeds, 90 runs (`results/e1/dev/no_control_20261030T022921Z.json`): 107 human collisions, 1027 robot collisions, 125 separation violations, 218 near misses, 0 unavoidable cases. Held-out seeds were not run.
 - Measured on this machine (`results/e8/dev/`): a 10-robot, 4-human rollout of 45 s simulated costs 22.3 s with lidar (core and detector about 8.7 s, lidar about 10.5 s). This is the open STOP POINT (PENDING 31).

@@ -67,10 +67,15 @@ def tokenize(command: str) -> list[Segment]:
         elif ch in ";&|()\n":
             end_segment()
         elif ch == ">":
+            if started and "".join(word).isdigit():
+                word, started = [], False  # a file descriptor prefix such as the 2 in 2>&1
             flush_word()
             if command[i + 1 : i + 2] == ">":
                 i += 1
-            redirect_next = True
+            if re.match(r"&\d", command[i + 1 : i + 3]):
+                i += 2  # fd duplication (2>&1) writes to no file
+            else:
+                redirect_next = True
         elif ch.isspace():
             flush_word()
         else:
