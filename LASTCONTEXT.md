@@ -16,6 +16,9 @@ Updated: 2026-10-29 (rule change on chore/agents-push-and-pr).
 - Open maintainer decisions: PENDING 22 (numpy). The maintainer approved numpy for `waggle.sim` in the Phase 1 prompt; record it in README and PENDING when it is added.
 
 ## Prompt for the next session
+The maintainer brief is stored in `docs/PHASE1_BRIEF.md` and replaces the prompt below. Follow its branch order B0 to B8 and its stop points. Its status notes list what already exists.
+
+### Superseded prompt (kept for reference)
 ```
 Phase 1 (simulator and ground truth), part 1 of 2. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, PLAN.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-002, 013, 018, 019, 020), docs/EXPERIMENTS.md first. If two documents conflict, stop and ask.
 
