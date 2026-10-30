@@ -1,6 +1,6 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (B9 `chore/guard-gaps-and-rules`, session brief 2).
+Updated: 2026-10-30 (context sync after B10 merged, viewer mockup noted).
 
 ## Done last
 - B10 `feat/sim-performance` (stacked on B9): contact episodes already counted as episodes (tests and ADR-021 text added, no result changed). `waggle.sim.hullgap` (batched exact detector), `fastlidar` (cached static ranges, exact dynamic hits), `rollout` (parallel variants). E1 no-control dev baseline identical on 90 runs (counts and final hashes). Speed 3.1x measured, below the 5x minimum: stopped, PENDING 31. Profiles and before/after in `results/e8/dev/`. Next: B11 `docs/phase2-design` after the maintainer decides.
@@ -11,6 +11,7 @@ Updated: 2026-10-30 (B9 `chore/guard-gaps-and-rules`, session brief 2).
 - Rules added: AGENTS.md section 18 (contingency order and gates), section 3 rules 8 to 11 (cloud first).
 
 ## Current state
+- Maintainer decision 2026-10-30: continue with B11 to B17 first (contingency order, G2 is Oct 31), then MCP, guard, court and advisors. The viewer mockup waits for the real logic.
 - `main` has B0 to B8. This handoff branch also carries the cloud-first rules of AGENTS.md section 3, which PR 17 merged into a stacked branch and never reached `main`. The trap is recorded in `docs/GOTCHAS.md` (merge a stacked chain from the top, or retarget each PR to `main`).
 - The guard allows only `git push [-u] origin <type/short-description>` and gates push and `gh pr create` on the pre-push check, which still needs a local green `uv run ci` on HEAD (PENDING 30). A full local `uv run ci` takes 2 to 3 minutes.
 - Open maintainer decisions: PENDING 31 (rollout cost), 30 (cloud gate and workflow), 29 (E9 undefined), 26 (viewer dependencies), 25 (gates G1 to G4).
@@ -19,7 +20,7 @@ Updated: 2026-10-30 (B9 `chore/guard-gaps-and-rules`, session brief 2).
 ```
 Continue Waggle Hive, session brief 2, from B11. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/PHASE1_BRIEF.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-021 to ADR-029), docs/EXPERIMENTS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
 
-State: B9 (PR 19) and B10 (PR 20, stacked on B9) are open and not merged. Base B11 on feat/sim-performance, or on origin/main if both are merged by then. Each PR targets the previous branch. Never merge, never push to main, no force push.
+State: B9 (PR 19) and B10 (PR 22, retarget of 20) are merged into main, with PR 21. Base B11 on origin/main. Never merge, never push to main, no force push. The viewer mockup `index (1).html` is untracked and stays as is (PENDING 33): do not commit it and do not work on the viewer.
 Decision taken (ADR-025 addendum, PENDING 31): rollout cost accepted at about 5.7 s per 45 s rollout (K = 5, H = 45 s, lidar every 4 ticks), variants for E10 and held-out runs go to the cloud, live-demo reductions are labeled, no more optimization now.
 
 Task, in order, tests first with the failing run shown, Conventional Commits, uv run ci green and gitleaks clean before each push, report every two branches in five lines (done, next, blockers):
