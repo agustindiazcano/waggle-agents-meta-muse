@@ -75,3 +75,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### Lease expiry is not physical clearance
 - Symptom: a stopped robot loses its lease but still occupies a capacity-one aisle, and a replacement would be admitted into it.
 - What to do: use the corridor model with a current trusted occupancy observation. An expired occupied or unknown zone keeps `FAULT_OCCUPIED`; only a current empty observation permits reassignment. Never use the generic logical lease expiry as an entry permit. Tests cover a robot that never releases, an occupied expired corridor and missing occupancy (ADR-031).
+
+### S03 admission needs staging and a clear exit
+- Symptom: the original S03 has both robots already inside the reserved aisle, so admission cannot resolve it; parking on the incoming path can also leave the unchanged fast layer holding the opponent outside.
+- What to do: retain the original S03 for E1 comparisons and use the explicit `build_s03_admission` integration fixture for before-entry admission. Start at rest outside the zone, request the entire route, and park clear of the opposite approach before release. Keep expired occupied zones faulted. The integration test checks both completed routes, footprint occupancy and the independent collision detector. Admission state is in simulator arrays, but the existing sensor and control rig also holds Python state; do not infer full rollout fork support from the admission-only replay test.

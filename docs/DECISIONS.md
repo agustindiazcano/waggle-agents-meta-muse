@@ -421,6 +421,14 @@ E2 measurement plan: after admission is integrated with the current simulator, m
 
 Consequences: the pure model is implemented, not evaluated. It is not a concurrent service and does not authenticate holders, move robots, enforce entry limits, persist state, implement A* or recover a physically blocked aisle. Those integrations remain separate work. No change is made to the fast layer, MCP boundary, audit logic or migrations.
 
+### ADR-031 addendum: simulator admission integration (2026-10-30)
+
+Decision: the simulator adapter lives in `waggle.experiments.corridor_admission`, leaving the pure checker and fast layer unchanged. Each robot requests its complete route in fleet-index order before it moves. A denial cancels queued and active motion commands, while the simulator still applies its declared braking dynamics. Lease expiry never means physical clearance. Occupancy comes from current ground-truth footprints against rectangular capacity-one zones; bounding boxes are conservative and exact contact counts as occupied. The adapter keeps token history, owner, expiry, observation tick and fault latch in simulator arrays. Admission-only snapshot and fork replay preserve those values; replay of the whole existing control rig is not established here.
+
+The original S03 fixture and all E1 results remain unchanged. `build_s03_admission` explicitly constructs exterior staging and one-shot parking routes on the same map: the first robot starts south of the aisle, the opponent waits to the north-east, and the first parks to the north-west before releasing. This geometry prevents the parked robot from blocking the opponent's entry under the unchanged envelope. The route grants last 4000 ticks by default for this bounded fixture; a shorter occupied expiry is tested as a fault, not silently renewed. This does not handle arbitrary routes, initial moving robots, fairness, dense-fleet deadlocks or database failures.
+
+Validation: `uv run pytest tests/unit/experiments/test_corridor_admission.py -q` passes 10 tests, including both robots completing, no simultaneous occupants, no robot collision according to the independent detector, all-or-nothing multizone admission, unknown occupancy denial, occupied expiry, release only when clear and admission state replay. The initial failing run reported the missing adapter module before implementation. These are integration and unit tests, not E2 measurements. Status: implemented, not evaluated. E2, paid calls, held-out seeds, database implementation and migrations were not run or added.
+
 ## ADR-032: MCP boundary and guard design
 
 Status: design only, proposed. No code, no migration, no `.env` change. The MCP boundary code, the audit logic and the fencing check are protected (AGENTS.md section 15), so each implementation branch below needs a maintainer go-ahead first.
