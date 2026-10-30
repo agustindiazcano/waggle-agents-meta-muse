@@ -18,7 +18,7 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 2. Tests first. Write the failing test, confirm it fails for the right reason, then write the minimum code to pass, then refactor with the test green.
 3. For a bug, write a test that reproduces it first, then fix it.
 4. CI gates: ruff, mypy --strict, pytest with coverage report, import-linter. A red CI blocks the PR.
-5. A human reviews and approves every PR. Agents never merge, never push, and never create or change remote repositories. The maintainer pushes.
+5. A human reviews and approves every PR. Agents push their task branch and open the PR with `gh pr create` (maintainer decision, ADR-022). Agents never merge, never push to `main`, never force push, never delete remote refs, and never create or change remote repositories. Push only after the checks in Git rules 4 and 11 pass. The maintainer merges.
 6. Conventional Commits in English: `type(scope): description`, imperative mood, subject under 72 characters.
 7. Commits from the first day, so the history shows what was built during the hackathon.
 8. Run tools as `uv run ...` or `sys.executable -m ...`, never a bare command name. There is no `make` on the maintainer machine. Targets are `uv run` scripts.
@@ -30,12 +30,12 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 3. Commits: one concern per commit, and every commit leaves the tests passing. Tests, code and docs go in separate commits when they are separate concerns. Commits made with AI assistance end with a `Co-Authored-By` trailer naming the tool.
 4. Stage files by name. Do not use `git add -A` or `git add .` blindly. Before each commit read `git diff --staged` and confirm that no secret, `.env`, build output or large file is in it. Held-out result files are committed only by the maintainer.
 5. If a secret reaches a commit, stop, tell the maintainer and do not push. Removing the file in a later commit is not enough, because history keeps it. The key must be rotated.
-6. Stacked branches are allowed when a task depends on one that is not merged yet. The base is the previous branch, named in the PR description, and its PR targets that branch. Merge in order and retarget the next PR after each merge.
+6. Stacked branches are allowed when a task depends on one that is not merged yet. The base is the previous branch, named in the PR description, and its PR targets that branch (`gh pr create --base <previous-branch>`). Merge in order and retarget the next PR after each merge.
 7. Parallel work: when more than one agent or person works at the same time, each uses its own worktree on its own branch (`git worktree add ../waggle-<branch> <branch>`). Never switch branches in a shared working tree that has uncommitted changes. Remove the worktree after the merge with `git worktree remove`.
 8. Never rewrite published history: no force push, no `git reset --hard`, no `git clean -f`, no amend or rebase of a pushed commit. Unpushed local commits may be amended.
 9. Never skip hooks or CI: no `--no-verify`, no disabling a check to get a green result.
-10. Pull request text, delivered in the reply: a title in Conventional Commit form, then a summary, a test plan with the commands and their results, the base branch if stacked, and a list of protected paths touched.
-11. After a merge, delete the local branch. The maintainer deletes the remote branch. Merges use a merge commit and not a squash, so the per-commit history stays visible as evidence of the work (maintainer decision).
+10. Pull request text, used as the PR body and also delivered in the reply: a title in Conventional Commit form, then a summary, a test plan with the commands and their results, the base branch if stacked, and a list of protected paths touched.
+11. Before each push: `uv run ci` is green, `git diff` against the base shows no secret, `.env`, build output or held-out result file, and the branch is not `main`. After a merge, delete the local branch. The maintainer deletes the remote branch. Merges use a merge commit and not a squash, so the per-commit history stays visible as evidence of the work (maintainer decision).
 
 ## 3. Test tiers and cloud runs
 
@@ -207,16 +207,19 @@ When refusing an action, state the correct alternative in the same reply.
 
 ## 18. Priorities when time runs short
 
-Scope is cut from the bottom of this list. The top is never cut. Phase 8 (delivery) stays reserved from Nov 2.
+Contingency order, cut from the bottom only when the maintainer decides it at a gate. The maintainer applies it, the agent never does.
 
-1. Simulator, exact detector, fast layer, E1, end-to-end slice.
-2. Leases, fencing tokens, E2.
-3. MCP boundary and injection matrix, E3.
-4. Director, item resolution, court, E4.
-5. README, video, deploy, submission.
-6. Predictive maintenance, E6.
-7. Per-robot advisors, E5.
-8. 3D scene, voice, vision, E7. If voice is cut, the video uses text commands.
+1. Simulator with snapshot and fork, exact detector, fast layer with occlusion cap, E1, end-to-end slice.
+2. Leases, atomic corridor locking, fencing, hand-off, E2.
+3. MCP boundary, guard, injection matrix E3, full court E4.
+4. Crisis replanning loop and E10.
+5. Technical viewer with overlays (envelopes, lidar shadows, rollout ghost paths).
+6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7. If voice is cut, the video uses text commands.
+7. E8 extended, E9, GLB models.
+
+Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+
+Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. At each gate the agent reports actual progress against this list and the maintainer decides what to cut. The detailed brief is in `docs/PHASE1_BRIEF.md`.
 
 ## 19. Token budget
 

@@ -2,26 +2,29 @@
 
 Build window: Oct 27 to Nov 3, 2026. Buffer and submission: Nov 4. Submission deadline: Wed Nov 4, 9:00 PM ET (23:00 in Argentina, since US daylight time ends Nov 1). Confirm the exact time on the submission platform.
 
-The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 2.
+The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 3 morning.
 
 ## Priority order
 
-Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 2.
+Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 3 morning.
 
-1. Simulator, exact detector, fast layer, E1, end-to-end slice.
-2. Leases, fencing tokens, E2.
-3. MCP boundary and injection matrix, E3.
-4. Director, item resolution, court, E4.
-5. README, video, deploy, submission.
-6. Predictive maintenance, E6.
-7. Per-robot advisors, E5.
-8. 3D scene, voice, vision, E7. If voice is cut, the video uses text commands.
+1. Simulator with snapshot and fork, exact detector, fast layer with occlusion cap, E1, end-to-end slice.
+2. Leases, atomic corridor locking, fencing, hand-off, E2.
+3. MCP boundary, guard, injection matrix E3, full court E4.
+4. Crisis replanning loop and E10.
+5. Technical viewer with overlays (envelopes, lidar shadows, rollout ghost paths).
+6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7. If voice is cut, the video uses text commands.
+7. E8 extended, E9, GLB models.
+
+Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+
+Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. The maintainer decides what to cut at each gate. Details in `docs/PHASE1_BRIEF.md`.
 
 ## Rules
 
 1. Every layer is measured by ablation: same seeds, layer on and off. The result goes in the README whether it is good or bad.
 2. A feature without its ablation is listed as "implemented, not evaluated". It is not presented as a contribution.
-3. Phase 8 is reserved from Nov 2 regardless of state. If a phase is open at that point, it ships with its real state documented.
+3. Phase 8 is reserved from Nov 3 morning regardless of state. If a phase is open at that point, it ships with its real state documented.
 4. A thin end-to-end slice (command, director, MCP, one robot moving, fast layer stopping it) must run by the end of Phase 3. Later phases deepen something that already runs.
 5. Seeds are split before any tuning: development seeds and held-out test seeds. Test seeds are run once per configuration.
 6. No code is copied from earlier repositories. Rewriting from design is allowed. See PRIOR_WORK.md.
@@ -46,12 +49,13 @@ Exit: CI green on smoke tests, `docker compose up` starts all services.
 Tasks
 - Deterministic tick loop (fixed dt, seeded RNG, no wall-clock dependence).
 - World: grid or polygon map, racks, aisles, narrow one-way aisles, blind corners, stations, depots, machines.
-- Robot classes with kinematics: carrier, heavy forklift, parts runner, tech repair. Speed, deceleration and actuation delay per class.
+- Robot classes with non-holonomic kinematics: carrier, heavy forklift, parts runner, tech repair. Speed, deceleration and actuation delay per class. Forklift: bicycle model with a minimum turning radius. Others: differential drive with a maximum angular speed. The footprint sweeps along the curved path and the detector uses the swept footprint. Optional `load_raised` on the forklift lowers max speed and decel limit by documented factors.
 - Humans: scripted paths, random walkers, adversarial paths (step out at a blind corner at the worst time).
 - Exact collision and separation-violation detector (swept geometry), independent of the control code.
-- Machine telemetry generator with hidden failure onset.
 - 2D debug map over WebSocket.
-- Scenario catalog S01 to S30 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer.
+- Simulated 2D lidar (ray casting with range, angular resolution, noise, dropout, occlusion) and the optional human beacon variant (ADR-018). The exact detector keeps using ground truth.
+- Scenario catalog S01 to S18 (see docs/EXPERIMENTS.md), each with a seed and a declared target layer. Development and held-out seeds are fixed once in `data/seeds.json`.
+- Conventions of ADR-021: dt = 0.025 s (40 Hz), lidar at 10 Hz, seeded streams, canonical state hash, contract `control-no-ground-truth`.
 
 Exit
 - Same seed produces the same trajectory (test).
@@ -67,10 +71,12 @@ Tasks
 - Heartbeat watchdog: a robot with no heartbeat stops.
 - Telemetry threshold to geofence, directly in the fast layer.
 - Override rule: the fast layer verifies every motion command and can only reduce motion.
-- Baseline run with the layer disabled, same seeds.
+- Closest point of approach predictor on lidar detections: constant velocity extrapolation, can only restrict, the envelope stays the floor (ADR-018).
+- Baseline run with the layer disabled, same seeds. E1 configurations: ground truth, lidar only, lidar with beacons; envelope only against envelope with prediction.
 - Loop latency measured and reported as code latency.
 
 Exit
+- E1 ablation reported.
 - E1 run on development seeds, then held-out seeds: collisions and violations with and without the layer.
 - Zero collisions with humans in held-out seeds is a target, not a promise. Report the real number and every failing seed.
 
@@ -78,14 +84,17 @@ Exit
 
 Tasks
 - PostgreSQL schema: zones with monotonic fencing token, tasks with state machine, task events.
+- Deterministic route planner: A* on the aisle graph, one-lane aisles as zones with capacity one, reservation through leases with fencing tokens.
 - Task queue on PostgreSQL (`FOR UPDATE SKIP LOCKED`), workers, expiry sweeper.
 - Lease manager: acquire increments the token, tools carry (zone, token), the tool checks inside one transaction with row lock.
 - Fault injection: kill worker mid-task, drop network, delay the database, expire leases early, duplicate delivery.
 - Property tests with Hypothesis on lease invariants.
 - Baseline without fencing (lease check outside the tool) to show the failure it prevents.
+- Task dependencies (mission graph) and the handoff at a rendezvous zone with an idempotency key and a fencing token (ADR-019), with a handoff chaos test.
 - Thin end-to-end slice: scripted command to one robot moving under the fast layer.
 
 Exit
+- Robots reach their targets in the S13 to S18 density scenarios without deadlock, and a deadlock counter is reported in E2.
 - E2: 500 tasks with workers killed at random points: 0 double assignments, 0 two robots in a one-lane aisle, 0 stale-token writes accepted. The no-fencing baseline shows nonzero counts.
 - Thin slice runs from a script.
 
@@ -137,6 +146,7 @@ Exit
 ## Phase 6: Predictive maintenance
 
 Tasks
+- Machine telemetry generator with hidden failure onset, and scenario families S19 to S36 (combined faults, dependency failures, sensor faults, coordinated handoff), built when the layers they exercise exist.
 - Machine physics in the simulator: bearing temperature and vibration as a function of load and a hidden fault state. Different dynamics from the predictor, with sensor noise and hidden onset.
 - Predictor: first-order thermal model fit online on telemetry, outputs estimated time to limit.
 - Structured manual sheet per machine, extracted once from the manual and validated by schema: limits, failure modes, part numbers, procedures. Missing sheet means a conservative default limit.
@@ -145,6 +155,8 @@ Tasks
 - MCP tools: `reserve_part` (checks stock in the database), `dispatch_tech`, with an idempotency key per failure event so one failure opens one ticket.
 - Parts-runner flow: fetch the part, deliver to a safe point near the machine, reroute the affected package.
 - Part number is verified against the catalog by code before any order.
+- Synthetic failure log generated separately from the simulator dynamics, history-based diagnosis (retrieval of similar cases) and offline predictor calibration (ADR-020).
+- MCP tool `create_purchase_order` against a simulated procurement table when stock is zero, idempotent per failure event.
 
 Exit
 - E6: three failure modes on one machine, seeded onset. Report lead time before failure, false alarms, missed failures, wrong part orders, against a fixed-threshold baseline.

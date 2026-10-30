@@ -4,7 +4,7 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 
 | # | Priority | Task | Owner | Status |
 |---|---|---|---|---|
-| 1 | P1 | Push `main`, then each stacked branch in the order listed in LASTCONTEXT.md with `git push -u origin <branch>`, and open each PR against the previous branch. Push after every finished branch from now on | M | pending |
+| 1 | P1 | Push `main` (maintainer, once), then push each stacked branch in the order listed in LASTCONTEXT.md and open each PR against the previous branch. Agents may do the branch pushes and PRs since ADR-022; they never push `main`. Push after every finished branch from now on | M, A | pending |
 | 2 | P1 | Confirm `ci.yml` runs green on GitHub | M | pending |
 | 3 | P1 | Review the 11 stacked branches and merge them in order with merge commits | M | pending |
 | 4 | P1 | Verify balances, expiry dates and rate limits in each provider console (Meta, Baseten, Modal, Vertex) | M | pending |
@@ -24,5 +24,11 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 18 | P4 | Tag demo images with the commit in the deploy script (compose uses `dev` locally) | A | backlog |
 | 19 | P2 | Set branch protection on the repository by hand: require pull request review and code owner review, block force pushes. CODEOWNERS is a weak control until then | M | pending |
 | 20 | P2 | Open /hooks in Claude Code to review and trust the project hooks in .claude/settings.json | M | pending |
-| 21 | P1 | Next agent task: branch `docs/design-extensions` (sensing, missions, failure history). Prompt in LASTCONTEXT.md | A | next |
-| 22 | P2 | Approve or reject numpy as a runtime dependency for `waggle.sim`. The agent asks again in `docs/design-extensions` and does not add it before approval | M | pending |
+| 21 | P1 | Superseded by row 23. Was: Phase 1 part 1 plan approval. Prompt in LASTCONTEXT.md. `docs/design-extensions` is done | A | next |
+| 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim` (Phase 1 prompt). Agent adds it with uv pin, README line and this row updated when branch 1 is built | A | approved |
+| 23 | P1 | Execute `docs/PHASE1_BRIEF.md` in branch order B0 to B8 (B1 and the contract of B3 partly exist, see its status notes). Stop points: after B0 and after B8 | A | next |
+| 24 | P1 | Review the hooks diff and approve the settings change after B0 (`chore/push-guard-hardening`). Restore `.claude/settings.json` by hand when required | M | pending |
+| 25 | P1 | Gates G1 Oct 30 night, G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night: read the progress report and decide what to cut from the contingency order in AGENTS.md section 18 | M | pending |
+| 26 | P2 | After B8: decide whether to approve FastAPI, uvicorn and the JavaScript toolchain (Node, Vite, TypeScript, three) for viewer v0 | M | pending |
+| 27 | P2 | Install gitleaks locally (it is not installed; B0 pre-push check fails closed without it) | M | pending |
+| 28 | P3 | Verify CEGIS and LLM-Modulo as prior art before ADR-023 cites them | A | pending |

@@ -127,3 +127,76 @@ Decision:
 - There is no rule that guard and court use different providers. Everything fails closed, so an outage of one provider degrades to escalation, never to approval. This is tested for each provider with the mock provider.
 
 Consequences: a correlated court may agree on a mistake, and E4 reports how often. A guard outage raises the escalation rate.
+
+## ADR-018: Sensing model and predictive caution
+
+Status: proposed. Designed, not implemented.
+
+Context: a fast layer that reads ground truth hides what a real robot cannot see around a blind corner. The detector that scores E1 must stay exact.
+
+Decision:
+- Robots perceive through a simulated 2D lidar: ray casting against walls, racks and moving entities, with range, angular resolution, noise, dropout and occlusion, all seeded. The fast layer reads only what the lidar detects. The exact detector keeps using ground truth and never feeds the control code.
+- Optional variant: human beacons that are visible around corners.
+- Prediction: constant velocity extrapolation of each detected object, then the closest point of approach (time and distance) compared with the robot's stopping distance. Prediction can only add restrictions earlier. The worst-case separation envelope of the fast layer stays the floor.
+- No learned model. Camera and vision stay out of the control loop.
+- Lidar dropout or a stale scan makes the layer assume the worst case (conservative default, watchdog).
+
+Consequences: E1 compares ground truth, lidar only and lidar with beacons, and envelope only against envelope with prediction. The lidar needs array math, so numpy as a runtime dependency of `waggle.sim` was approved by the maintainer (PENDING 22).
+
+## ADR-019: Missions and handoff
+
+Status: proposed. Designed, not implemented.
+
+Context: a repair needs a part carried by one robot to a technician robot. Two robots and two tasks must agree on one delivery.
+
+Decision:
+- A mission is a small task graph with dependency edges. A task is eligible only when its dependencies are done.
+- A handoff is an event with an idempotency key at a rendezvous zone (capacity one, lease with fencing token). The dependent task becomes eligible exactly once, however many times the delivery is reported.
+- If the carrier dies, its lease expires, the task is reassigned, and the fencing check blocks the stale carrier.
+- Inter-robot messages stay schema-validated, screened as untrusted and bounded by turns and budget.
+
+Consequences: E2 gains a handoff chaos test with a no-fencing baseline. Threat T14 covers spoofed or duplicated handoffs.
+
+## ADR-020: Failure history and purchase orders
+
+Status: proposed. Designed, not implemented.
+
+Context: diagnosis improves with similar past cases, and a zero-stock part needs an order.
+
+Decision:
+- A synthetic failure log (`failure_history`), generated separately from the simulator's degradation dynamics. The two never share parameters. It serves retrieval of similar cases in diagnosis and offline calibration of the predictor.
+- MCP tool `create_purchase_order` writes to a simulated procurement table (`purchase_orders`) when stock is zero. It is idempotent per failure event. The part number is verified against the catalog in code before any order.
+- Retrieved cases are untrusted text. They inform the ticket and never widen access.
+
+Consequences: E6 reports diagnosis accuracy with and without the history, wrong part orders and duplicate purchase orders. Threat T16 covers duplicates.
+
+## ADR-021: Simulation conventions
+
+Status: proposed.
+
+Context: Phase 1 builds the simulator that every experiment depends on. Reproducible runs and a clean split between ground truth and what control sees are the base of E1.
+
+Decision:
+- Units and step: SI units (meters, seconds, radians). The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D (Three.js) and the FPV vision check renders the 3D scene. Fixed step dt = 0.025 s (40 Hz), one constant that every layer reads, never a wall clock. Every actuation delay must be an integer multiple of dt (the forklift 0.15 s is 6 ticks). The loader rejects a config that breaks this. The lidar runs at 10 Hz, every 4 ticks.
+- Seeds: one root seed per run. Independent streams per entity and per subsystem come from numpy `SeedSequence.spawn`, so adding an entity does not change the other streams. A generator is built only from a spawned child, with `default_rng(child)`.
+- Determinism scan: a test parses the sources of `waggle.sim` and `waggle.control` with `ast` and rejects global `random`, `time`, `datetime`, network, `os.urandom`, `uuid`, `secrets`, global numpy random functions, `np.random.seed`, `default_rng` without a `SeedSequence` child, builtin `hash()` on strings, and iteration over a set when building state or the hash.
+- State hash: a canonical serialization with sorted keys and floats rounded to a fixed number of decimals (documented next to the code). No golden hash values are committed. Determinism tests compare two runs in the same process. Every result file records the numpy version and the platform.
+- Reproduction scope: exact reproduction holds on the same platform and numpy version. Published results come from the cloud run (Linux).
+- Ground truth versus observation: `waggle.control` never reads ground truth. It reads only the types in `waggle.sim.observations`. That module is a leaf: it imports nothing from the project, and `waggle/sim/__init__.py` imports nothing, because import-linter also flags indirect chains. The contract `control-no-ground-truth` forbids `waggle.control` from importing `world`, `entities`, `engine`, `detector` and `sensors` in `waggle.sim`.
+- Detector conventions: closed sets, so an exact touch counts as contact. Contact is a collision. Separation below the declared margin is a violation. The human footprint is a disc or an oriented rectangle, declared per scenario.
+
+Consequences: results are comparable run to run on one platform and are not claimed bit-identical across platforms. The lidar rate and the delay rule are checked at load time, not at run time.
+
+## ADR-022: Agents push task branches and open pull requests
+
+Status: accepted (maintainer decision, 2026-10-29). It supersedes the "the maintainer pushes" part of AGENTS.md section 2.
+
+Context: this is a hackathon with a fixed deadline, and waiting for the maintainer to push each branch and open each PR slows delivery.
+
+Decision:
+- Agents push their own task branch and open the PR with `gh pr create`, using the PR text from AGENTS.md section 2.
+- Unchanged: agents never merge, never push to `main` or `master`, never force push, never delete remote refs, never create or change remote repositories. The maintainer reviews and merges.
+- The PreToolUse guard (`tools/hooks/safety_guard.py`) allows a plain `git push` and denies force flags, `+` and `:` refspecs, delete flags and any push whose target is `main` or `master`. A bare `git push` while checked out on `main` is not detected by the guard, and committing to `main` stays forbidden.
+- Before each push the agent runs `uv run ci` and checks the diff for secrets and held-out results (AGENTS.md section 2, Git rule 11).
+
+Consequences: a pushed secret cannot be taken back by deleting a later commit, so the pre-push check is mandatory. Branch protection (PENDING 19) is now the main control on `main`.

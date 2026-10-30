@@ -22,11 +22,13 @@ flowchart TB
     subgraph SIM["Simulator: seeded tick loop, ground truth"]
         WORLD[Robots, humans, machines, telemetry]
         DETECT[Exact collision and separation detector]
+        LIDAR[Simulated 2D lidar and optional beacons]
     end
 
     subgraph FAST["Fast control loop: every tick, no LLM"]
         THRESH[Telemetry thresholds to hazard geofence]
         ENV[Stopping-distance and separation envelope, e-stop, watchdog]
+        PRED[Closest point of approach predictor, can only restrict]
     end
 
     subgraph SLOW["Async governance pipeline"]
@@ -37,11 +39,12 @@ flowchart TB
         ADV[Per-robot advisors: safety, organizer]
         PLANNER[Fleet planner: optional, event driven]
         VALID[Deterministic validator: feasibility, leases, bounds]
+        HANDOFF[Mission graph and handoff at a rendezvous zone]
     end
 
     subgraph MCP["Isolated MCP server"]
         AUTH[Chassis identity, allowlist, schemas, rate limit, audit]
-        TOOLS[move, pick, deliver, reserve_part, dispatch_tech]
+        TOOLS[move, pick, deliver, reserve_part, dispatch_tech, create_purchase_order]
     end
 
     subgraph DB["PostgreSQL + pgvector"]
@@ -49,6 +52,7 @@ flowchart TB
         TASKS[Tasks, events, inbox]
         AUD[Audit, LLM call log]
         KB[Manuals, SOPs]
+        HIST[Failure history, purchase orders]
     end
 
     CMD -->|transcript or text| GUARD
@@ -60,6 +64,9 @@ flowchart TB
     WORLD -.->|context change| PLANNER
     PLANNER -->|proposal| VALID --> AUTH
     WORLD -->|telemetry| THRESH --> ENV
+    WORLD --> LIDAR -->|detections only| PRED --> ENV
+    HANDOFF -->|idempotency key and fencing token| AUTH
+    HIST --> DIAG
     THRESH -.->|event, parallel| DIAG --> DIR
     LEASE --> ENV
     ENV -->|verifies every motion command| WORLD
@@ -67,6 +74,24 @@ flowchart TB
     WORLD --> MAP
     KB --> DIAG
 ```
+
+## Sensing and prediction
+
+Designed, not implemented (ADR-018).
+
+- The simulator owns ground truth. Robots perceive through a simulated 2D lidar: rays against walls, racks and moving entities, with range, angular resolution, noise, dropout and occlusion, all seeded. Optional human beacons are visible around corners.
+- The fast layer reads detections only. The exact detector in the simulator keeps using ground truth for scoring.
+- Predictor: constant velocity extrapolation of each detected object and the closest point of approach (time and distance), compared with the robot's stopping distance. A predicted conflict lowers the speed cap earlier. It never raises it. The worst-case separation envelope is the floor.
+- Failure mode: a missing or stale scan assumes the worst case and the watchdog stops the robot. No learned model. Camera and vision are not in the control loop.
+
+## Missions and handoff
+
+Designed, not implemented (ADR-019).
+
+- A mission is a small task graph with dependency edges. A dependent task is eligible only when its predecessors are done.
+- A handoff happens at a rendezvous zone with capacity one, held by a lease with a fencing token. The handoff event carries an idempotency key, so the dependent task becomes eligible exactly once.
+- If the carrier dies, the lease expires, the task is reassigned and the fencing check rejects the stale carrier.
+- Inter-robot messages use a fixed schema, are screened as untrusted and are bounded.
 
 ## Control path versus governance path
 
@@ -83,6 +108,23 @@ Parameters per robot class (simulator assumptions, to be calibrated and document
 | forklift | 1.5 | 0.8 | 0.15 |
 | parts runner | 1.8 | 1.5 | 0.10 |
 | tech repair | 1.2 | 1.5 | 0.10 |
+
+Kinematics are non-holonomic (assumptions to calibrate, no claim of any standard):
+
+| Class | Model | Parameter |
+|---|---|---|
+| forklift | bicycle model | minimum turning radius 2.5 m, wheelbase 1.6 m |
+| carrier | differential drive | maximum angular speed 1.5 rad/s |
+| parts runner | differential drive | maximum angular speed 1.8 rad/s |
+| tech repair | differential drive | maximum angular speed 1.2 rad/s |
+
+The footprint is an oriented rectangle that sweeps along the curved path. The detector uses the swept footprint. A robot cannot exceed its minimum turning radius or maximum angular speed, so a forklift at full speed cannot clear a blind corner that a carrier can.
+
+Optional forklift parameter `load_raised`: multiplies max speed by 0.6 and the decel limit by 0.7. Both factors are assumptions to calibrate.
+
+## Route planner
+
+Deterministic, no LLM (designed, not implemented). A* on the aisle graph with a fixed tie-break. One-lane aisles are zones with capacity one, reserved through leases with fencing tokens. A robot that cannot get a lease waits or replans. A deadlock counter is reported in E2.
 
 Formulas:
 - Stopping distance: `S_stop = v*t_r + v^2/(2a)`.
@@ -136,7 +178,7 @@ Each transition is an event row. Retries carry an attempt number and an idempote
 - Audit: intent row before forwarding (write fails means call denied). Result row after execution, linked by correlation id.
 - Per-call timeout on the client so a denied request cannot hang it.
 
-Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `reserve_part`, `dispatch_tech`, `open_ticket`, `get_task`, `get_inventory`.
+Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `reserve_part`, `dispatch_tech`, `open_ticket`, `get_task`, `get_inventory`, `create_purchase_order` (designed, not implemented).
 
 ## Court
 
@@ -167,7 +209,7 @@ Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `rese
 
 ## Data model (summary)
 
-`robots`, `robot_identities`, `zones`, `tasks`, `task_events`, `machines`, `machine_telemetry` (sampled), `spare_parts`, `maintenance_tickets` (unique idempotency key), `mcp_audit` (intent and result rows), `llm_calls`, `knowledge_chunks` (pgvector), `operator_inbox`.
+`robots`, `robot_identities`, `zones`, `tasks`, `task_events`, `machines`, `machine_telemetry` (sampled), `spare_parts`, `maintenance_tickets` (unique idempotency key), `failure_history` (synthetic, separate from the simulator dynamics), `purchase_orders` (unique idempotency key per failure event), `mcp_audit` (intent and result rows), `llm_calls`, `knowledge_chunks` (pgvector), `operator_inbox`.
 
 ## Observability
 

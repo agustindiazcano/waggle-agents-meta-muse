@@ -21,6 +21,8 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
 | Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) | Yes, bounded |
 | Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback | Yes, optional |
+| Sensing and prediction | Simulated 2D lidar, closest point of approach predictor that can only restrict (designed, not implemented) | No |
+| Missions and handoff | Task graph, handoff with idempotency key and fencing token (designed, not implemented) | No |
 | Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part | RAG text only |
 
 ## Models used
@@ -52,7 +54,10 @@ Scaling to thousands of agents is reported as an extrapolation from a stub calib
 
 - Simulation only. Latencies of the fast layer are code latencies inside the simulator, not real-time guarantees on hardware.
 - The separation formula is inspired by speed and separation monitoring. This project does not claim compliance with any standard.
-- Vision inputs are synthetic renders, so ground truth is known by construction.
+- The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D and the FPV vision check renders the 3D scene.
+- Exact reproduction of a run holds on the same platform and numpy version. Published results come from the cloud run (Linux).
+- The lidar is simulated (designed, not implemented). Failure history and purchase orders are synthetic (designed, not implemented).
+- Vision inputs are synthetic renders, not in the control loop, so ground truth is known by construction.
 - Human behavior is scripted or adversarial by design, not learned from real data.
 
 ## Repository layout
