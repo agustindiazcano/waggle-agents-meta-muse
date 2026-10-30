@@ -195,3 +195,10 @@ def test_experiments_define_unavoidable_at_spawn_and_master_seed() -> None:
 )
 def test_adr_021_derives_the_stopping_distance_bound(term: str) -> None:
     assert term in _adr(21), f"ADR-021 lacks {term!r}"
+
+
+@pytest.mark.parametrize(
+    "term", ["no false negatives", "0.005 rad", "brute-force fine-substep", "1.58 mm"]
+)
+def test_adr_021_records_the_detector_tolerance(term: str) -> None:
+    assert term in _adr(21), f"ADR-021 lacks {term!r}"
