@@ -128,3 +128,27 @@ def test_five_dropped_rays_in_a_row_put_a_point_at_the_robot() -> None:
     clusters = perception.clusters_from_scan(scan, PP)
     nearest = min(float(np.min(np.hypot(c.points[:, 0], c.points[:, 1]))) for c in clusters)
     assert nearest == 0.0
+
+
+WALL_FACE = np.array([[3.0, -1.0, 3.0, 1.0]])
+
+
+def test_points_on_a_mapped_segment_are_on_the_map() -> None:
+    points = np.array([[3.0, -0.4], [3.05, 0.0], [2.95, 0.5]])
+    assert perception.on_static_map(points, WALL_FACE, PP.map_margin)
+
+
+def test_one_point_off_the_map_makes_the_cluster_not_on_it() -> None:
+    points = np.array([[3.0, -0.4], [3.4, 0.0]])
+    assert not perception.on_static_map(points, WALL_FACE, PP.map_margin)
+
+
+def test_an_empty_map_or_empty_cluster_is_never_on_the_map() -> None:
+    points = np.array([[3.0, 0.0]])
+    assert not perception.on_static_map(points, np.empty((0, 4)), PP.map_margin)
+    assert not perception.on_static_map(np.empty((0, 2)), WALL_FACE, PP.map_margin)
+
+
+def test_a_point_past_the_end_of_a_segment_is_measured_to_its_end() -> None:
+    points = np.array([[3.0, 1.5]])
+    assert not perception.on_static_map(points, WALL_FACE, PP.map_margin)
