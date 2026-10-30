@@ -103,8 +103,9 @@ def _perceive(state: ControlState, inputs: ControlInputs, pp: PerceptionParams) 
         others: list[Points] = []
         for cluster in perception.clusters_from_scan(scan, pp):
             world = frames.to_world(cluster.points, odom)
-            if perception.is_human_candidate(cluster, pp) and not perception.on_static_map(
-                world, inputs.map_segments, pp.map_margin
+            if perception.is_human_candidate(cluster, pp) and not (
+                inputs.use_occlusion
+                and perception.on_static_map(world, inputs.map_segments, pp.map_margin)
             ):
                 human_clusters.append(world)
                 detections.append(_cluster_detection(world, scan.tick))

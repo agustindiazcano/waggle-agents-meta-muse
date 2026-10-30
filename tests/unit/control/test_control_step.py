@@ -324,7 +324,7 @@ RACK_PIECE = [(3.0, -0.3, 3.2, 0.3)]
 
 
 def _with_map(scan: LidarScan, segments: np.ndarray) -> ControlInputs:
-    return replace(_inputs(scan=scan), map_segments=segments)
+    return replace(_inputs(scan=scan), map_segments=segments, use_occlusion=True)
 
 
 def test_a_small_cluster_on_the_map_is_structure_and_not_a_track() -> None:
@@ -351,3 +351,9 @@ def test_a_human_far_from_the_mapped_wall_is_still_a_track() -> None:
     state, out = _run(ControlState(), _with_map(scan, RACK_FACE))
     assert len(state.tracks.tracks) == 1
     assert out.reason is Reason.ENVELOPE
+
+
+def test_the_map_filter_is_off_without_the_occlusion_cap() -> None:
+    inputs = replace(_with_map(make_scan(boxes=RACK_PIECE), RACK_FACE), use_occlusion=False)
+    state, _ = _run(ControlState(), inputs)
+    assert len(state.tracks.tracks) == 1
