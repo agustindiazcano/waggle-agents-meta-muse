@@ -23,7 +23,7 @@ from collections.abc import Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from waggle.sim import robots, state
+from waggle.sim import hullgap, robots, state
 from waggle.sim.engine import System
 from waggle.sim.params import HUMAN_RADIUS, RobotParams
 
@@ -221,19 +221,93 @@ class Detector:
 
         return step
 
-    def _bump(
-        self,
-        flags: NDArray[np.int64],
-        counts: NDArray[np.int64],
-        key: tuple[int, int],
-        kind: int,
-        now: bool,
-        counter: int,
+    def _half_diagonals(self) -> tuple[Floats, Floats, Floats]:
+        half_l = np.array([p.length / 2 for p in self.params])
+        half_w = np.array([p.width / 2 for p in self.params])
+        return half_l, half_w, np.hypot(half_l, half_w)
+
+    def _human_gaps(
+        self, pose: Floats, prev_pose: Floats, humans: Floats, prev_h: Floats
+    ) -> Floats:
+        """Swept robot-human gaps (n, m), infinity where the broad phase rules a pair out."""
+        n, m = len(self.params), len(humans)
+        gaps = np.full((n, m), math.inf)
+        if m == 0:
+            return gaps
+        half_l, half_w, diag = self._half_diagonals()
+        move_i = np.hypot(*(pose[:, :2] - prev_pose[:, :2]).T)
+        move_h = np.hypot(*(humans - prev_h).T)
+        near = np.hypot(*(prev_h[None, :, :] - prev_pose[:, None, :2]).transpose(2, 0, 1))
+        reach = diag[:, None] + self.radius + move_i[:, None] + move_h[None, :]
+        rows, cols = np.nonzero(near <= reach + max(self.margin, self.near_margin) + 1e-6)
+        if len(rows) == 0:
+            return gaps
+        a, b = prev_pose[rows], pose[rows]
+        end = b[:, :2] - (humans[cols] - prev_h[cols])
+        turn = hullgap.wrap(b[:, 2] - a[:, 2])
+        count = hullgap.pieces_needed(turn, MAX_ROTATION_PER_PIECE)
+        step, lo, hi, offsets = hullgap.ragged_pieces(count)
+        frac = np.concatenate([lo, hi])[:, None]
+        owner = np.concatenate([step, step])
+        x = a[owner, 0:1] + (end[owner, 0:1] - a[owner, 0:1]) * frac
+        y = a[owner, 1:2] + (end[owner, 1:2] - a[owner, 1:2]) * frac
+        poses = np.concatenate([x, y, a[owner, 2:3] + turn[owner, None] * frac], axis=1)
+        c = hullgap.corners(half_l[rows][owner], half_w[rows][owner], poses)
+        total = len(step)
+        hull = np.concatenate([c[:total], c[total:]], axis=1)
+        gap = hullgap.hull_point_gap(hull, prev_h[cols][step])
+        cut = hullgap.sagitta(diag[rows][step], turn[step] / count[step])
+        piece = gap - self.radius - cut
+        gaps[rows, cols] = np.minimum.reduceat(piece, offsets)
+        return gaps
+
+    def _robot_contacts(self, pose: Floats, prev_pose: Floats) -> Floats:
+        """Boolean (n, n) of robot pairs i < k in contact over the step."""
+        n = len(self.params)
+        hit = np.zeros((n, n), dtype=bool)
+        if n < 2:
+            return hit
+        half_l, half_w, diag = self._half_diagonals()
+        move = np.hypot(*(pose[:, :2] - prev_pose[:, :2]).T)
+        far = np.hypot(*(prev_pose[None, :, :2] - prev_pose[:, None, :2]).transpose(2, 0, 1))
+        reach = diag[:, None] + diag[None, :] + move[:, None] + move[None, :]
+        rows, cols = np.nonzero(np.triu(far <= reach + 1e-6, k=1))
+        if len(rows) == 0:
+            return hit
+        a1, b1, a2, b2 = prev_pose[rows], pose[rows], prev_pose[cols], pose[cols]
+        t1 = hullgap.wrap(b1[:, 2] - a1[:, 2])
+        t2 = hullgap.wrap(b2[:, 2] - a2[:, 2])
+        count = hullgap.pieces_needed(np.maximum(np.abs(t1), np.abs(t2)), MAX_ROTATION_PER_PIECE)
+        step, lo, hi, offsets = hullgap.ragged_pieces(count)
+        frac = np.concatenate([lo, hi])[:, None]
+        owner = np.concatenate([step, step])
+        end1 = b1[:, :2] - (b2[:, :2] - a2[:, :2])
+        x = a1[owner, 0:1] + (end1[owner, 0:1] - a1[owner, 0:1]) * frac
+        y = a1[owner, 1:2] + (end1[owner, 1:2] - a1[owner, 1:2]) * frac
+        moving = np.concatenate([x, y, a1[owner, 2:3] + t1[owner, None] * frac], axis=1)
+        still = np.concatenate(
+            [a2[owner, 0:1], a2[owner, 1:2], a2[owner, 2:3] + t2[owner, None] * frac], axis=1
+        )
+        total = len(step)
+
+        def hulls(index: NDArray[np.int64], poses: Floats) -> Floats:
+            c = hullgap.corners(half_l[index][owner], half_w[index][owner], poses)
+            return np.concatenate([c[:total], c[total:]], axis=1)
+
+        cut1 = hullgap.sagitta(diag[rows][step], t1[step] / count[step])
+        cut2 = hullgap.sagitta(diag[cols][step], t2[step] / count[step])
+        gap = hullgap.hull_hull_gap(hulls(rows, moving), hulls(cols, still), cut1 + cut2)
+        best = np.minimum.reduceat(gap - cut1 - cut2, offsets)
+        hit[rows, cols] = best <= 0.0
+        return hit
+
+    @staticmethod
+    def _record(
+        flags: NDArray[np.int64], counts: NDArray[np.int64], now: Floats, counter: int
     ) -> None:
-        i, j = key
-        if now and flags[i, j, kind] == 0:
-            counts[counter] += 1
-        flags[i, j, kind] = 1 if now else 0
+        """Count the pairs that just entered the condition and store the new flag."""
+        counts[counter] += int(np.count_nonzero(now & (flags == 0)))
+        flags[...] = now
 
     def _check(self, sim: state.SimState) -> None:
         pose = np.asarray(sim.arrays["robot_pose"], dtype=np.float64)
@@ -242,34 +316,12 @@ class Detector:
         prev_h = np.asarray(sim.arrays["det_prev_human_pos"], dtype=np.float64).reshape(-1, 2)
         flags = np.asarray(sim.arrays["det_flags"], dtype=np.int64)
         counts = np.asarray(sim.arrays["det_counts"], dtype=np.int64)
-        n, m = len(self.params), len(humans)
-        reach_margin = max(self.margin, self.near_margin)
-        for i, p in enumerate(self.params):
-            diag = math.hypot(p.length, p.width) / 2
-            move_i = float(np.hypot(*(pose[i, :2] - prev_pose[i, :2])))
-            for j in range(m):
-                move_h = float(np.hypot(*(humans[j] - prev_h[j])))
-                near = float(np.hypot(*(prev_h[j] - prev_pose[i, :2])))
-                if near > diag + self.radius + move_i + move_h + reach_margin + 1e-6:
-                    gap = math.inf
-                else:
-                    gap = robot_human_gap(
-                        p, prev_pose[i], pose[i], prev_h[j], humans[j], self.radius
-                    )
-                hit = is_contact(gap)
-                self._bump(flags, counts, (i, j), _CONTACT, hit, 0)
-                self._bump(flags, counts, (i, j), _VIOLATION, is_violation(gap, self.margin), 2)
-                self._bump(flags, counts, (i, j), _NEAR, (not hit) and gap < self.near_margin, 3)
-            for k in range(i + 1, n):
-                q = self.params[k]
-                far = float(np.hypot(*(prev_pose[k, :2] - prev_pose[i, :2])))
-                move_k = float(np.hypot(*(pose[k, :2] - prev_pose[k, :2])))
-                reach = diag + math.hypot(q.length, q.width) / 2 + move_i + move_k
-                if far > reach + 1e-6:
-                    hit = False
-                else:
-                    gap = robot_robot_gap(p, prev_pose[i], pose[i], q, prev_pose[k], pose[k])
-                    hit = is_contact(gap)
-                self._bump(flags, counts, (i, m + k), _CONTACT, hit, 1)
+        m = len(humans)
+        gaps = self._human_gaps(pose, prev_pose, humans, prev_h)
+        hit = gaps <= 0.0
+        self._record(flags[:, :m, _CONTACT], counts, hit, 0)
+        self._record(flags[:, :m, _VIOLATION], counts, gaps < self.margin, 2)
+        self._record(flags[:, :m, _NEAR], counts, (~hit) & (gaps < self.near_margin), 3)
+        self._record(flags[:, m:, _CONTACT], counts, self._robot_contacts(pose, prev_pose), 1)
         prev_pose[:] = pose
         prev_h[:] = humans
