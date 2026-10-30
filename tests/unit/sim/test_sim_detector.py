@@ -258,3 +258,23 @@ def test_system_is_deterministic_and_fork_safe() -> None:
 
 def test_default_human_radius_is_the_documented_disc() -> None:
     assert detector.DEFAULT_HUMAN_RADIUS == HUMAN_RADIUS
+
+
+def test_a_long_stay_in_contact_counts_once_and_a_second_contact_counts_again() -> None:
+    stay = [(0.0, 0.0)] * 40  # parked on top of the human for 40 ticks
+    sim, det = build([(-3.0, 0.0), *stay, (-3.0, 0.0), (-3.0, 0.0), *stay], (0.0, 0.0))
+    sim.run(90)
+    counts = det.counts(sim.state)
+    assert counts["human_collisions"] == 2, "two contiguous runs of ticks are two episodes"
+    assert counts["separation_violations"] == 2
+
+
+def test_robot_robot_contact_over_many_ticks_is_one_episode() -> None:
+    det = detector.Detector([UNIT, UNIT], separation_margin=0.5, near_miss_margin=0.8)
+    poses = np.array([[0.0, 0.0, 0.0], [0.2, 0.0, 0.0]])  # overlapping and not moving
+    arrays = det.initial_arrays(poses, np.zeros((0, 2)))
+    arrays["robot_pose"] = poses.copy()
+    arrays["human_pos"] = np.zeros((0, 2))
+    sim = engine.Engine(1, arrays, [det.system()], {})
+    sim.run(50)
+    assert det.counts(sim.state)["robot_collisions"] == 1

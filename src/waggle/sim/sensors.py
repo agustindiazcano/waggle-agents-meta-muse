@@ -83,7 +83,7 @@ def _cross(a: Floats, b: Floats) -> Floats:
     return np.asarray(a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0], dtype=np.float64)
 
 
-def _segment_hits(origin: Floats, dirs: Floats, segments: Floats) -> Floats:
+def segment_hits(origin: Floats, dirs: Floats, segments: Floats) -> Floats:
     """Distance along each ray to the nearest segment, infinity when there is none."""
     if len(segments) == 0:
         return np.full(len(dirs), np.inf)
@@ -137,9 +137,20 @@ def lidar_scan(
         else np.zeros((0, 4))
     )
     nearest = np.minimum(
-        _segment_hits(origin, dirs, np.vstack([static, box_segments])),
+        segment_hits(origin, dirs, np.vstack([static, box_segments])),
         _disc_hits(origin, dirs, discs),
     )
+    return finish_scan(nearest, config, rng, tick, robot_index)
+
+
+def finish_scan(
+    nearest: Floats, config: LidarConfig, rng: np.random.Generator, tick: int, robot_index: int
+) -> LidarScan:
+    """Turn the true first-hit distances into a scan: noise, range clip and dropout.
+
+    Two draws per ray, always, so the stream advances the same amount whatever the geometry.
+    """
+    angle_increment = 2 * math.pi / config.n_rays
     noise = rng.normal(0.0, 1.0, size=config.n_rays)
     dropped = rng.random(config.n_rays) < config.dropout_probability
     returned = nearest < config.max_range

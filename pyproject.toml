@@ -105,6 +105,9 @@ forbidden_modules = [
     "waggle.sim.humans",
     "waggle.sim.detector",
     "waggle.sim.sensors",
+    "waggle.sim.hullgap",
+    "waggle.sim.fastlidar",
+    "waggle.sim.rollout",
     "waggle.sim.scenarios",
     "waggle.sim.scripted",
 ]
