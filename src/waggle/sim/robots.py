@@ -142,7 +142,7 @@ def footprint_corners(p: RobotParams, x: float, y: float, theta: float) -> Float
     return np.asarray(local @ rotation.T + np.array([x, y]), dtype=np.float64)
 
 
-def _hull(points: Floats) -> Floats:
+def convex_hull(points: Floats) -> Floats:
     """Convex hull, counter-clockwise (Andrew's monotone chain)."""
     pts = sorted({(float(a), float(b)) for a, b in points})
     if len(pts) <= 2:
@@ -177,5 +177,5 @@ def swept_footprint(p: RobotParams, poses: Floats) -> list[Floats]:
     pieces: list[Floats] = []
     for a, b in itertools.pairwise(path):
         both = np.vstack([footprint_corners(p, *a), footprint_corners(p, *b)])
-        pieces.append(_hull(both))
+        pieces.append(convex_hull(both))
     return pieces
