@@ -1,12 +1,12 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (night: B0 to B17, ADR-030, E1 metrics and the A+C decision are on main; Phase 3 pure logic is on a local branch).
+Updated: 2026-10-30 (night: B0 to B17, ADR-030, E1 metrics, the A+C decision and the pure Phase 3 model (ADR-031) are on main).
 
 ## Done last
 - `main` has B0 to B17 and PR 34 (ADR-030): a cluster whose points all lie within `map_margin` 0.25 m of a mapped segment is structure, active only when the occlusion cap is on (maintainer option C).
 - PR 35 (`exp/e1-speed-metrics`, open): E1 now also records `distance_m` and `speed_sums` per run, and the report shows "Distance vs no_control" and "Mean speed / request" next to tasks. Reason: tasks fall to 0 when a slowed robot misses its first waypoint in a short scene. No limit or stored result changed. `uv run ci` 1363 passed.
 - E1 dev run 4 (cloud run 41100237070, PR 35 branch) is in the table below. Correction of an earlier reading: the cliff explains single scenes (S01 to S08), but over all 90 runs the speed cost is real. Mean speed over request is 0.16 to 0.19 and distance over no_control is 0.18 to 0.22, in line with the task ratio. Dense scenes with many robots (S13 to S18) weigh most in these sums.
-- Another agent works in parallel on Phase 3 in its own worktree, branch `feat/coordination-leases`: leases, fencing tokens and corridor locking as pure functions in `src/waggle/coordination/`, plus an ADR-031 or higher. It does not touch `waggle.control`, `waggle.experiments`, `waggle.sim` or these context files. When it reports, add its PENDING rows and ADR number here.
+- Phase 3 pure model (PR 37, ADR-031) is on main: leases, fencing tokens and atomic corridor admission, tests with Hypothesis, import contract for `waggle.coordination`. Implemented, not evaluated.
 
 ### E1 development runs (runs with a human collision out of 90 | tasks as ratio to no_control)
 
@@ -57,12 +57,12 @@ Reading: the controlled fleet moves at about a fifth of the requested speed in a
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS.md (ADR-024, ADR-026, ADR-028 with its addendum, ADR-030), docs/EXPERIMENTS.md (E1), docs/GOTCHAS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
 
 State: main has B0 to B17, the map filter (ADR-030, active only with the occlusion cap), the E1 distance and speed columns, and the A+C decision (ADR-028 addendum): the fast layer keeps other robots as static structure, the dense scene cost is reported by scenario, traffic is for Phase 3. E1 dev runs exist only as cloud artifacts (run 41100237070 has the latest files), not in results/e1/dev/. Held-out seeds were not run.
-A parallel agent built the Phase 3 pure logic in the worktree ../waggle-feat-leases, branch feat/coordination-leases (leases, fencing tokens, corridor locks, 2 commits, not pushed when this was written). Check if it was pushed and if a PR exists. Do not edit that worktree from another session unless the maintainer says so.
+The Phase 3 pure model is on main (PR 37, ADR-031): waggle.coordination.leases and corridors, deterministic, no clock, no database. It is implemented, not evaluated: no persistence, no integration with the simulator, no E2. The worktree ../waggle-feat-leases may be removed after the merge (git worktree remove, the maintainer decides).
 
 Never merge, never push to main, no force push. Do not commit `index (1).html`. Tests first with the failing run shown, Conventional Commits, uv run ci green before each push (3 to 6 minutes, or push and let the CI run decide).
 
 Tasks, ask the maintainer which first if unsure:
-1. Review the Phase 3 branch if a PR exists: pure functions only, no clock, no database, a failure-path test per function, ADR number not clashing with ADR-030. Add its PENDING rows to PENDING.md.
+1. Phase 3 next step: integrate the pure corridor model with the simulator so that S03 is resolved by admission before entry, then measure E2 on development seeds in the cloud. The database layer and any migration need the maintainer first (AGENTS section 15).
 2. Commit the E1 development results from the cloud artifacts into results/e1/dev/ (gh run download 41100237070), in a branch docs/e1-dev-results. Check there is no secret or large file. Held-out files are never committed by an agent.
 3. Next block of the contingency order (AGENTS section 18, item 3): the MCP boundary and the guard. Design first, as an ADR: per-chassis token, SHA-256 hash with constant time compare, allowlist per tool, strict schemas with physical bounds, audit intent row before forwarding. Do not write the database layer or a migration, and ask before touching the fencing check, the MCP boundary code beyond the design, the audit logic or .env.
 4. The LLM smoke test branch needs PENDING 4, 5, 9 and 12 first (balances, caps, HTTP client, Meta credits by Nov 4 9 PM ET). Do not start it until the maintainer confirms them. No paid API call before that.
