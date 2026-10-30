@@ -15,7 +15,7 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
 | Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
-| Coordination | Pure leases and atomic corridor reservations with monotonic fencing tokens (implemented, not evaluated). Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests. Database transactions and E2 evaluation are not implemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
+| Coordination | Pure leases and atomic corridor reservations with monotonic fencing tokens (implemented, not evaluated). Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. Database transactions and the full chaos evaluation remain unimplemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
 | Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
 | Input screening | Deterministic sanitizers, then an LLM guard classifier (Muse Glimmer) on all untrusted input, fails closed | Yes, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
