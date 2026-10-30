@@ -439,3 +439,71 @@ def test_cli_malformed_input_asks() -> None:
     result = _cli("{not json")
     assert result.returncode == 0
     assert json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"] == "ask"
+
+
+REMOTE_AND_GH_DENIED = [
+    "git remote add evil https://example.com/x.git",
+    "git remote set-url origin https://example.com/x.git",
+    "git remote remove origin",
+    "git remote rm origin",
+    "git -C . remote add evil u",
+    "gh api repos/o/r -X DELETE",
+    "gh api repos/o/r --method PATCH",
+    "gh api -XPOST repos/o/r/issues",
+    "gh api repos/o/r --method=PUT",
+    "gh repo delete o/r --yes",
+    "gh repo create x",
+    "gh secret set KEY",
+    "gh auth login",
+    "gh auth refresh",
+    "gh release create v1",
+    "gh release delete v1",
+    "python -c \"import os; os.system('git push origin main')\"",
+    "node -e \"require('child_process').exec('git remote add x y')\"",
+    'powershell -Command "gh api repos/o/r -X DELETE"',
+]
+
+
+@pytest.mark.parametrize("command", REMOTE_AND_GH_DENIED)
+def test_remote_changes_gh_writes_and_interpreter_wrappers_are_denied(command: str) -> None:
+    assert decide(bash(command)) == "deny", command
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "git remote -v",
+        "git remote get-url origin",
+        "gh api repos/o/r",
+        "gh api repos/o/r --method GET",
+        "gh repo view",
+        "gh auth status",
+        "gh release list",
+        "gh pr list",
+        'python -c "print(1)"',
+    ],
+)
+def test_read_only_remote_and_gh_commands_are_allowed(command: str) -> None:
+    assert decide(bash(command)) == "allow", command
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        PUSH + " 2>&1",
+        PUSH + " 2>&1 | tail -5",
+        PUSH + " 2>&1 | head -20",
+        PUSH + " | tail -3",
+        PUSH + " 2>/dev/null",
+        PR_CREATE + " 2>&1 | tail -3",
+    ],
+)
+def test_stderr_redirection_and_head_tail_pipes_do_not_block_an_allowed_push(
+    command: str,
+) -> None:
+    assert decide(bash(command), pre_push=lambda: []) == "allow", command
+
+
+def test_a_stderr_merge_does_not_hide_a_denied_push() -> None:
+    assert decide(bash("git push --force origin feat/x 2>&1 | tail -5")) == "deny"
+    assert decide(bash("git push origin main 2>&1")) == "deny"
