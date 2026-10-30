@@ -22,6 +22,12 @@ LOAD_RAISED_SPEED_FACTOR = 0.6
 LOAD_RAISED_DECEL_FACTOR = 0.7
 """Forklift with the load raised: the deceleration limit is multiplied by this (assumption)."""
 
+HUMAN_RADIUS = 0.30
+"""Default human footprint: a disc of this radius in meters (assumption)."""
+
+HUMAN_WALK_SPEED = 1.4
+"""Assumed human walking and approach speed in m/s (assumption)."""
+
 _TICK_TOLERANCE = 1e-9
 _KINEMATICS = ("bicycle", "differential")
 
