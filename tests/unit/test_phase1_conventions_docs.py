@@ -202,3 +202,10 @@ def test_adr_021_derives_the_stopping_distance_bound(term: str) -> None:
 )
 def test_adr_021_records_the_detector_tolerance(term: str) -> None:
     assert term in _adr(21), f"ADR-021 lacks {term!r}"
+
+
+def test_architecture_documents_the_lidar_defaults() -> None:
+    section = _read("docs/ARCHITECTURE.md").split("## Sensing and prediction", 1)[1]
+    section = section.split("\n## ", 1)[0]
+    for term in ("360 rays", "12 m", "0.02 m", "dropout probability 0.01", "10 Hz", "NaN"):
+        assert term in section, term
