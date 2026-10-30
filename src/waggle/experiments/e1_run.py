@@ -62,8 +62,10 @@ def run_one(spec: RunSpec) -> dict[str, Any]:
         rig = ControlRig(config, fleet, scenarios.load_map(scenario.map_name))
         sim.systems.insert(1, rig.system())
     total = scenario.duration_ticks if spec.ticks is None else spec.ticks
+    distance = 0.0
     for _ in range(total):
         sim.step()
+        distance += float(np.abs(np.asarray(sim.state.arrays["robot_speed"])).sum()) * DT
     tasks = int(np.asarray(sim.state.arrays["script_tasks"], dtype=np.int64).sum())
     record: dict[str, Any] = {
         "scenario": spec.scenario,
@@ -74,6 +76,8 @@ def run_one(spec: RunSpec) -> dict[str, Any]:
         "tasks_completed": tasks,
         "counts": det.counts(sim.state),
         "final_hash": sim.state_hash(),
+        "distance_m": distance,
+        "speed_sums": {"requested": 0.0, "limited": 0.0},
         "stop_episodes": {},
         "false_stops": 0,
         "latency": e1_stats.latency_summary([]),
@@ -81,6 +85,10 @@ def run_one(spec: RunSpec) -> dict[str, Any]:
     if rig is not None:
         record["stop_episodes"] = dict(sorted(rig.tally.stop_episodes.items()))
         record["false_stops"] = rig.tally.false_stops
+        record["speed_sums"] = {
+            "requested": rig.tally.requested_speed,
+            "limited": rig.tally.limited_speed,
+        }
         record["latency"] = e1_stats.latency_summary(rig.tally.latency_us)
     return record
 
@@ -146,6 +154,23 @@ def _stops(runs: Sequence[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _distance(runs: Sequence[dict[str, Any]]) -> float | None:
+    """Metres travelled by all robots, or None when a run record has no distance."""
+    if any("distance_m" not in r for r in runs):
+        return None
+    return float(sum(r["distance_m"] for r in runs))
+
+
+def _speed_ratio(runs: Sequence[dict[str, Any]]) -> float | None:
+    """Limited over requested speed, summed over control calls. None without a control layer."""
+    if any("speed_sums" not in r for r in runs):
+        return None
+    requested = sum(r["speed_sums"]["requested"] for r in runs)
+    if requested <= 0.0:
+        return None
+    return float(sum(r["speed_sums"]["limited"] for r in runs)) / float(requested)
+
+
 def assemble(config: E1Config, runs: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Build the result document of one configuration from its run records."""
     hours = sum(r["ticks"] for r in runs) * DT / 3600.0
@@ -191,6 +216,8 @@ def assemble(config: E1Config, runs: Sequence[dict[str, Any]]) -> dict[str, Any]
         ],
         "tasks_completed": tasks,
         "tasks_per_simulated_hour": tasks / hours if hours > 0 else 0.0,
+        "distance_m": _distance(runs),
+        "speed_ratio": _speed_ratio(runs),
         "stops": _stops(runs),
         "latency": _latency(runs),
         "failing_seeds": sorted(failing, key=lambda f: (f["scenario"], f["seed"])),
@@ -205,7 +232,9 @@ def assemble(config: E1Config, runs: Sequence[dict[str, Any]]) -> dict[str, Any]
         "prompt_versions": {},
         "notes": "Development seeds only. Every control value is an assumption, not calibrated. "
         "Reflex limits (watchdog, geofence, e-stop) are off in E1. Throughput is waypoints "
-        "reached per simulated hour.",
+        "reached per simulated hour. distance_m is the path length of all robots and speed_ratio "
+        "the limited over the requested speed per control call; both read slowing without the "
+        "waypoint cliff.",
     }
 
 
