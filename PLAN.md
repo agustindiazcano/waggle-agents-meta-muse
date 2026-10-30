@@ -201,6 +201,8 @@ Exit
 
 Starts after branch B8 of `docs/PHASE1_BRIEF.md`. Sources in `web/`, WebSocket bridge in `src/waggle/api`. Primitives, top-down camera, envelope, lidar and ghost overlays, one-click chaos buttons that call the scenario format with seeds, deterministic replay with a state hash bar. The web server, WebSocket and JavaScript dependencies need maintainer approval first (PENDING 26).
 
+Status (2026-10-30): a standalone mockup (`index (1).html`, Three.js 0.186.1, its own mock simulation in JavaScript) was built by the maintainer with another agent. It stays as it is and is not committed until the real logic is done (control, MCP, court, advisors). The refactor into `web/` fed by a state snapshot per tick from `waggle.sim` comes after that. The mock simulation must be removed then, because the renderer owns nothing (ADR-002).
+
 ## Phase 8: Delivery
 
 Tasks
