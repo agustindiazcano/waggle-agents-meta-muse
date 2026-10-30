@@ -157,9 +157,15 @@ def test_architecture_has_planner_tiers_and_llm_guard() -> None:
 def test_experiments_e3_e4_e5() -> None:
     exp = _read("docs/EXPERIMENTS.md")
     assert "Muse Glimmer" in exp
-    for config in ("A: single Muse Spark", "B: two Muse members", "C: default Muse court"):
+    configs = (
+        "A: single Muse Spark",
+        "B: two Muse members",
+        "C: three Muse members with identical prompts",
+        "D: three Muse members with role-specialized checklists",
+        "E: two Muse members plus a non-Muse member on Vertex",
+    )
+    for config in configs:
         assert config in exp, config
-    assert "D: Muse Spark, Muse Spark Open and a non-Muse member on Vertex" in exp
     assert "fleet planner" in exp
     assert "label policy is fixed before the run" in exp
 
