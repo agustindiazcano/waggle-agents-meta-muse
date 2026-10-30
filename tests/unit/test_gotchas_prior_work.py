@@ -53,3 +53,9 @@ def test_prior_work_states_ideas_only() -> None:
     assert "only ideas and method are reused" in lowered
     assert "no code" in lowered
     assert "no text" in lowered
+
+
+def test_stacked_pr_merge_order_trap_is_recorded() -> None:
+    text = (ROOT / "docs" / "GOTCHAS.md").read_text(encoding="utf-8")
+    assert "### Merging a stacked pull request chain in the wrong order loses work" in text
+    assert "retarget" in text

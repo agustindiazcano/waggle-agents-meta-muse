@@ -58,6 +58,12 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 - Symptom: an outage or a rate limit removes the input guard and a court member at the same moment.
 - What to do: plan for the shared failure. Fail closed on untrusted input when the guard cannot score it, and escalate when a court member times out. Record the providers of each layer in the result file.
 
+## Git and pull requests
+
+### Merging a stacked pull request chain in the wrong order loses work
+- Symptom: every PR of a stack shows as merged, but main lacks most of the commits. PR 5 was merged into main first, then PRs 6 to 14 were merged into their stacked base branches, which were already closed with respect to main. `main` was 36 commits behind the top of the stack.
+- What to do: merge a stack from the top down, or retarget each PR to main before merging it. After merging, run `git rev-list --count origin/main..origin/<top-branch>`: it must be 0. If it is not, open one PR from the top branch to main.
+
 ## Docker
 
 ### Healthchecks that start a heavy process keep an idle service busy
