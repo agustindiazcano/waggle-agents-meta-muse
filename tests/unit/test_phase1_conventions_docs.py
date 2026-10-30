@@ -229,3 +229,21 @@ def test_experiments_define_the_no_control_baseline(term: str) -> None:
     text = _read("docs/EXPERIMENTS.md")
     section = text.split("## E1:", 1)[1].split("\n## ", 1)[0]
     assert term in section, f"E1 lacks {term!r}"
+
+
+def test_readme_numbers_come_from_result_files() -> None:
+    """Every figure the README gives for the no-control baseline is read from its result file."""
+    import glob
+    import json
+
+    readme = _read("README.md")
+    baseline = sorted(glob.glob(str(ROOT / "results" / "e1" / "dev" / "no_control_*.json")))[-1]
+    data = json.loads(Path(baseline).read_text(encoding="utf-8"))
+    assert Path(baseline).name in readme
+    assert f"{data['counts']['human_collisions']} human collisions" in readme
+    assert f"{data['counts']['robot_collisions']} robot collisions" in readme
+    speed = sorted(glob.glob(str(ROOT / "results" / "e8" / "dev" / "sim_speed_*.json")))[-1]
+    rollout = json.loads(Path(speed).read_text(encoding="utf-8"))["scenario_rollout"]
+    assert Path(speed).name in readme
+    assert f"{rollout['seconds_per_rollout']:.1f} s" in readme
+    assert "code speed on this machine" in readme
