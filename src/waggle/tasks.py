@@ -72,9 +72,31 @@ def contracts() -> int:
     return _run([_import_contracts()])
 
 
+STAMP_NAME = "waggle_ci_stamp"
+
+
+def _git_output(*args: str) -> str:
+    git = shutil.which("git")
+    if git is None:
+        return ""
+    result = subprocess.run([git, *args], capture_output=True, text=True, check=False, timeout=15)
+    return (result.stdout or "").strip() if result.returncode == 0 else ""
+
+
+def _write_ci_stamp() -> None:
+    """Record the HEAD sha under .git/ after a green run, for the pre-push check."""
+    head = _git_output("rev-parse", "HEAD")
+    git_dir = _git_output("rev-parse", "--git-dir")
+    if head and git_dir:
+        (Path(git_dir) / STAMP_NAME).write_text(head + "\n", encoding="utf-8")
+
+
 def ci() -> int:
-    """Run every CI check in the same order as the workflow."""
-    return _run([*LINT, *TYPE, *TEST, _import_contracts()])
+    """Run every CI check in the same order as the workflow. A green run writes the stamp."""
+    code = _run([*LINT, *TYPE, *TEST, _import_contracts()])
+    if code == 0:
+        _write_ci_stamp()
+    return code
 
 
 def _placeholder(name: str) -> Callable[[], int]:
