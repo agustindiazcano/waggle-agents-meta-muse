@@ -35,5 +35,8 @@ forbidden_modules =
     fixture_pkg.sim.humans
     fixture_pkg.sim.detector
     fixture_pkg.sim.sensors
+    fixture_pkg.sim.hullgap
+    fixture_pkg.sim.fastlidar
+    fixture_pkg.sim.rollout
     fixture_pkg.sim.scenarios
     fixture_pkg.sim.scripted

@@ -301,3 +301,39 @@ Structured logs, `llm_calls` table with tokens, latency, cost per call, per-task
 ## Deployment
 
 Docker Compose on one VM for the live demo. Local `docker compose up` for development and for every experiment script.
+
+## Rollout performance (Phase 2, B10)
+
+Status: measured. All figures are code speed on this machine (a 4-core laptop CPU with throttling), not a real-time guarantee on hardware. Scenario S14 seed 1, 10 robots, 4 humans, 1800 ticks (45 s), 4500 lidar scans.
+
+Profile before (cProfile, exact lidar, commit 3ce1c3e), own time by component: core 3.0 s, detector 7.4 s, lidar 6.4 s, other 3.4 s. Profiled total 20.1 s.
+
+| Top functions before | Component | Calls | Own seconds |
+|---|---|---|---|
+| sensors.py:82(_cross) | lidar | 13590 | 3.32 |
+| detector.py:238(_check) | detector | 1810 | 2.57 |
+| detector.py:51(_point_segment) | detector | 112600 | 2.06 |
+| sensors.py:114(lidar_scan) | lidar | 4530 | 1.34 |
+| sensors.py:86(_segment_hits) | lidar | 4530 | 1.19 |
+| robots.py:136(footprint_corners) | core | 61178 | 1.11 |
+| detector.py:66(_orient) | detector | 426324 | 1.10 |
+| ~:0(<built-in method numpy.array>) | other | 237107 | 0.75 |
+
+Profile after (fast lidar), own time by component: core 1.4 s, detector 2.1 s, lidar 2.8 s, other 2.3 s. Profiled total 8.6 s.
+
+| Top functions after | Component | Calls | Own seconds |
+|---|---|---|---|
+| sensors.py:82(_cross) | lidar | 8601 | 0.84 |
+| sensors.py:86(segment_hits) | lidar | 2867 | 0.66 |
+| detector.py:264(_robot_contacts) | detector | 1810 | 0.51 |
+| ~:0(<method 'reduce' of 'numpy.ufunc' objects>) | other | 18376 | 0.50 |
+| fastlidar.py:145(_box_distances) | lidar | 453 | 0.37 |
+| humans.py:61(_edge_distance) | core | 21640 | 0.32 |
+| sensors.py:146(finish_scan) | lidar | 4530 | 0.31 |
+| hullgap.py:38(_edges) | detector | 1759 | 0.30 |
+
+Result files: `results/e8/dev/profile_*.json` and `results/e8/dev/before_after_20261030.json`.
+
+Measured speed, four alternating runs in one session: before 16.7 to 24.6 s (median 18.0 s), after 5.6 to 7.1 s (median 5.7 s). Speedup 3.1x by median and 3.0x by minimum. The same rollout varied between 3.6 s and 8.9 s inside one session, so single figures are not comparable across sessions. K = 5 variants in 5 processes took 14.0 s against 23.9 s serial (1.7x): the CPU has 4 physical cores and each job slowed from about 4.5 s to 13 s when five ran together.
+
+Targets (not claims): 2.0 s per rollout and about 5 s for K = 5. Both are missed. The minimum speedup of 5x is missed, so work stops here for the maintainer's decision (see ADR-025).

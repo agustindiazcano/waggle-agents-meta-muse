@@ -32,6 +32,7 @@ from waggle.sim.observations import LidarScan
 from waggle.sim.params import HUMAN_RADIUS, RobotParams
 
 Floats = NDArray[np.float64]
+Bools = NDArray[np.bool_]
 _PARALLEL = 1e-12
 _WINDOW_MARGIN_RAYS = 1.5
 DEFAULT_CELL = 0.05
@@ -184,7 +185,10 @@ def fleet_scans(
             np.minimum.at(flat, rows[pair] * n + ray, t)
     if len(corners) > 1:
         centers = corners.mean(axis=1)
-        radii = np.max(np.hypot(*(corners - centers[:, None, :]).transpose(2, 0, 1)), axis=1)
+        offsets = corners - centers[:, None, :]
+        radii = np.asarray(
+            np.max(np.hypot(offsets[..., 0], offsets[..., 1]), axis=1), dtype=np.float64
+        )
         rows, cols = _candidates(poses, centers, radii, config.max_range, True)
         if len(rows):
             pair, ray, angle = _windows(poses, centers, radii, rows, cols, n)

@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from waggle.sim import detector, hullgap
+from waggle.sim import detector, hullgap, robots
 from waggle.sim.params import RobotKind, RobotParams
 
 UNIT = RobotParams(
@@ -13,12 +13,10 @@ TOLERANCE = 1e-9
 
 
 def _rect_points(pose: np.ndarray) -> np.ndarray:
-    return hullgap.corners(np.array([0.6]), np.array([0.4]), pose[None, None, :])[0, 0]
+    return np.asarray(hullgap.corners(np.array([0.6]), np.array([0.4]), pose[None, None, :])[0, 0])
 
 
 def test_corners_match_the_reference_footprint() -> None:
-    from waggle.sim import robots
-
     pose = np.array([1.3, -0.4, 0.7])
     expected = robots.footprint_corners(UNIT, *pose)
     got = hullgap.corners(np.array([0.6]), np.array([0.4]), pose[None, None, :])[0, 0]
@@ -31,7 +29,7 @@ def test_hull_point_gap_equals_the_reference_point_polygon_distance(seed: int) -
     for _ in range(40):
         pa, pb = rng.uniform(-1, 1, 3), rng.uniform(-1, 1, 3)
         points = np.vstack([_rect_points(pa), _rect_points(pb)])
-        hull = detector.robots.convex_hull(points)
+        hull = robots.convex_hull(points)
         target = rng.uniform(-3, 3, 2)
         reference = detector.point_polygon_distance(target, hull)
         got = float(hullgap.hull_point_gap(points[None], target[None])[0])
@@ -47,9 +45,7 @@ def test_hull_hull_gap_equals_the_reference_polygon_distance(seed: int) -> None:
         )
         shift = rng.uniform(-3, 3, 2)
         second = np.vstack([_rect_points(np.array([*shift, rng.uniform(-3, 3)]))] * 2)
-        reference = detector.polygon_distance(
-            detector.robots.convex_hull(first), detector.robots.convex_hull(second)
-        )
+        reference = detector.polygon_distance(robots.convex_hull(first), robots.convex_hull(second))
         got = float(hullgap.hull_hull_gap(first[None], second[None])[0])
         assert got == pytest.approx(reference, abs=TOLERANCE)
 

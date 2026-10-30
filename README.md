@@ -47,7 +47,7 @@ All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](do
 | E5 Per-robot advisors | Near-misses, false stops, tasks per hour | TBD | TBD | not run |
 | E6 Predictive maintenance | Lead time, false alarms, missed failures vs fixed threshold | TBD | TBD | not run |
 | E7 Multimodal | ID error rate in transcription, label verification accuracy | TBD | TBD | not run |
-| E8 Latency and cost | Fast loop latency, cost per task, LLM latency distribution | 10 robots, 4 humans, 45 s simulated, lidar included: 22.3 s per rollout, 81 ticks/s, code speed on this machine (`sim_speed_20261030T023049Z.json`) | TBD | simulator only |
+| E8 Latency and cost | Fast loop latency, cost per task, LLM latency distribution | 10 robots, 4 humans, 45 s simulated, lidar included: 12.2 s per rollout with the exact lidar and 5.8 s (median) with the rollout lidar, code speed on this machine (`sim_speed_20261030T121253Z.json`). Same-session before and after, four alternating runs: median 18.0 s to 5.7 s, 3.1x (`before_after_20261030.json`). Targets of 2.0 s and 5x are missed | TBD | simulator only |
 
 Scaling to thousands of agents is reported as an extrapolation from a stub calibrated on measured latency distributions. It is not a claim about real fleets.
 

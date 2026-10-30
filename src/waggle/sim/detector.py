@@ -28,6 +28,7 @@ from waggle.sim.engine import System
 from waggle.sim.params import HUMAN_RADIUS, RobotParams
 
 Floats = NDArray[np.float64]
+Bools = NDArray[np.bool_]
 DEFAULT_HUMAN_RADIUS = HUMAN_RADIUS
 MAX_ROTATION_PER_PIECE = 0.005
 """A step is cut so that no piece turns by more than this many radians."""
@@ -261,7 +262,7 @@ class Detector:
         gaps[rows, cols] = np.minimum.reduceat(piece, offsets)
         return gaps
 
-    def _robot_contacts(self, pose: Floats, prev_pose: Floats) -> Floats:
+    def _robot_contacts(self, pose: Floats, prev_pose: Floats) -> Bools:
         """Boolean (n, n) of robot pairs i < k in contact over the step."""
         n = len(self.params)
         hit = np.zeros((n, n), dtype=bool)
@@ -303,7 +304,7 @@ class Detector:
 
     @staticmethod
     def _record(
-        flags: NDArray[np.int64], counts: NDArray[np.int64], now: Floats, counter: int
+        flags: NDArray[np.int64], counts: NDArray[np.int64], now: Bools, counter: int
     ) -> None:
         """Count the pairs that just entered the condition and store the new flag."""
         counts[counter] += int(np.count_nonzero(now & (flags == 0)))

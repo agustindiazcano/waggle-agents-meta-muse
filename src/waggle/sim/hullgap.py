@@ -15,6 +15,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 Floats = NDArray[np.float64]
+Bools = NDArray[np.bool_]
 _EDGE_TOLERANCE = 1e-12
 _MIN_EDGE = 1e-9
 _I, _J = np.triu_indices(8, k=1)
@@ -35,7 +36,7 @@ def _cross(ax: Floats, ay: Floats, bx: Floats, by: Floats) -> Floats:
     return np.asarray(ax * by - ay * bx, dtype=np.float64)
 
 
-def _edges(points: Floats) -> tuple[Floats, Floats, Floats]:
+def _edges(points: Floats) -> tuple[Floats, Floats, Bools]:
     """Counter-clockwise hull edges of point sets (B, 8, 2).
 
     Returns the edge start and vector (B, 28, 2) and a validity mask (B, 28).
@@ -55,7 +56,7 @@ def _edges(points: Floats) -> tuple[Floats, Floats, Floats]:
     return np.where(flip, end, start), np.where(flip, -vec, vec), valid
 
 
-def _point_edge_distance(pts: Floats, start: Floats, vec: Floats, valid: Floats) -> Floats:
+def _point_edge_distance(pts: Floats, start: Floats, vec: Floats, valid: Bools) -> Floats:
     """Smallest distance (B, K) from points (B, K, 2) to the valid edges (B, 56)."""
     rel = pts[:, :, None, :] - start[:, None, :, :]  # (B, K, 56, 2)
     denom = np.sum(vec * vec, axis=-1)[:, None, :]
@@ -65,7 +66,7 @@ def _point_edge_distance(pts: Floats, start: Floats, vec: Floats, valid: Floats)
     return np.asarray(np.min(np.where(valid[:, None, :], dist, np.inf), axis=2), dtype=np.float64)
 
 
-def _inside(pts: Floats, start: Floats, vec: Floats, valid: Floats) -> Floats:
+def _inside(pts: Floats, start: Floats, vec: Floats, valid: Bools) -> Bools:
     """Whether each point (B, K, 2) is inside or on the hull given by its valid edges."""
     rel = pts[:, :, None, :] - start[:, None, :, :]
     side = _cross(vec[:, None, :, 0], vec[:, None, :, 1], rel[..., 0], rel[..., 1])
@@ -80,7 +81,7 @@ def hull_point_gap(hull: Floats, point: Floats) -> Floats:
     return np.where(inside, 0.0, _point_edge_distance(pts, start, vec, valid)[:, 0])
 
 
-def _clearance(start: Floats, vec: Floats, valid: Floats, other: Floats) -> Floats:
+def _clearance(start: Floats, vec: Floats, valid: Bools, other: Floats) -> Floats:
     """Largest distance (B,) by which one valid edge keeps every point of ``other`` on its right.
 
     Negative or zero when no edge separates them. This is a lower bound on the hull gap.

@@ -262,6 +262,14 @@ Decision:
 
 Consequences: B3 (feat/sim-core) implements the state layout and measures the empty loop and a fork rollout. If the measured cost makes ADR-023 doubtful, work stops and the maintainer is asked.
 
+Deviations applied in Phase 2 (B10), each measured:
+1. Detector: the broad phase is vectorized over all robot-human and robot-robot pairs, and the exact narrow phase (swept pieces of at most 0.005 rad, closed sets, rotation sagitta) runs in numpy batches in `waggle.sim.hullgap` with pieces laid out without padding. A pair is first checked by the best separating hull edge, and the exact distance is computed only when that clearance is within the sagitta bound. The scalar functions stay as the reference in `waggle.sim.detector` and the tests compare both. Check: the no-control E1 baseline on the 90 development runs gives identical counts and identical final state hashes before and after.
+2. Rollout lidar (`waggle.sim.fastlidar`): static ranges are cached per position cell (0.05 m) on a world-frame grid of 720 rays, and a scan is a rotation of the cached vector by the heading. Human discs and robot rectangles are resolved per scan with exact ray tests only inside the angular window of their bounding circle and combined by minimum; this part equals the reference to 1e-9. Quantization: the origin moves by at most 0.035 m and the heading by at most 0.25 degrees. Measured on S14 robot poses against the exact static ranges: median error 0, p90 below 5 cm, p99 below 15 cm, and about 0.1 percent of rays differ by over 1 m (a different surface at a rack corner). Grazing rays can exceed the first-order bound (shift + range times heading shift) divided by the cosine of the incidence angle. The cache is keyed by cell only, so results do not depend on scan history. The exact lidar stays the one used in execution.
+3. Parallel variants (`waggle.sim.rollout`): `concurrent.futures.ProcessPoolExecutor`, each variant a pure function of its spec, results returned in spec order. Tests show parallel equals serial.
+Not done: kinematics were already vectorized across robots; the human walkers and the waypoint driver are still per-entity Python (about 0.8 s of 5.7 s).
+Outcome: 3.1x measured against a 5x minimum and 2.0 s per rollout target. Stopped for the maintainer. Options: accept 5.7 s per rollout, lower K, H or the lidar rate for the live demo only, vectorize the human walkers and driver (about 10 percent more), or run variants in the cloud on more cores.
+
+
 ## ADR-029: Test tiers, rollout optimization approval and approved dependencies
 
 Context: the maintainer answered PENDING 26, 29, 30 and 31 at the start of Phase 2.

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from waggle.sim import fastlidar, robots, scenarios, sensors
+from waggle.sim.observations import LidarScan
 from waggle.sim.params import HUMAN_RADIUS, ROBOT_PARAMS, RobotKind
 
 CONFIG = sensors.LidarConfig()
@@ -24,7 +25,7 @@ def _fleet(seed: int, count: int = 5) -> tuple[np.ndarray, np.ndarray, np.ndarra
 
 def _reference(
     static: np.ndarray, poses: np.ndarray, discs: np.ndarray, corners: np.ndarray, seed: int
-) -> list[sensors.LidarScan]:
+) -> list[LidarScan]:
     return [
         sensors.lidar_scan(
             static, discs, np.delete(corners, i, axis=0), poses[i], CONFIG,
@@ -40,7 +41,7 @@ def _fast(
     discs: np.ndarray,
     corners: np.ndarray,
     seed: int,
-) -> list[sensors.LidarScan]:
+) -> list[LidarScan]:
     rngs = [np.random.default_rng(seed + i) for i in range(len(poses))]
     return fastlidar.fleet_scans(cache, poses, discs, corners, rngs, 0)
 
@@ -148,7 +149,7 @@ def test_the_rollout_system_scans_every_robot_on_lidar_ticks_only() -> None:
     scenario = scenarios.generate("S14", 1)
     sim, _ = scenarios.build_engine(scenario, {"lidar": len(scenario.robots)})
     static = sensors.static_segments(scenarios.load_map(scenario.map_name))
-    sink: list[sensors.LidarScan] = []
+    sink: list[LidarScan] = []
     cache = fastlidar.StaticScanCache(static, CONFIG)
     params_list = [ROBOT_PARAMS[r.kind] for r in scenario.robots]
     sim.systems.append(fastlidar.rollout_system(cache, params_list, sink.extend))
