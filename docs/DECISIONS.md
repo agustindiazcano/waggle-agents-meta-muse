@@ -236,7 +236,7 @@ Consequences: a new package `waggle.validation` (Phase 5C), a rollout cost that 
 
 ## ADR-024: Occlusion-aware speed cap
 
-Status: proposed. Designed, not implemented.
+Status: proposed. Implemented in B14, see the end of this record.
 
 Context: a lidar cannot see behind a rack. A robot that follows only the detected objects can meet a human who steps out of the shadow.
 
@@ -247,6 +247,14 @@ Decision:
 - The cap can only reduce speed. The cost is throughput, reported in E1.
 
 Consequences: E1 adds the configuration swept footprint plus occlusion cap. The same cap runs inside the rollout of ADR-023.
+
+Implementation in B14 (`waggle.control.occlusion`), with the choices the first text left open:
+- Boundary: for every pair of neighbouring rays whose ranges differ by at least `jump_min` (0.6 m, twice the human radius, assumption), the nearer return is a boundary point. A ray with no return reads `max_range`, so a rack edge next to open floor is a boundary. Dropped rays are filled as in perception and make no boundary. The phantom sits at the boundary point itself, the nearest place a person can be hidden, so the cap is conservative.
+- Cap: the largest `v` with `interp_k * S_sep(v)` at most the swept path gap to the boundary points. The footprint is widened by `v_h * (t_r + v / a)`, the distance a person covers toward the path while the robot reacts and brakes from `v`. Without this a corner beside the lane would never bind. The widening uses existing quantities, no new parameter. The widened condition stays monotone in `v`, so the root is found by 40 bisections, which is deterministic.
+- Boundaries farther than `interp_k * S_sep(v_max)` plus the widening and the footprint are dropped before the search.
+- `speed_floor` (0.05 m/s, assumption) sizes the turning circle of a differential drive when the requested speed is near zero. A request that does not move (speed zero) is not limited, so a rotation in place is not blocked by this cap.
+- The cap enters `limit_command` through `extra_limits`, the same arbiter, reason `OCCLUSION`. It is switched on by `ControlInputs.use_occlusion` (configurations 5 to 7 of ADR-028).
+- Known cost: a single return at a wall end is also a human candidate for perception (extent zero), so the envelope can already slow the robot there. E1 reports both as false stops.
 
 ## ADR-025: Simulator state layout and rollout cost
 
