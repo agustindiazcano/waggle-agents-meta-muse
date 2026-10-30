@@ -58,3 +58,17 @@ def test_adr_022_records_the_push_guard_conditions() -> None:
         "gh pr merge",
     ):
         assert term in adr, term
+
+
+def test_agents_section_3_is_cloud_first() -> None:
+    text = _read("AGENTS.md")
+    section = text.split("## 3.")[1].split("## 4.")[0]
+    for term in (
+        "Cloud first",
+        "push the branch",
+        "GitHub",
+        "very fast",
+        "dev seeds",
+        "pre-push check",
+    ):
+        assert term in section, term
