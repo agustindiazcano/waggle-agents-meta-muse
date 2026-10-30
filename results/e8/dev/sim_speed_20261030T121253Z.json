@@ -1,0 +1,76 @@
+{
+  "experiment": "e8",
+  "seed_set": "dev",
+  "label": "code speed on this machine, not a real-time guarantee on hardware",
+  "commit": "df76e5c4f8844d2aecc4612ede53969c07cd7290",
+  "date": "2026-10-30T12:10:44+00:00",
+  "numpy_version": "2.5.4",
+  "platform": "Windows-11-10.0.22631-SP0",
+  "dt": 0.025,
+  "entities": 10,
+  "empty_loop": {
+    "ticks": 100000,
+    "ticks_per_second": 2642175.4653604655
+  },
+  "fork_rollout": {
+    "forks": 5,
+    "ticks_per_fork": 1800,
+    "ticks_per_second": 17047.440198321783,
+    "note": "toy random-walk system; the 10-robot rollout with lidar is measured in B8"
+  },
+  "scenario_rollout": {
+    "lidar_mode": "exact",
+    "label": "code speed on this machine, not a real-time guarantee on hardware",
+    "scenario": "S14",
+    "seed": 1,
+    "robots": 10,
+    "humans": 4,
+    "forks": 5,
+    "ticks_per_fork": 1800,
+    "lidar_scans_per_rollout": 4500,
+    "ticks_per_second": 147.37084758570398,
+    "seconds_per_rollout": 12.214084600098431,
+    "seconds_per_fork": [
+      12.131440499797463,
+      11.683345899917185,
+      13.06668240018189,
+      10.851675200276077,
+      13.33727900031954
+    ],
+    "seconds_per_rollout_median": 12.131440499797463,
+    "seconds_per_rollout_min": 10.851675200276077
+  },
+  "scenario_rollout_fast_lidar": {
+    "lidar_mode": "fast",
+    "label": "code speed on this machine, not a real-time guarantee on hardware",
+    "scenario": "S14",
+    "seed": 1,
+    "robots": 10,
+    "humans": 4,
+    "forks": 5,
+    "ticks_per_fork": 1800,
+    "lidar_scans_per_rollout": 4500,
+    "ticks_per_second": 305.0727786370022,
+    "seconds_per_rollout": 5.900231439992785,
+    "seconds_per_fork": [
+      8.895295300055295,
+      5.929752999916673,
+      3.990587200038135,
+      5.778907000087202,
+      4.906614699866623
+    ],
+    "seconds_per_rollout_median": 5.778907000087202,
+    "seconds_per_rollout_min": 3.990587200038135
+  },
+  "variants": {
+    "label": "code speed on this machine, not a real-time guarantee on hardware",
+    "scenario": "S14",
+    "variants": 5,
+    "ticks_per_variant": 1800,
+    "workers": 5,
+    "serial_seconds": 23.904894299805164,
+    "parallel_seconds": 14.013762100134045,
+    "speedup": 1.705815621029881,
+    "results_equal": true
+  }
+}

@@ -21,6 +21,9 @@ GROUND_TRUTH = [
     "humans",
     "detector",
     "sensors",
+    "hullgap",
+    "fastlidar",
+    "rollout",
     "scenarios",
     "scripted",
 ]

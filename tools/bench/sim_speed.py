@@ -18,7 +18,7 @@ from typing import Any
 
 import numpy as np
 
-from waggle.sim import engine, params, robots, scenarios, sensors, state
+from waggle.sim import engine, fastlidar, params, robots, rollout, scenarios, sensors, state
 
 LABEL = "code speed on this machine, not a real-time guarantee on hardware"
 
@@ -102,25 +102,49 @@ def _lidar_system(sim_robots: int) -> engine.System:
 _STATIC: dict[str, object] = {}
 
 
-def measure_scenario_rollout(scenario_id: str, seed: int, ticks: int, forks: int) -> dict[str, Any]:
-    """Time fork rollouts of a scenario with the lidar of every robot included."""
+def _scans(lidar: Any, sink: list[Any], mode: str) -> int:
+    return len(sink) if mode == "fast" else int(lidar.counter["scans"])
+
+
+def measure_scenario_rollout(
+    scenario_id: str, seed: int, ticks: int, forks: int, lidar_mode: str = "exact"
+) -> dict[str, Any]:
+    """Time fork rollouts of a scenario with the lidar of every robot included.
+
+    ``lidar_mode`` is ``exact`` (the reference lidar of execution) or ``fast`` (cached static
+    ranges plus exact dynamic hits, the rollout lidar of ADR-025).
+    """
     if min(ticks, forks) < 1:
         raise ValueError("ticks and forks must be at least 1")
+    if lidar_mode not in ("exact", "fast"):
+        raise ValueError("lidar_mode must be exact or fast")
     scenario = scenarios.generate(scenario_id, seed)
     n = len(scenario.robots)
     sim, _ = scenarios.build_engine(scenario, {"lidar": n})
-    _STATIC["segments"] = sensors.static_segments(scenarios.load_map(scenario.map_name))
-    _STATIC["params"] = [params.ROBOT_PARAMS[r.kind] for r in scenario.robots]
-    lidar = _lidar_system(n)
+    static = sensors.static_segments(scenarios.load_map(scenario.map_name))
+    robot_params = [params.ROBOT_PARAMS[r.kind] for r in scenario.robots]
+    sink: list[Any] = []
+    if lidar_mode == "fast":
+        cache = fastlidar.StaticScanCache(static, sensors.LidarConfig())
+        lidar = fastlidar.rollout_system(cache, robot_params, sink.extend)
+        counter = sink
+    else:
+        _STATIC["segments"], _STATIC["params"] = static, robot_params
+        lidar = _lidar_system(n)
+        counter = []
     sim.systems.append(lidar)
     sim.run(10)
-    scans_before = lidar.counter["scans"]  # type: ignore[attr-defined]
-    start = time.perf_counter()
+    scans_before = _scans(lidar, sink, lidar_mode)
+    per_fork: list[float] = []
     for _ in range(forks):
+        start = time.perf_counter()
         sim.fork().run(ticks)
-    seconds = time.perf_counter() - start
-    scans = (lidar.counter["scans"] - scans_before) // forks  # type: ignore[attr-defined]
+        per_fork.append(time.perf_counter() - start)
+    seconds = sum(per_fork)
+    scans = (_scans(lidar, sink, lidar_mode) - scans_before) // forks
+    del counter
     return {
+        "lidar_mode": lidar_mode,
         "label": LABEL,
         "scenario": scenario_id,
         "seed": seed,
@@ -131,6 +155,38 @@ def measure_scenario_rollout(scenario_id: str, seed: int, ticks: int, forks: int
         "lidar_scans_per_rollout": scans,
         "ticks_per_second": _rate(forks * ticks, seconds),
         "seconds_per_rollout": seconds / forks,
+        "seconds_per_fork": per_fork,
+        "seconds_per_rollout_median": sorted(per_fork)[len(per_fork) // 2],
+        "seconds_per_rollout_min": min(per_fork),
+    }
+
+
+def measure_variants(
+    scenario_id: str, seeds: Sequence[int], ticks: int, workers: int
+) -> dict[str, Any]:
+    """Wall time of K rollouts run serially and in ``workers`` processes, results compared.
+
+    The parallel time includes starting the worker processes and building their caches.
+    """
+    if not seeds or ticks < 1 or workers < 1:
+        raise ValueError("seeds, ticks and workers must be positive")
+    specs = [rollout.RolloutSpec(scenario_id, seed, ticks) for seed in seeds]
+    start = time.perf_counter()
+    serial = rollout.run_variants(specs, 1)
+    serial_seconds = time.perf_counter() - start
+    start = time.perf_counter()
+    parallel = rollout.run_variants(specs, workers)
+    parallel_seconds = time.perf_counter() - start
+    return {
+        "label": LABEL,
+        "scenario": scenario_id,
+        "variants": len(specs),
+        "ticks_per_variant": ticks,
+        "workers": min(workers, len(specs)),
+        "serial_seconds": serial_seconds,
+        "parallel_seconds": parallel_seconds,
+        "speedup": serial_seconds / parallel_seconds,
+        "results_equal": serial == parallel,
     }
 
 
@@ -154,10 +210,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--entities", type=int, default=10)
     parser.add_argument("--scenario-ticks", type=int, default=1_800)
     parser.add_argument("--scenario-forks", type=int, default=3)
+    parser.add_argument("--variants", type=int, default=5)
+    parser.add_argument("--workers", type=int, default=5)
     args = parser.parse_args(argv)
     data = measure(args.ticks, args.rollout_ticks, args.forks, args.entities)
     data["scenario_rollout"] = measure_scenario_rollout(
         "S14", 1, args.scenario_ticks, min(args.scenario_forks, args.forks) or 1
+    )
+    data["scenario_rollout_fast_lidar"] = measure_scenario_rollout(
+        "S14", 1, args.scenario_ticks, min(args.scenario_forks, args.forks) or 1, "fast"
+    )
+    data["variants"] = measure_variants(
+        "S14", range(1, args.variants + 1), args.scenario_ticks, args.workers
     )
     out_dir = Path(args.results_dir) / "e8" / "dev"
     out_dir.mkdir(parents=True, exist_ok=True)
