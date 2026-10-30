@@ -196,7 +196,8 @@ Context: this is a hackathon with a fixed deadline, and waiting for the maintain
 Decision:
 - Agents push their own task branch and open the PR with `gh pr create`, using the PR text from AGENTS.md section 2.
 - Unchanged: agents never merge, never push to `main` or `master`, never force push, never delete remote refs, never create or change remote repositories. The maintainer reviews and merges.
-- The PreToolUse guard (`tools/hooks/safety_guard.py`) allows a plain `git push` and denies force flags, `+` and `:` refspecs, delete flags and any push whose target is `main` or `master`. A bare `git push` while checked out on `main` is not detected by the guard, and committing to `main` stays forbidden.
+- The PreToolUse guard (`tools/hooks/safety_guard.py`) allows only `git push [-u|--set-upstream] origin <branch>` with an explicit branch named type/short-description (types feat, fix, test, docs, exp, chore, ci) that is not main or master. It denies a bare push, any other flag (force, delete, tags, all, mirror), refspecs, `HEAD` and tag names, and any push or `gh pr create` while the current branch is main or master or the HEAD is detached. `gh pr merge` is denied.
+- Before it allows a push or `gh pr create`, the guard runs `tools/ci/pre_push_check.py` (standard library only): `uv run ci` must have passed on the current HEAD (a stamp under `.git/`) with a clean working tree, gitleaks must find nothing in the commits not yet on the remote, and those commits must contain no `.env` file and nothing under `results/**/heldout/`. If gitleaks is missing or any check cannot run, the push is denied.
 - Before each push the agent runs `uv run ci` and checks the diff for secrets and held-out results (AGENTS.md section 2, Git rule 11).
 
 Consequences: a pushed secret cannot be taken back by deleting a later commit, so the pre-push check is mandatory. Branch protection (PENDING 19) is now the main control on `main`.
