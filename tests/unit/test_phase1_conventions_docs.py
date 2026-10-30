@@ -209,3 +209,23 @@ def test_architecture_documents_the_lidar_defaults() -> None:
     section = section.split("\n## ", 1)[0]
     for term in ("360 rays", "12 m", "0.02 m", "dropout probability 0.01", "10 Hz", "NaN"):
         assert term in section, term
+
+
+@pytest.mark.parametrize(
+    "term",
+    [
+        "no_control",
+        "0.5 m",
+        "0.2 m",
+        "counted as episodes",
+        "waypoint driver",
+        "results/e1/dev/",
+        "development seeds only",
+        "map A",
+        "map B",
+    ],
+)
+def test_experiments_define_the_no_control_baseline(term: str) -> None:
+    text = _read("docs/EXPERIMENTS.md")
+    section = text.split("## E1:", 1)[1].split("\n## ", 1)[0]
+    assert term in section, f"E1 lacks {term!r}"
