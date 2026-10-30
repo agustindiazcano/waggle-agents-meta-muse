@@ -46,5 +46,6 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 40 | P2 | Task metric cliff: approved by the maintainer, PR 35 adds distance and mean speed ratio to the E1 report | A | done, PR 35 open |
 | 41 | P3 | S03 head-on deadlock belongs to corridor locking (Phase 3, E2) | A | backlog |
 | 42 | P1 | Merge PR 35 (E1 distance and speed ratio) | M | pending |
-| 43 | P2 | Diagnose S14, S15, S18 stops (dense scenes). S06, S11, S12 are a human stopped in the only lane (Phase 5C, E10) | A | next |
+| 43 | P2 | S14, S15, S17, S18 stops diagnosed: robot-robot queues. S06, S11, S12 are a human stopped in the only lane (Phase 5C, E10) | A | done |
 | 44 | P2 | Phase 3 running in parallel in feat/coordination-leases (leases, fencing, corridor locking, ADR-031 or higher). Add its rows and ADR number when it reports | A | in progress |
+| 45 | P1 | Decide how the envelope treats other robots. Today they are static structure, so a follower waits for a full stopping gap behind a moving leader (speed ratio 0.04 in 30-robot scenes). Options: A keep it and report it as the cost of safety, B use the relative velocity of robot tracks for a following distance (touches the fast layer, ADR and tests needed), C leave to Phase 3 zone and corridor locking | M | pending |
