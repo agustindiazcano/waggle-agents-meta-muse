@@ -28,7 +28,12 @@ source_modules =
     fixture_pkg.control
 forbidden_modules =
     fixture_pkg.sim.world
-    fixture_pkg.sim.entities
+    fixture_pkg.sim.state
+    fixture_pkg.sim.streams
     fixture_pkg.sim.engine
+    fixture_pkg.sim.robots
+    fixture_pkg.sim.humans
     fixture_pkg.sim.detector
     fixture_pkg.sim.sensors
+    fixture_pkg.sim.scenarios
+    fixture_pkg.sim.scripted
