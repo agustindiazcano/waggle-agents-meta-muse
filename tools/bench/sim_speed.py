@@ -135,10 +135,12 @@ def measure_scenario_rollout(
     sim.systems.append(lidar)
     sim.run(10)
     scans_before = _scans(lidar, sink, lidar_mode)
-    start = time.perf_counter()
+    per_fork: list[float] = []
     for _ in range(forks):
+        start = time.perf_counter()
         sim.fork().run(ticks)
-    seconds = time.perf_counter() - start
+        per_fork.append(time.perf_counter() - start)
+    seconds = sum(per_fork)
     scans = (_scans(lidar, sink, lidar_mode) - scans_before) // forks
     del counter
     return {
@@ -153,6 +155,9 @@ def measure_scenario_rollout(
         "lidar_scans_per_rollout": scans,
         "ticks_per_second": _rate(forks * ticks, seconds),
         "seconds_per_rollout": seconds / forks,
+        "seconds_per_fork": per_fork,
+        "seconds_per_rollout_median": sorted(per_fork)[len(per_fork) // 2],
+        "seconds_per_rollout_min": min(per_fork),
     }
 
 
