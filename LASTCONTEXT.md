@@ -5,7 +5,7 @@ Updated: 2026-10-30 (B0 to B17 and the map filter on main, E1 dev run 3 done, PR
 ## Done last
 - `main` has B0 to B17 and PR 34 (ADR-030): a cluster whose points all lie within `map_margin` 0.25 m of a mapped segment is structure, active only when the occlusion cap is on (maintainer option C).
 - PR 35 (`exp/e1-speed-metrics`, open): E1 now also records `distance_m` and `speed_sums` per run, and the report shows "Distance vs no_control" and "Mean speed / request" next to tasks. Reason: tasks fall to 0 when a slowed robot misses its first waypoint in a short scene. No limit or stored result changed. `uv run ci` 1363 passed.
-- E1 dev run 4 (cloud run 41100237070 on the PR 35 branch) was still running when this was written. Read its `e1-dev-report` artifact for the two new columns; do not assume values.
+- E1 dev run 4 (cloud run 41100237070, PR 35 branch) is in the table below. Correction of an earlier reading: the cliff explains single scenes (S01 to S08), but over all 90 runs the speed cost is real. Mean speed over request is 0.16 to 0.19 and distance over no_control is 0.18 to 0.22, in line with the task ratio. Dense scenes with many robots (S13 to S18) weigh most in these sums.
 - Another agent works in parallel on Phase 3 in its own worktree, branch `feat/coordination-leases`: leases, fencing tokens and corridor locking as pure functions in `src/waggle/coordination/`, plus an ADR-031 or higher. It does not touch `waggle.control`, `waggle.experiments`, `waggle.sim` or these context files. When it reports, add its PENDING rows and ADR number here.
 
 ### E1 development runs (runs with a human collision out of 90 | tasks as ratio to no_control)
@@ -22,6 +22,20 @@ Updated: 2026-10-30 (B0 to B17 and the map filter on main, E1 dev run 3 done, PR
 | envelope_occlusion_cpa_lidar_beacons | 13 \| 0.05 | 12 \| 0.22 | 12 \| 0.22 |
 
 Run 2 showed that without the occlusion cap the filter doubles human collisions, so it is only on with the cap. Run 3 confirmed: configurations without the cap return to run 1, those with it keep 12 collisions and gain throughput. Stop episodes stay near 19000 per configuration and most count as false by definition.
+
+### E1 dev run 4: cost columns (same code as run 3, new columns)
+
+| Configuration | Tasks vs no_control | Distance vs no_control | Mean speed / request |
+|---|---|---|---|
+| radial_lidar | 0.01 | 0.08 | 0.07 |
+| envelope_oracle | 0.34 | 0.19 | 0.17 |
+| envelope_lidar | 0.11 | 0.18 | 0.16 |
+| envelope_lidar_beacons | 0.13 | 0.18 | 0.17 |
+| envelope_occlusion_lidar | 0.23 | 0.22 | 0.19 |
+| envelope_occlusion_cpa_lidar | 0.23 | 0.22 | 0.19 |
+| envelope_occlusion_cpa_lidar_beacons | 0.22 | 0.22 | 0.19 |
+
+Reading: the controlled fleet moves at about a fifth of the requested speed in aggregate. The next step is to split these sums by scenario to see which scenes (the dense ones) hold the cost.
 
 ### Why the controlled runs complete few tasks (diagnosed with traces)
 
@@ -45,7 +59,7 @@ Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS
 State: B0 to B17 and ADR-030 are on main. PR 35 (exp/e1-speed-metrics) adds distance and speed ratio to the E1 report; if it is not merged, branch from it. A parallel agent builds Phase 3 in feat/coordination-leases; do not touch src/waggle/coordination/. Never merge, never push to main, no force push. Do not commit `index (1).html`.
 
 Task, tests first with the failing run shown, uv run ci green before each push:
-1. Read the report of cloud run 41100237070 (gh run download 41100237070 -n e1-dev-report) and add its two new columns to the table in LASTCONTEXT.
+1. Split speed ratio and distance by scenario from the run 4 result files (gh run download 41100237070) to see which scenes hold the cost.
 2. Diagnose S14, S15 and S18 (dense scenes with thousands of stops): trace which Limit wins the arbiter and where the robots are, for 2 seeds each, as was done for S08 (wrap waggle.experiments.e1_rig.control_step and print reasons, speeds and the nearest human or robot). Report causes in a table. Any fix is a new branch, never loosens a limit, with an ADR.
 3. If a control change is made, rerun E1 in the cloud (gh workflow run e1.yml --ref <branch>) and report the table versus run 3.
 Then stop and report. Phase 3 integration, MCP, guard and court only when the maintainer says so.
