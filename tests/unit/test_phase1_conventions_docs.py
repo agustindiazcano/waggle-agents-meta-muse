@@ -181,3 +181,17 @@ def test_experiments_define_unavoidable_at_spawn_and_master_seed() -> None:
     text = _read("docs/EXPERIMENTS.md")
     assert "unavoidable_at_spawn" in text
     assert "fixed master seed" in text
+
+
+@pytest.mark.parametrize(
+    "term",
+    [
+        "explicit Euler",
+        "v*dt/2 + a*dt^2/2",
+        "n = ceil(v/(a*dt))",
+        "quantization of the delay",
+        "2.4 m wide",
+    ],
+)
+def test_adr_021_derives_the_stopping_distance_bound(term: str) -> None:
+    assert term in _adr(21), f"ADR-021 lacks {term!r}"
