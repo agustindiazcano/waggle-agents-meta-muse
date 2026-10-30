@@ -7,6 +7,7 @@ type = forbidden
 source_modules =
     fixture_pkg.sim
     fixture_pkg.control
+    fixture_pkg.coordination
 forbidden_modules =
     fixture_pkg.llm
     fixture_pkg.governance

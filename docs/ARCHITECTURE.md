@@ -255,6 +255,10 @@ Guard classifier: deterministic sanitizers run first (length, charset, delimiter
 Budget: a guard in `waggle.llm` checks accumulated cost plus the call estimate against the provider cap before every call, and per-task call and cost caps apply.
 ## Leases and fencing tokens
 
+The pure reference model is implemented in `waggle.coordination.leases` (grant, renew, expire, revoke and exact token check) and `waggle.coordination.corridors` (whole-route admission, occupancy-aware expiry and release), ADR-031. Inputs and returned state are frozen typed objects; time is a caller-supplied integer tick. No persistence, simulator admission or tool transaction is implemented by these functions. The failure mode is deny or wait: stale tokens fail closed, unknown occupancy denies admission, and expired occupied zones retain `FAULT_OCCUPIED` until a current empty observation. Malformed input or backwards time raises `ValueError`; an adapter must deny on that error. The implementation imports only the standard library and its own package. Its status is implemented, not evaluated.
+
+The following local control view and database integration remain designed, not implemented in this branch.
+
 Control keeps a local lease view (zone, token, expiry_tick) pushed by the coordination layer. It clamps speed before a zone with no valid grant and fails closed when the view is stale. The authoritative token check stays inside the tool (ADR-004). Control never reads the database. Lease expiry is stored in simulation ticks supplied by the caller; audit timestamps keep `clock_timestamp()`. Multi-zone corridors are acquired in one transaction with rows locked in canonical order. Zone state FAULT_OCCUPIED: the sweeper never releases a zone while the last known odometry puts a chassis in it. It marks the zone FAULT_OCCUPIED and triggers replanning.
 
 - `zones(zone_id, holder, fencing_token, expires_at)`.

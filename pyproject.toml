@@ -71,9 +71,9 @@ root_package = "waggle"
 
 [[tool.importlinter.contracts]]
 id = "sim-control-no-llm-side"
-name = "waggle.sim and waggle.control must not import llm, governance, maintenance or mcp_server"
+name = "sim, control and coordination must not import the LLM side"
 type = "forbidden"
-source_modules = ["waggle.sim", "waggle.control"]
+source_modules = ["waggle.sim", "waggle.control", "waggle.coordination"]
 forbidden_modules = [
     "waggle.llm",
     "waggle.governance",
