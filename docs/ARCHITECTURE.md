@@ -98,22 +98,40 @@ Designed, not implemented (ADR-019).
 Governance path (slow, seconds): command, screening, director, court, MCP, lease, motion command.
 Control path (fast, every tick): every motion command, from any source, passes through the envelope and can be reduced or vetoed. Telemetry thresholds act on this path directly, without any LLM or retrieval.
 
+## Simulator module layout
+
+`waggle.sim` modules (control may import only `params` and `observations`, see ADR-021):
+
+| Module | Role |
+|---|---|
+| `world` | Map, walls, racks, aisles, one-lane aisles, blind corners, stations, depots, JSON format |
+| `params` | Frozen dataclasses with robot class parameters (leaf) |
+| `observations` | LidarScan, RobotOdometry, BeaconReport (leaf) |
+| `robots` | Four classes, kinematics, actuation delay, swept footprint polygon |
+| `humans` | Scripted, random walker and adversarial humans, hidden-human variant sampling |
+| `detector` | Exact collision and separation-violation detector on ground truth |
+| `sensors` | Lidar as a pure function over geometry arrays, beacon variant, odometry noise |
+| `scenarios` | Scenario format, generators S01 to S18, seeds, replay |
+| `scripted` | Waypoint-following driver for the no-control baseline and scripted entities, no safety logic |
+
 ## Fast layer
 
 Parameters per robot class (simulator assumptions, to be calibrated and documented):
 
-| Class | Max speed (m/s) | Decel (m/s^2) | Actuation delay (s) |
-|---|---|---|---|
-| carrier | 2.0 | 2.0 | 0.10 |
-| forklift | 1.5 | 0.8 | 0.15 |
-| parts runner | 1.8 | 1.5 | 0.10 |
-| tech repair | 1.2 | 1.5 | 0.10 |
+| Class | Max speed (m/s) | Decel (m/s^2) | Actuation delay (s) | Delay (ticks at 40 Hz) | Footprint (length x width, m) |
+|---|---|---|---|---|---|
+| carrier | 2.0 | 2.0 | 0.10 | 4 | 1.2 x 0.8 |
+| forklift | 1.5 | 0.8 | 0.15 | 6 | 2.4 x 1.1 |
+| parts runner | 1.8 | 1.5 | 0.10 | 4 | 0.9 x 0.6 |
+| tech repair | 1.2 | 1.5 | 0.10 | 4 | 0.8 x 0.6 |
+
+Footprints are assumptions to calibrate. The human footprint is a disc of radius 0.30 m by default.
 
 Kinematics are non-holonomic (assumptions to calibrate, no claim of any standard):
 
 | Class | Model | Parameter |
 |---|---|---|
-| forklift | bicycle model | minimum turning radius 2.5 m, wheelbase 1.6 m |
+| forklift | bicycle model | minimum turning radius 2.5 m, wheelbase 1.6 m, maximum steering angle 0.569 rad |
 | carrier | differential drive | maximum angular speed 1.5 rad/s |
 | parts runner | differential drive | maximum angular speed 1.8 rad/s |
 | tech repair | differential drive | maximum angular speed 1.2 rad/s |
