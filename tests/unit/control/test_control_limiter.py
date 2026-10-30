@@ -7,7 +7,7 @@ import pytest
 
 from waggle.control.limiter import EnvelopeMode, limit_command
 from waggle.control.params import DEFAULT_CONTROL_PARAMS as CP
-from waggle.control.types import ControlRequest, Reason
+from waggle.control.types import ControlRequest, Limit, Reason
 from waggle.sim.params import ROBOT_PARAMS, RobotKind
 
 CARRIER = ROBOT_PARAMS[RobotKind.CARRIER]
@@ -121,3 +121,23 @@ def test_the_output_never_exceeds_the_request(gap: float) -> None:
     )
     assert out.speed <= 1.2
     assert abs(out.turn) <= 0.3 + 1e-12
+
+
+def test_an_extra_limit_joins_the_envelope_in_the_arbiter() -> None:
+    extra = [Limit(0.8, Reason.OCCLUSION)]
+    out = limit_command(ControlRequest(1.5, 0.0), CARRIER, NONE, NONE, 0.0, CP, extra_limits=extra)
+    assert (out.speed, out.reason) == (0.8, Reason.OCCLUSION)
+
+
+def test_an_extra_limit_never_raises_the_envelope_result() -> None:
+    human = _pts((3.0, 0.0))
+    base = _limit(ControlRequest(1.5, 0.0), human=human)[0]
+    extra = [Limit(CARRIER.max_speed, Reason.OCCLUSION)]
+    out = limit_command(ControlRequest(1.5, 0.0), CARRIER, human, NONE, 0.0, CP, extra_limits=extra)
+    assert out.speed == base
+
+
+def test_a_zero_extra_limit_stops_a_rotation_in_place() -> None:
+    extra = [Limit(0.0, Reason.GEOFENCE)]
+    out = limit_command(ControlRequest(0.0, 0.5), CARRIER, NONE, NONE, 0.0, CP, extra_limits=extra)
+    assert (out.speed, out.turn, out.reason) == (0.0, 0.0, Reason.GEOFENCE)

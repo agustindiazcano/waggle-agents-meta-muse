@@ -5,6 +5,7 @@ module does not read a scan.
 """
 
 import math
+from collections.abc import Sequence
 from enum import StrEnum
 
 import numpy as np
@@ -58,16 +59,19 @@ def limit_command(
     current_speed: float,
     cp: ControlParams,
     mode: EnvelopeMode = EnvelopeMode.SWEPT,
+    extra_limits: Sequence[Limit] = (),
 ) -> ControlOutput:
     """Limit a command by the separation to humans and the stopping distance to structures.
 
     A gap inside the stopping distance at the current speed gives a stop with reason ``ESTOP``.
     A pure rotation of a differential drive is blocked by any point inside the swept circle.
+    ``extra_limits`` (occlusion, CPA, geofence) join the envelope in the same arbiter.
     """
     if not (math.isfinite(request.speed) and math.isfinite(request.turn)):
         return arbitrate(request, p, [])
     if p.kinematics == "differential" and abs(request.speed) <= _EPS and request.turn != 0.0:
-        return arbitrate(request, p, _rotation_limits(human_points, structure_points, p, cp))
+        limits = _rotation_limits(human_points, structure_points, p, cp)
+        return arbitrate(request, p, [*limits, *extra_limits])
     gap_human, gap_structure = _gaps(human_points, structure_points, request, p, cp, mode)
     limits = [
         Limit(envelope.human_cap(p, gap_human, cp), Reason.ENVELOPE),
@@ -76,4 +80,4 @@ def limit_command(
     nearest = min(gap_human, gap_structure)
     if math.isfinite(nearest) and nearest <= envelope.stop_distance(p, abs(current_speed)):
         limits.append(Limit(0.0, Reason.ESTOP))
-    return arbitrate(request, p, limits)
+    return arbitrate(request, p, [*limits, *extra_limits])

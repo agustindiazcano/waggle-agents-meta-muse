@@ -222,7 +222,7 @@ Unknown fields are rejected. Idempotency keys and global task ids are derived by
 
 ## Occlusion-aware speed cap
 
-Designed, not implemented (ADR-024). For each occlusion boundary in the lidar scan, assume a phantom human at the nearest possible point approaching at `v_h`. The cap is the largest `v` such that `S_sep(v)` is at most the distance to the boundary along the swept curvilinear path. No non-negative root gives a cap of zero. Near zero speed a minimum speed floor is used. The cap runs in the fast layer and inside the rollout. Its cost is throughput, reported in E1.
+Implemented in B14 (ADR-024), not yet evaluated in E1. For each occlusion boundary in the lidar scan, assume a phantom human at the nearest possible point approaching at `v_h`. The cap is the largest `v` such that `S_sep(v)` is at most the distance to the boundary along the swept curvilinear path. No non-negative root gives a cap of zero. Near zero speed a minimum speed floor is used. The cap runs in the fast layer and inside the rollout. Its cost is throughput, reported in E1.
 
 ## Prompt requirements
 
