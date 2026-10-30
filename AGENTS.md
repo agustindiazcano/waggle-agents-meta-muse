@@ -18,7 +18,7 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 2. Tests first. Write the failing test, confirm it fails for the right reason, then write the minimum code to pass, then refactor with the test green.
 3. For a bug, write a test that reproduces it first, then fix it.
 4. CI gates: ruff, mypy --strict, pytest with coverage report, import-linter. A red CI blocks the PR.
-5. A human reviews and approves every PR. Agents push their task branch and open the PR with `gh pr create` (maintainer decision, ADR-022). Agents never merge, never push to `main`, never force push, never delete remote refs, and never create or change remote repositories. Push only after the checks in Git rules 4 and 11 pass. The maintainer merges.
+5. A human reviews and approves every PR. Agents push their task branch and open the PR with `gh pr create` (maintainer decision, ADR-022). Agents never push to `main`, never force push, never delete remote refs, and never create or change remote repositories. Push only after the checks in Git rules 4 and 11 pass. The maintainer merges.
 6. Conventional Commits in English: `type(scope): description`, imperative mood, subject under 72 characters.
 7. Commits from the first day, so the history shows what was built during the hackathon.
 8. Run tools as `uv run ...` or `sys.executable -m ...`, never a bare command name. There is no `make` on the maintainer machine. Targets are `uv run` scripts.
