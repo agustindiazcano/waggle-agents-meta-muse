@@ -1,0 +1,2853 @@
+{
+  "experiment": "e1",
+  "configuration": "envelope_occlusion_cpa_lidar_beacons",
+  "configuration_detail": {
+    "name": "envelope_occlusion_cpa_lidar_beacons",
+    "sensing": "lidar",
+    "mode": "swept",
+    "beacons": true,
+    "occlusion": true,
+    "cpa": true
+  },
+  "seed_set": "dev",
+  "commit": "94bacc41a4f58298da2acb70de588e2c7ae6ce93",
+  "date": "2026-10-30T17:47:34+00:00",
+  "numpy_version": "2.5.4",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "dt": 0.025,
+  "definitions": {
+    "collision": "Contact of a robot footprint with a human disc or a robot footprint, closed sets, counted as episodes.",
+    "separation_violation": "Gap to a human below 0.5 m, counted as episodes. A collision is also a violation.",
+    "near_miss": "No contact and a gap below 0.2 m, counted as episodes.",
+    "stop_episode": "A tick where the requested speed is above zero and the limited speed is zero, after a tick where it was not. Counted per robot.",
+    "false_stop": "A stop episode that starts while the centre distance to every human minus the human radius is above 3.0 m."
+  },
+  "counts": {
+    "human_collisions": 46,
+    "robot_collisions": 0,
+    "separation_violations": 63,
+    "near_misses": 98
+  },
+  "counts_excluding_unavoidable": {
+    "human_collisions": 46,
+    "robot_collisions": 0,
+    "separation_violations": 63,
+    "near_misses": 98
+  },
+  "proportions": {
+    "human_collision": {
+      "runs_with": 12,
+      "runs": 90,
+      "wilson95_low": 0.07794682040686314,
+      "wilson95_high": 0.21873930500697653
+    },
+    "robot_collision": {
+      "runs_with": 0,
+      "runs": 90,
+      "wilson95_low": 0.0,
+      "wilson95_high": 0.04093562556432678
+    },
+    "separation_violation": {
+      "runs_with": 13,
+      "runs": 90,
+      "wilson95_low": 0.08639988786660784,
+      "wilson95_high": 0.23159877920135785
+    }
+  },
+  "unavoidable_cases": [],
+  "tasks_completed": 1346,
+  "tasks_per_simulated_hour": 1944.2672284080652,
+  "distance_m": 4327.9101204219605,
+  "speed_ratio": 0.19264423901380104,
+  "stops": {
+    "episodes": 19488,
+    "by_reason": {
+      "cpa": 25,
+      "envelope": 16008,
+      "estop": 1491,
+      "occlusion": 1964
+    },
+    "false_stops": 18161,
+    "false_stop_gap_m": 3.0
+  },
+  "latency": {
+    "calls": 581690,
+    "median_of_run_medians_us": 1541.8587499999999,
+    "max_of_run_p99_us": 11353.149730000003,
+    "max_us": 87976.726,
+    "note": "code latency of control_step on the machine named in platform, not a real-time bound"
+  },
+  "failing_seeds": [
+    {
+      "scenario": "S13",
+      "seed": 633021836
+    },
+    {
+      "scenario": "S15",
+      "seed": 82473746
+    },
+    {
+      "scenario": "S16",
+      "seed": 8893461
+    },
+    {
+      "scenario": "S17",
+      "seed": 217899087
+    },
+    {
+      "scenario": "S17",
+      "seed": 339866399
+    },
+    {
+      "scenario": "S17",
+      "seed": 601969674
+    },
+    {
+      "scenario": "S17",
+      "seed": 962258108
+    },
+    {
+      "scenario": "S18",
+      "seed": 47264320
+    },
+    {
+      "scenario": "S18",
+      "seed": 141178730
+    },
+    {
+      "scenario": "S18",
+      "seed": 375870558
+    },
+    {
+      "scenario": "S18",
+      "seed": 493284782
+    },
+    {
+      "scenario": "S18",
+      "seed": 730892012
+    }
+  ],
+  "assumptions": {
+    "control": {
+      "human_speed_bound": 1.6,
+      "human_margin": 0.3,
+      "structure_margin": 0.2,
+      "lateral_margin": 0.1,
+      "interp_k": 1.5
+    },
+    "perception": {
+      "max_scan_age_ticks": 8,
+      "max_nan_fraction": 0.2,
+      "nan_window": 2,
+      "gap_base": 0.15,
+      "gap_per_meter": 0.05,
+      "human_max_extent": 1.0,
+      "assoc_gate_base": 0.5,
+      "velocity_alpha": 0.5,
+      "max_coast_ticks": 80,
+      "ring_points": 12,
+      "beacon_sigma": 0.1,
+      "human_speed_bound": 1.6,
+      "trail_ticks": 40,
+      "velocity_min_ticks": 10,
+      "map_margin": 0.25
+    },
+    "occlusion": {
+      "jump_min": 0.6,
+      "speed_floor": 0.05
+    },
+    "cpa": {
+      "horizon": 3.0,
+      "step": 0.1
+    }
+  },
+  "runs": [
+    {
+      "scenario": "S01",
+      "seed": 419688070,
+      "robots": 1,
+      "ticks": 1280,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "ca4bc34e71d93d5afeb717ac0533eb6be8de31325c3936187c56b375ca1abdeb",
+      "distance_m": 32.117808015348416,
+      "speed_sums": {
+        "requested": 1920.0,
+        "limited": 1275.404814508467
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1280,
+        "median_us": 1537.8025,
+        "p99_us": 9353.02008000002,
+        "max_us": 87279.277
+      }
+    },
+    {
+      "scenario": "S01",
+      "seed": 160488194,
+      "robots": 1,
+      "ticks": 1280,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "9c121ee451e14655cd0161e21c9a221f1d3286b8e0d0b14bbf3b6dccf160710b",
+      "distance_m": 31.931035503474032,
+      "speed_sums": {
+        "requested": 1920.0,
+        "limited": 1269.6266145309505
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1280,
+        "median_us": 1526.501,
+        "p99_us": 8683.823400000007,
+        "max_us": 86809.413
+      }
+    },
+    {
+      "scenario": "S01",
+      "seed": 519602281,
+      "robots": 1,
+      "ticks": 1280,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "85f318d50ab881b5c8bc48bfc4582fef8250bfd9f50400c01f57d187eb9b03b5",
+      "distance_m": 32.02056578535053,
+      "speed_sums": {
+        "requested": 1920.0,
+        "limited": 1278.9696862017313
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1280,
+        "median_us": 1512.2295,
+        "p99_us": 6829.426640000003,
+        "max_us": 83458.046
+      }
+    },
+    {
+      "scenario": "S01",
+      "seed": 619865736,
+      "robots": 1,
+      "ticks": 1280,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "cb7be2688449a93738760e130b9bfee2debd6e30a61c41ac47f26d49220f0a34",
+      "distance_m": 32.13337125617028,
+      "speed_sums": {
+        "requested": 1920.0,
+        "limited": 1274.3358858002719
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1280,
+        "median_us": 1511.6934999999999,
+        "p99_us": 7099.35723000003,
+        "max_us": 87976.726
+      }
+    },
+    {
+      "scenario": "S01",
+      "seed": 692763450,
+      "robots": 1,
+      "ticks": 1280,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "cabac6e188f06a5323aaa962a63351f53c0f420072fc639d5d7285f3b43846cd",
+      "distance_m": 31.853309070470925,
+      "speed_sums": {
+        "requested": 1920.0,
+        "limited": 1277.0824854880175
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1280,
+        "median_us": 1622.1885,
+        "p99_us": 5757.2802900000015,
+        "max_us": 8904.803
+      }
+    },
+    {
+      "scenario": "S02",
+      "seed": 836622699,
+      "robots": 1,
+      "ticks": 1040,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 151,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "a152dab9f1f5142c7760db1128029866ee5a4116f8771d0cb431cf8178d2635c",
+      "distance_m": 37.30630402381052,
+      "speed_sums": {
+        "requested": 1656.199999999992,
+        "limited": 1443.9013493739853
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1040,
+        "median_us": 574.2339999999999,
+        "p99_us": 5390.006369999999,
+        "max_us": 6150.837
+      }
+    },
+    {
+      "scenario": "S02",
+      "seed": 825337471,
+      "robots": 1,
+      "ticks": 1040,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 137,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "0888d41119169cac6768a269926e54781f1385c280835dfebd808a314665f91f",
+      "distance_m": 37.32992022010492,
+      "speed_sums": {
+        "requested": 1682.799999999992,
+        "limited": 1455.9317855563927
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1040,
+        "median_us": 567.7915,
+        "p99_us": 5312.64953,
+        "max_us": 6093.451
+      }
+    },
+    {
+      "scenario": "S02",
+      "seed": 376988137,
+      "robots": 1,
+      "ticks": 1040,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 75,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "2a6fc44170ae44589120747755ce65d3030e93e614f2b9adfa9e707bf9c657dd",
+      "distance_m": 37.32521236257821,
+      "speed_sums": {
+        "requested": 1806.799999999992,
+        "limited": 1458.2207840136336
+      },
+      "stop_episodes": {
+        "envelope": 1
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1040,
+        "median_us": 1212.742,
+        "p99_us": 5308.66998,
+        "max_us": 5490.017
+      }
+    },
+    {
+      "scenario": "S02",
+      "seed": 326935064,
+      "robots": 1,
+      "ticks": 1040,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 136,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "a9de564a799bbbc84081f47de0fe639d4fd2f8e35a9c4cf70f4599d7a25ae5c7",
+      "distance_m": 37.33560001502008,
+      "speed_sums": {
+        "requested": 1684.799999999992,
+        "limited": 1445.8392910371913
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1040,
+        "median_us": 587.0825,
+        "p99_us": 5337.378769999999,
+        "max_us": 6650.107
+      }
+    },
+    {
+      "scenario": "S02",
+      "seed": 710301817,
+      "robots": 1,
+      "ticks": 1040,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 144,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "6d167da629dcdebbd34000b51a8aae185fd1a50f662b944ca42d44053ceed08f",
+      "distance_m": 37.306325872677945,
+      "speed_sums": {
+        "requested": 1670.199999999992,
+        "limited": 1445.3992145861425
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1040,
+        "median_us": 571.939,
+        "p99_us": 5387.841629999998,
+        "max_us": 6592.219
+      }
+    },
+    {
+      "scenario": "S03",
+      "seed": 830106457,
+      "robots": 2,
+      "ticks": 400,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "79d528809da280c729b21893bed9330a47ea49f213e58276bfadec55763cb4c2",
+      "distance_m": 9.710057083664324,
+      "speed_sums": {
+        "requested": 1600.0,
+        "limited": 466.8500874384792
+      },
+      "stop_episodes": {
+        "envelope": 106
+      },
+      "false_stops": 106,
+      "latency": {
+        "n": 800,
+        "median_us": 1576.113,
+        "p99_us": 5401.32782,
+        "max_us": 7131.482
+      }
+    },
+    {
+      "scenario": "S03",
+      "seed": 883949663,
+      "robots": 2,
+      "ticks": 400,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "8c40a2b7d8d072fdd65636a22be18d0594f87c2bf5b4659bc40248b1f6b8a092",
+      "distance_m": 9.711178266746247,
+      "speed_sums": {
+        "requested": 1600.0,
+        "limited": 466.8578414492737
+      },
+      "stop_episodes": {
+        "envelope": 108
+      },
+      "false_stops": 108,
+      "latency": {
+        "n": 800,
+        "median_us": 1557.519,
+        "p99_us": 5334.974729999999,
+        "max_us": 5678.228
+      }
+    },
+    {
+      "scenario": "S03",
+      "seed": 414186736,
+      "robots": 2,
+      "ticks": 400,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "2840483ceea3e385c4bd20f4c11e497c5200ed7706984e80f8b5efda7a0a0261",
+      "distance_m": 9.708937464921034,
+      "speed_sums": {
+        "requested": 1600.0,
+        "limited": 466.63295936105226
+      },
+      "stop_episodes": {
+        "envelope": 102
+      },
+      "false_stops": 102,
+      "latency": {
+        "n": 800,
+        "median_us": 1538.353,
+        "p99_us": 5239.59723,
+        "max_us": 5802.549
+      }
+    },
+    {
+      "scenario": "S03",
+      "seed": 230355215,
+      "robots": 2,
+      "ticks": 400,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "6395acb3370f16c3b2a8484d08fae984bdf774b915e6cf951768a0e7114d1eda",
+      "distance_m": 9.70921787523034,
+      "speed_sums": {
+        "requested": 1600.0,
+        "limited": 466.7012251664195
+      },
+      "stop_episodes": {
+        "envelope": 102
+      },
+      "false_stops": 102,
+      "latency": {
+        "n": 800,
+        "median_us": 1555.2445,
+        "p99_us": 5223.75439,
+        "max_us": 6004.625
+      }
+    },
+    {
+      "scenario": "S03",
+      "seed": 130524517,
+      "robots": 2,
+      "ticks": 400,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "52a258219b030da6e7d3fe71bcdeb5eba029642d15869f65bc89665f20056a15",
+      "distance_m": 9.710723409642974,
+      "speed_sums": {
+        "requested": 1600.0,
+        "limited": 466.91518207111125
+      },
+      "stop_episodes": {
+        "envelope": 99
+      },
+      "false_stops": 99,
+      "latency": {
+        "n": 800,
+        "median_us": 1533.353,
+        "p99_us": 5273.06951,
+        "max_us": 5700.389
+      }
+    },
+    {
+      "scenario": "S04",
+      "seed": 200467740,
+      "robots": 1,
+      "ticks": 1120,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 104,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "7550cb4eec8c6bd4d446476aa91705e7bf2a1c76401eda378869638ce60bc04c",
+      "distance_m": 37.32169416130847,
+      "speed_sums": {
+        "requested": 1733.0399999999697,
+        "limited": 1458.3769012493697
+      },
+      "stop_episodes": {
+        "envelope": 1
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1120,
+        "median_us": 1165.213,
+        "p99_us": 5419.981409999999,
+        "max_us": 7451.368
+      }
+    },
+    {
+      "scenario": "S04",
+      "seed": 555190957,
+      "robots": 1,
+      "ticks": 1120,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 127,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "9ecaf9cd0caeb5a851a32c8748733d58952352647182207e21f7f9c3c0a64b6b",
+      "distance_m": 37.3298275609661,
+      "speed_sums": {
+        "requested": 1691.6399999999708,
+        "limited": 1448.0744960496256
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1120,
+        "median_us": 605.7660000000001,
+        "p99_us": 5420.573959999995,
+        "max_us": 7584.577
+      }
+    },
+    {
+      "scenario": "S04",
+      "seed": 383286097,
+      "robots": 1,
+      "ticks": 1120,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 130,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "ed416fd4c0e9580f823e0976e9e3f62bbbafb914bb23736b2c11deeec9912e74",
+      "distance_m": 37.29950056958472,
+      "speed_sums": {
+        "requested": 1687.499999999971,
+        "limited": 1445.557482726371
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1120,
+        "median_us": 584.543,
+        "p99_us": 5350.85556,
+        "max_us": 7381.284
+      }
+    },
+    {
+      "scenario": "S04",
+      "seed": 821336371,
+      "robots": 1,
+      "ticks": 1120,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 130,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "eb95834a355516a10a0bd0b094ed6f41076d20a26ededb2f4a17122c9035525f",
+      "distance_m": 37.33022531565509,
+      "speed_sums": {
+        "requested": 1686.239999999971,
+        "limited": 1447.641094195575
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1120,
+        "median_us": 602.292,
+        "p99_us": 5469.623949999999,
+        "max_us": 8159.515
+      }
+    },
+    {
+      "scenario": "S04",
+      "seed": 199455481,
+      "robots": 1,
+      "ticks": 1120,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 137,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "146d58f8e0731aa1b21c4bffdbbdadcbee5a8ef5443b4b0fa6b76759d79b446c",
+      "distance_m": 37.301053663586565,
+      "speed_sums": {
+        "requested": 1674.8999999999712,
+        "limited": 1443.0100207801227
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1120,
+        "median_us": 611.5485,
+        "p99_us": 5227.91101,
+        "max_us": 5720.747
+      }
+    },
+    {
+      "scenario": "S05",
+      "seed": 861685585,
+      "robots": 1,
+      "ticks": 1920,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "be03a990099f6da22c9496f3d3ce8d1cbda0f19e241874f69b07fcfc149e5130",
+      "distance_m": 32.46236288043523,
+      "speed_sums": {
+        "requested": 1728.000000000053,
+        "limited": 1294.6627379862164
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1920,
+        "median_us": 1392.0965,
+        "p99_us": 5445.27293,
+        "max_us": 6844.178
+      }
+    },
+    {
+      "scenario": "S05",
+      "seed": 684495231,
+      "robots": 1,
+      "ticks": 1920,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "ad5d82949fe583a76ee0030fbe9c28f691faa5c5e6158a6d440bf0e9675d0b26",
+      "distance_m": 32.48293434795292,
+      "speed_sums": {
+        "requested": 1728.000000000053,
+        "limited": 1292.7365040239174
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1920,
+        "median_us": 1415.6895,
+        "p99_us": 5499.747829999999,
+        "max_us": 6696.022
+      }
+    },
+    {
+      "scenario": "S05",
+      "seed": 842368745,
+      "robots": 1,
+      "ticks": 1920,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "befd05915c62a649d2ab21de06b468a893c8d04ff5ec8e7ff372796eaea55eb4",
+      "distance_m": 32.53348460756252,
+      "speed_sums": {
+        "requested": 1728.000000000053,
+        "limited": 1297.7127833098118
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1920,
+        "median_us": 1399.7305000000001,
+        "p99_us": 5306.612039999998,
+        "max_us": 6713.595
+      }
+    },
+    {
+      "scenario": "S05",
+      "seed": 314832476,
+      "robots": 1,
+      "ticks": 1920,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "122a307f077d2d98cfbe68b85a6da87cdd3f29aba1d8a8fa2dc912faff3d4a7d",
+      "distance_m": 32.492330262703184,
+      "speed_sums": {
+        "requested": 1728.000000000053,
+        "limited": 1295.0726453354719
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1920,
+        "median_us": 1421.5839999999998,
+        "p99_us": 5470.439929999999,
+        "max_us": 7298.324
+      }
+    },
+    {
+      "scenario": "S05",
+      "seed": 44671688,
+      "robots": 1,
+      "ticks": 1920,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "4c43197387291b5b11c3f1cf26bc64446923b339495f42b9ee6e2548747c0ee8",
+      "distance_m": 32.49126643453764,
+      "speed_sums": {
+        "requested": 1728.000000000053,
+        "limited": 1292.0738829774984
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1920,
+        "median_us": 1443.341,
+        "p99_us": 5637.457679999996,
+        "max_us": 7637.194
+      }
+    },
+    {
+      "scenario": "S06",
+      "seed": 793028680,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "94d2a4ab428eb569dcd0f0396f489a790a6b3027151c5ffd7ed956588c64fc39",
+      "distance_m": 22.282953046386787,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 885.6703125456103
+      },
+      "stop_episodes": {
+        "envelope": 89
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 1570.542,
+        "p99_us": 5657.17574,
+        "max_us": 6568.534
+      }
+    },
+    {
+      "scenario": "S06",
+      "seed": 67332239,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "b2c532ae22f9d0ec116b30f0879ba0e23830b046fc0cc068131a272d258aab88",
+      "distance_m": 22.27043742853932,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 886.4328878218081
+      },
+      "stop_episodes": {
+        "envelope": 65
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 1544.735,
+        "p99_us": 5745.148980000002,
+        "max_us": 10112.06
+      }
+    },
+    {
+      "scenario": "S06",
+      "seed": 732414731,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "8c0d305c15407f9fac7d37211c6a0d0f59e11fda42173e480d3f81da84afaefb",
+      "distance_m": 22.29575990095892,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 886.4336270370329
+      },
+      "stop_episodes": {
+        "envelope": 93
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 1438.678,
+        "p99_us": 5685.446940000001,
+        "max_us": 6076.762
+      }
+    },
+    {
+      "scenario": "S06",
+      "seed": 165450615,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "c13aeb67f6e8ddbebf7a2ea9d5b2ba3ec8391c997bdf90a92f88f1688c2747c2",
+      "distance_m": 22.316693191052696,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 886.7903897820236
+      },
+      "stop_episodes": {
+        "envelope": 99
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 1427.046,
+        "p99_us": 5571.945300000002,
+        "max_us": 8886.649
+      }
+    },
+    {
+      "scenario": "S06",
+      "seed": 807789445,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e01f64856f90343ec0a0dbc9520fb50ecd904af23057b826baff7b4d08812577",
+      "distance_m": 22.305702371226335,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 886.6677732751687
+      },
+      "stop_episodes": {
+        "envelope": 102
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 1459.376,
+        "p99_us": 5726.26728,
+        "max_us": 7914.961
+      }
+    },
+    {
+      "scenario": "S07",
+      "seed": 478319539,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e7d738c4f88bcf1672e2fefa72f16dabe28c62580b7a09645e820a06177c0f01",
+      "distance_m": 34.15581731654321,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 1374.7205785390265
+      },
+      "stop_episodes": {
+        "envelope": 1
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1400.296,
+        "p99_us": 5760.2360499999995,
+        "max_us": 9460.427
+      }
+    },
+    {
+      "scenario": "S07",
+      "seed": 451650604,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "30a85fae99077d0091ed2423634948e76ed4c6a272275604640e38dce83b07d1",
+      "distance_m": 34.83017271762109,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 1397.27108982162
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1528.9605000000001,
+        "p99_us": 5556.01455,
+        "max_us": 6071.31
+      }
+    },
+    {
+      "scenario": "S07",
+      "seed": 420555216,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "d131d0ac14691bec85d02f13f36ebc9299387061876053ea75ae28cd1fc3e1b6",
+      "distance_m": 35.375028525005675,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 1420.230270843389
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1388.2285000000002,
+        "p99_us": 5440.89184,
+        "max_us": 5748.769
+      }
+    },
+    {
+      "scenario": "S07",
+      "seed": 66447779,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "7c509b3b3624c8e9a5bbd1474afc2df3fbd9f9c678056203bc1d879bb6769b99",
+      "distance_m": 34.27631885859275,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 1378.0840656598375
+      },
+      "stop_episodes": {
+        "estop": 2
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1385.138,
+        "p99_us": 5533.704900000001,
+        "max_us": 7113.319
+      }
+    },
+    {
+      "scenario": "S07",
+      "seed": 980757511,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "8c983d7646d01bdebcf2d52cbc478242db5cf013d95ba77c109c3492a7d1e5a0",
+      "distance_m": 35.292992138184175,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 1415.9423510206227
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1377.3285,
+        "p99_us": 5387.87603,
+        "max_us": 6050.431
+      }
+    },
+    {
+      "scenario": "S08",
+      "seed": 212395693,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e2581285c47f9f4719bfac0cb233b75494161a5937f602b6111edb0febe5e80f",
+      "distance_m": 22.630244841708183,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 898.0585854315939
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1543.322,
+        "p99_us": 6504.19452,
+        "max_us": 8318.482
+      }
+    },
+    {
+      "scenario": "S08",
+      "seed": 235622891,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "87a1ff58b291a8e610a46b2bb5637ebc77d5019e16e99eb9c2f0910a552d382c",
+      "distance_m": 22.687144582059073,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 892.0646110406259
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1523.331,
+        "p99_us": 5605.2992,
+        "max_us": 11247.584
+      }
+    },
+    {
+      "scenario": "S08",
+      "seed": 376903847,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "1d76f1675d34cccdf224e0ae80772579fb33751f9cf045f81d9ff236e53dd95a",
+      "distance_m": 22.593534689832303,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 897.6026002627913
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1560.855,
+        "p99_us": 5696.2628,
+        "max_us": 6048.367
+      }
+    },
+    {
+      "scenario": "S08",
+      "seed": 382823189,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "a94d1c61858439566b5c2476cb50839e28cb4b0503eb4557d89cf47b0c93497e",
+      "distance_m": 22.335279741394462,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 896.3396839722651
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1561.587,
+        "p99_us": 5620.38348,
+        "max_us": 6236.597
+      }
+    },
+    {
+      "scenario": "S08",
+      "seed": 102612522,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "27309f0aef2f50b4d955f2684e13797c9e6256a56512f73356c2ff4c3e4f491f",
+      "distance_m": 22.59502071392962,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 899.2397413574931
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1565.484,
+        "p99_us": 6178.067079999999,
+        "max_us": 7258.232
+      }
+    },
+    {
+      "scenario": "S09",
+      "seed": 757652174,
+      "robots": 1,
+      "ticks": 898,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "1a1be00d8632ecdf72aa823e3e729a71ea76919f354d7aae326efb703591be78",
+      "distance_m": 32.24228630443325,
+      "speed_sums": {
+        "requested": 1616.3999999999744,
+        "limited": 1297.1168194868544
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 898,
+        "median_us": 1406.7335,
+        "p99_us": 5453.4810800000005,
+        "max_us": 6181.938
+      }
+    },
+    {
+      "scenario": "S09",
+      "seed": 177945808,
+      "robots": 1,
+      "ticks": 898,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "ced821da88836dfb940115b44f90ecc76295bc6892f16a94fca4c53d159aeb25",
+      "distance_m": 32.74245243312615,
+      "speed_sums": {
+        "requested": 1616.3999999999744,
+        "limited": 1317.5124568907352
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 898,
+        "median_us": 1431.509,
+        "p99_us": 5359.14585,
+        "max_us": 6314.071
+      }
+    },
+    {
+      "scenario": "S09",
+      "seed": 705967957,
+      "robots": 1,
+      "ticks": 898,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "a600575da4f9147e90306e0e239da0cf9a398552be206b441717648c3cd6518a",
+      "distance_m": 32.531028554467696,
+      "speed_sums": {
+        "requested": 1616.3999999999744,
+        "limited": 1310.5409140226143
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 898,
+        "median_us": 1422.2820000000002,
+        "p99_us": 5403.66876,
+        "max_us": 6381.71
+      }
+    },
+    {
+      "scenario": "S09",
+      "seed": 856954589,
+      "robots": 1,
+      "ticks": 898,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "727ae13163fbfeea0a80e981e42f7dc677b67df30aaac3f296eed3e698d9a073",
+      "distance_m": 32.17481356723729,
+      "speed_sums": {
+        "requested": 1616.3999999999744,
+        "limited": 1287.2679931458224
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 898,
+        "median_us": 1426.9455,
+        "p99_us": 5416.699959999999,
+        "max_us": 5568.404
+      }
+    },
+    {
+      "scenario": "S09",
+      "seed": 995766752,
+      "robots": 1,
+      "ticks": 898,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "b94bf3064a582c4eb5b1079d23768277a9cbfffdb37d50b686f9f4e4b47bfd34",
+      "distance_m": 32.39524769738057,
+      "speed_sums": {
+        "requested": 1616.3999999999744,
+        "limited": 1302.4148628138566
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 898,
+        "median_us": 1463.519,
+        "p99_us": 5382.60669,
+        "max_us": 5982.515
+      }
+    },
+    {
+      "scenario": "S10",
+      "seed": 96712523,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "65bb0e906f42796bfc2199e514149af505fc79ca0c17b78ecce075459f8b172e",
+      "distance_m": 32.633577466809044,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 1306.0716669427632
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 546.588,
+        "p99_us": 5420.361960000013,
+        "max_us": 7089.598
+      }
+    },
+    {
+      "scenario": "S10",
+      "seed": 741635605,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "61d18d1f28527d7f11487c321796a0e7902fa751a3b3ffd866d2231acea60dd7",
+      "distance_m": 32.41487471835378,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 1296.4559311246123
+      },
+      "stop_episodes": {
+        "envelope": 9
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 545.906,
+        "p99_us": 5209.028820000001,
+        "max_us": 14129.778
+      }
+    },
+    {
+      "scenario": "S10",
+      "seed": 611369257,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "c2e7a99d479189b089330460d383b010eb3cf46607e70f6ed44d359c54eed226",
+      "distance_m": 32.365100071025,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 1295.2846647864117
+      },
+      "stop_episodes": {
+        "envelope": 10
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 551.586,
+        "p99_us": 5676.148220000003,
+        "max_us": 6179.862
+      }
+    },
+    {
+      "scenario": "S10",
+      "seed": 290587930,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "886c99189a02a07728d3bf874a55a98b07c1295f3e4924694aa4b28cea7852e1",
+      "distance_m": 31.536041792329577,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 1265.6443324294628
+      },
+      "stop_episodes": {
+        "envelope": 6
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 614.393,
+        "p99_us": 5421.2301000000125,
+        "max_us": 24564.939
+      }
+    },
+    {
+      "scenario": "S10",
+      "seed": 512558154,
+      "robots": 1,
+      "ticks": 1187,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "8b1c750ba0aa5fbac09bbc7f8beadde51f6f79f184f33cab2fd7492175adb281",
+      "distance_m": 32.56079231891309,
+      "speed_sums": {
+        "requested": 1424.400000000031,
+        "limited": 1303.7674472502379
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1187,
+        "median_us": 553.23,
+        "p99_us": 5287.940760000002,
+        "max_us": 6085.383
+      }
+    },
+    {
+      "scenario": "S11",
+      "seed": 288785471,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "fb7bdb72f260a7d05a6e872124c3e4080ffd4a468e309c191a535b305a064543",
+      "distance_m": 22.068992290519667,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 875.2554050421902
+      },
+      "stop_episodes": {
+        "envelope": 61
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1553.5815,
+        "p99_us": 5749.377350000001,
+        "max_us": 6841.853
+      }
+    },
+    {
+      "scenario": "S11",
+      "seed": 40101521,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "142670004f49040ae1626877b1d4aeff91f2306b1a8e0080bcfded07ab7a6121",
+      "distance_m": 22.068745763173915,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 874.6670201697575
+      },
+      "stop_episodes": {
+        "envelope": 61
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1524.8670000000002,
+        "p99_us": 5809.28036,
+        "max_us": 8599.135
+      }
+    },
+    {
+      "scenario": "S11",
+      "seed": 304758822,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e6f2bcd7c2195206b675e997caf21b8aab2aa6162671662dd517a81f365d2b1c",
+      "distance_m": 22.065440956813493,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 884.415817540104
+      },
+      "stop_episodes": {
+        "envelope": 57
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1523.17,
+        "p99_us": 5706.17159,
+        "max_us": 5987.191
+      }
+    },
+    {
+      "scenario": "S11",
+      "seed": 443133586,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "3c00074c247fbd866a12fd92977f127e18176a18653a484cbe593bd26e051d41",
+      "distance_m": 22.07077823118376,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 875.3721149322345
+      },
+      "stop_episodes": {
+        "envelope": 57
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1501.84,
+        "p99_us": 5769.0987000000005,
+        "max_us": 5971.642
+      }
+    },
+    {
+      "scenario": "S11",
+      "seed": 855115839,
+      "robots": 1,
+      "ticks": 840,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "7abc1515f4268efebee22fd136c9efc32db90690d4d8577b5c1477279e7ca72d",
+      "distance_m": 22.065559274010354,
+      "speed_sums": {
+        "requested": 1680.0,
+        "limited": 875.1359409767576
+      },
+      "stop_episodes": {
+        "envelope": 62
+      },
+      "false_stops": 0,
+      "latency": {
+        "n": 840,
+        "median_us": 1536.354,
+        "p99_us": 5630.13548,
+        "max_us": 7692.259
+      }
+    },
+    {
+      "scenario": "S12",
+      "seed": 848272079,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "8483bd1e691b43f885681ea22c546944208067dd63ec906689b5dd74230fe80a",
+      "distance_m": 21.19548035065683,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 838.545141794974
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1558.776,
+        "p99_us": 5760.65736,
+        "max_us": 6021.655
+      }
+    },
+    {
+      "scenario": "S12",
+      "seed": 796499750,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e9888474218791bd2db1d78975e27481ca0438cf888f3d06faf52fc410204407",
+      "distance_m": 21.184144471134662,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 836.742506939456
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1578.592,
+        "p99_us": 5759.4148,
+        "max_us": 7346.975
+      }
+    },
+    {
+      "scenario": "S12",
+      "seed": 968457897,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "f8b44bd0b990d8e46d74efda871566222d00bf1b3a41a4424d383676cb2f51bd",
+      "distance_m": 21.16201029466746,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 844.2678740289167
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1555.28,
+        "p99_us": 5789.57156,
+        "max_us": 6834.802
+      }
+    },
+    {
+      "scenario": "S12",
+      "seed": 213496709,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "321a40dd12ed061da04892b24e174c45bf6326b394bfe731469397e107c230e9",
+      "distance_m": 21.184852127614032,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 839.5526676761901
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1589.373,
+        "p99_us": 5798.02968,
+        "max_us": 7557.889
+      }
+    },
+    {
+      "scenario": "S12",
+      "seed": 202469928,
+      "robots": 1,
+      "ticks": 1013,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 0,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "2a2a11282bf0a72c341b7d445169f477298af378a3d46630e9ae0a06e2b71a1b",
+      "distance_m": 21.18441521913351,
+      "speed_sums": {
+        "requested": 1519.5,
+        "limited": 838.6244221239759
+      },
+      "stop_episodes": {},
+      "false_stops": 0,
+      "latency": {
+        "n": 1013,
+        "median_us": 1595.184,
+        "p99_us": 5955.91612,
+        "max_us": 7478.123
+      }
+    },
+    {
+      "scenario": "S13",
+      "seed": 633021836,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 1,
+        "robot_collisions": 0,
+        "separation_violations": 1,
+        "near_misses": 2
+      },
+      "final_hash": "68a4cb073796a38f29d10dee37ba5a394e9bb2ddd06afee66739399a8542943b",
+      "distance_m": 69.5045823366433,
+      "speed_sums": {
+        "requested": 5082.209999999986,
+        "limited": 2861.7585689274483
+      },
+      "stop_episodes": {
+        "envelope": 52,
+        "estop": 6,
+        "occlusion": 2
+      },
+      "false_stops": 56,
+      "latency": {
+        "n": 3600,
+        "median_us": 1575.852,
+        "p99_us": 9867.960659999995,
+        "max_us": 11495.881
+      }
+    },
+    {
+      "scenario": "S13",
+      "seed": 719883213,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e12dfb0d4efc10c5f20d25674679e80223cc895fbf644b787f5088d8e24cbb95",
+      "distance_m": 92.83329440713835,
+      "speed_sums": {
+        "requested": 5424.359999999863,
+        "limited": 3825.224564459272
+      },
+      "stop_episodes": {
+        "envelope": 2,
+        "estop": 9,
+        "occlusion": 1
+      },
+      "false_stops": 12,
+      "latency": {
+        "n": 3600,
+        "median_us": 1949.1675,
+        "p99_us": 6923.728349999999,
+        "max_us": 9363.575
+      }
+    },
+    {
+      "scenario": "S13",
+      "seed": 313487353,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "d2e4786abd4929a19905d64bbfe60a33c198395c8fc24b5606a9a86bec3f3a20",
+      "distance_m": 109.51935465067,
+      "speed_sums": {
+        "requested": 5664.360000000014,
+        "limited": 4440.579681858247
+      },
+      "stop_episodes": {
+        "envelope": 42,
+        "estop": 4
+      },
+      "false_stops": 46,
+      "latency": {
+        "n": 3600,
+        "median_us": 1790.4685,
+        "p99_us": 8980.312379999998,
+        "max_us": 10706.374
+      }
+    },
+    {
+      "scenario": "S13",
+      "seed": 593303039,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "4d0310aa6f700bab71c4371a2869152ad1cfb43fe752bc5dc5a50007cb8ddf8f",
+      "distance_m": 99.29061654868723,
+      "speed_sums": {
+        "requested": 5737.000000000028,
+        "limited": 3987.340983827722
+      },
+      "stop_episodes": {
+        "cpa": 1,
+        "envelope": 11,
+        "estop": 11
+      },
+      "false_stops": 23,
+      "latency": {
+        "n": 3600,
+        "median_us": 1894.7945,
+        "p99_us": 8431.717019999996,
+        "max_us": 11257.465
+      }
+    },
+    {
+      "scenario": "S13",
+      "seed": 959823677,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "41f32e9a689a11e1c55e99716f6b3f066e97809e9314b0318f9f12e88203f241",
+      "distance_m": 97.89000794107102,
+      "speed_sums": {
+        "requested": 5792.959999999994,
+        "limited": 3988.2628570790102
+      },
+      "stop_episodes": {
+        "envelope": 22,
+        "estop": 15
+      },
+      "false_stops": 37,
+      "latency": {
+        "n": 3600,
+        "median_us": 1769.865,
+        "p99_us": 8164.654959999996,
+        "max_us": 10847.285
+      }
+    },
+    {
+      "scenario": "S14",
+      "seed": 810184639,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e686f180fbf2ed728eed00aad8989745814ae4996f9deba2412912d933f6dd1a",
+      "distance_m": 85.93791119133425,
+      "speed_sums": {
+        "requested": 19028.160000000094,
+        "limited": 3588.6298234158076
+      },
+      "stop_episodes": {
+        "envelope": 598,
+        "estop": 38,
+        "occlusion": 1
+      },
+      "false_stops": 637,
+      "latency": {
+        "n": 12000,
+        "median_us": 2602.688,
+        "p99_us": 9472.53844,
+        "max_us": 13855.64
+      }
+    },
+    {
+      "scenario": "S14",
+      "seed": 40238984,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "4ab66999c61729237a61a45aadfa96388a7ca3f665d2af617cb7101405dc1bb7",
+      "distance_m": 83.23750693309118,
+      "speed_sums": {
+        "requested": 19252.280000000454,
+        "limited": 3406.030384327151
+      },
+      "stop_episodes": {
+        "envelope": 651,
+        "estop": 40,
+        "occlusion": 16
+      },
+      "false_stops": 707,
+      "latency": {
+        "n": 12000,
+        "median_us": 2624.608,
+        "p99_us": 9675.45438,
+        "max_us": 17766.083
+      }
+    },
+    {
+      "scenario": "S14",
+      "seed": 820765836,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "bccd91325e28b3cde8a3d1d802cebc2e107997b1738325a2b97515e25056c139",
+      "distance_m": 81.24576418812076,
+      "speed_sums": {
+        "requested": 19969.159999999578,
+        "limited": 3393.1938285345873
+      },
+      "stop_episodes": {
+        "envelope": 417,
+        "estop": 40,
+        "occlusion": 21
+      },
+      "false_stops": 478,
+      "latency": {
+        "n": 12000,
+        "median_us": 2549.5645,
+        "p99_us": 9777.42884,
+        "max_us": 12969.253
+      }
+    },
+    {
+      "scenario": "S14",
+      "seed": 567737527,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "18ae1e7348a2ac288c80461f6a08ec8c61c91018a2bf168dedb6dd4b1d4dbcbd",
+      "distance_m": 129.34611545912585,
+      "speed_sums": {
+        "requested": 19023.960000000097,
+        "limited": 5235.522988456213
+      },
+      "stop_episodes": {
+        "envelope": 260,
+        "estop": 32,
+        "occlusion": 100
+      },
+      "false_stops": 392,
+      "latency": {
+        "n": 12000,
+        "median_us": 2445.0125,
+        "p99_us": 8971.774770000004,
+        "max_us": 16428.035
+      }
+    },
+    {
+      "scenario": "S14",
+      "seed": 52744551,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "34c6816f1d9b741c30bfb2dabc9a7940c2f61aaf4bba17d3845196b7b31bb119",
+      "distance_m": 80.38495898902437,
+      "speed_sums": {
+        "requested": 19435.300000000174,
+        "limited": 3441.3752163469157
+      },
+      "stop_episodes": {
+        "envelope": 435,
+        "estop": 44
+      },
+      "false_stops": 479,
+      "latency": {
+        "n": 12000,
+        "median_us": 2596.261,
+        "p99_us": 9380.796270000003,
+        "max_us": 31810.918
+      }
+    },
+    {
+      "scenario": "S15",
+      "seed": 545157448,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "e265b7f83c3214cf22706182c1fce6c492c9eeb5e132bd111000e3c625513103",
+      "distance_m": 47.49547051431791,
+      "speed_sums": {
+        "requested": 57940.79999999998,
+        "limited": 2007.718889487897
+      },
+      "stop_episodes": {
+        "envelope": 954,
+        "estop": 94,
+        "occlusion": 303
+      },
+      "false_stops": 1351,
+      "latency": {
+        "n": 36000,
+        "median_us": 3729.797,
+        "p99_us": 11209.204080000001,
+        "max_us": 33618.35
+      }
+    },
+    {
+      "scenario": "S15",
+      "seed": 229344423,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "b88ce6b2cc0bbc2a650f1308f60492d3b08e45fc903e547d4998c811ea28ab4d",
+      "distance_m": 49.66096930298204,
+      "speed_sums": {
+        "requested": 57941.639999999985,
+        "limited": 2084.2393980296424
+      },
+      "stop_episodes": {
+        "envelope": 933,
+        "estop": 102,
+        "occlusion": 304
+      },
+      "false_stops": 1339,
+      "latency": {
+        "n": 36000,
+        "median_us": 3724.9365,
+        "p99_us": 11083.783300000003,
+        "max_us": 17117.829
+      }
+    },
+    {
+      "scenario": "S15",
+      "seed": 82473746,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 2,
+        "robot_collisions": 0,
+        "separation_violations": 1,
+        "near_misses": 4
+      },
+      "final_hash": "7249b281056a9f6bf535c99cb8d859f36f3bacd51e76ca2fc32e74c2da7781a6",
+      "distance_m": 66.53156050925547,
+      "speed_sums": {
+        "requested": 56680.07999999774,
+        "limited": 2794.427036740308
+      },
+      "stop_episodes": {
+        "envelope": 981,
+        "estop": 75,
+        "occlusion": 197
+      },
+      "false_stops": 1247,
+      "latency": {
+        "n": 36000,
+        "median_us": 3537.8895,
+        "p99_us": 10505.94765,
+        "max_us": 28923.903
+      }
+    },
+    {
+      "scenario": "S15",
+      "seed": 74125674,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "2149988cbdb8a21178c9e072a23cb0ba450cf3ede72e584052eb661ebebaf7c2",
+      "distance_m": 56.926259915266975,
+      "speed_sums": {
+        "requested": 57497.649999998845,
+        "limited": 2394.6438480604456
+      },
+      "stop_episodes": {
+        "envelope": 1285,
+        "estop": 142,
+        "occlusion": 177
+      },
+      "false_stops": 1604,
+      "latency": {
+        "n": 36000,
+        "median_us": 3789.7484999999997,
+        "p99_us": 11240.132249999999,
+        "max_us": 52812.065
+      }
+    },
+    {
+      "scenario": "S15",
+      "seed": 608804536,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "baffcde9e46a17df64bfd82a67930d07bfb73826574baeeecedc01e97250a8db",
+      "distance_m": 57.012148996446356,
+      "speed_sums": {
+        "requested": 57432.54999999885,
+        "limited": 2402.354236377893
+      },
+      "stop_episodes": {
+        "envelope": 1356,
+        "estop": 126,
+        "occlusion": 210
+      },
+      "false_stops": 1692,
+      "latency": {
+        "n": 36000,
+        "median_us": 3821.6185,
+        "p99_us": 11069.12426,
+        "max_us": 19143.932
+      }
+    },
+    {
+      "scenario": "S16",
+      "seed": 568609466,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "7fb23028d22c085800d23c062701f59ad3ffa01f8013d166e2df07bf0085abe2",
+      "distance_m": 88.45221629720042,
+      "speed_sums": {
+        "requested": 6086.720000000111,
+        "limited": 3630.176244493339
+      },
+      "stop_episodes": {
+        "envelope": 11,
+        "estop": 3
+      },
+      "false_stops": 14,
+      "latency": {
+        "n": 3600,
+        "median_us": 1949.7615,
+        "p99_us": 8779.033089999997,
+        "max_us": 19358.459
+      }
+    },
+    {
+      "scenario": "S16",
+      "seed": 317022959,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "c1262cb85b4db9566816451f75ddcbc91060f7fc9fd99644fef2d6d03119f7c6",
+      "distance_m": 82.97617208970831,
+      "speed_sums": {
+        "requested": 5346.679999999858,
+        "limited": 3377.6580269620877
+      },
+      "stop_episodes": {
+        "envelope": 6,
+        "estop": 5
+      },
+      "false_stops": 11,
+      "latency": {
+        "n": 3600,
+        "median_us": 1715.4885,
+        "p99_us": 7244.0420499999955,
+        "max_us": 9259.314
+      }
+    },
+    {
+      "scenario": "S16",
+      "seed": 385124418,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 4,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "1c3bd38babb89023c6c8121535e9f7fe175305ea656752dcc723be8695e90465",
+      "distance_m": 112.96079653973811,
+      "speed_sums": {
+        "requested": 5626.159999999967,
+        "limited": 4594.013171929825
+      },
+      "stop_episodes": {
+        "estop": 1
+      },
+      "false_stops": 1,
+      "latency": {
+        "n": 3600,
+        "median_us": 1540.3955,
+        "p99_us": 9376.489069999992,
+        "max_us": 13710.349
+      }
+    },
+    {
+      "scenario": "S16",
+      "seed": 857583022,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 1,
+        "near_misses": 0
+      },
+      "final_hash": "776d02ae55772e2e23829afa814b9260661c185b8ca8332da833a9ff585cfc5c",
+      "distance_m": 84.41264307032291,
+      "speed_sums": {
+        "requested": 5324.239999999851,
+        "limited": 3423.567151803748
+      },
+      "stop_episodes": {
+        "cpa": 1,
+        "envelope": 3,
+        "estop": 7
+      },
+      "false_stops": 6,
+      "latency": {
+        "n": 3600,
+        "median_us": 1837.679,
+        "p99_us": 8871.521779999994,
+        "max_us": 14305.542
+      }
+    },
+    {
+      "scenario": "S16",
+      "seed": 8893461,
+      "robots": 3,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 1,
+        "robot_collisions": 0,
+        "separation_violations": 2,
+        "near_misses": 2
+      },
+      "final_hash": "8cabb7872ba32761f468d8a103bce038a431498e1e858512bbd0236903179c61",
+      "distance_m": 93.67618098210323,
+      "speed_sums": {
+        "requested": 5353.639999999863,
+        "limited": 3785.12829782911
+      },
+      "stop_episodes": {
+        "cpa": 1,
+        "envelope": 1,
+        "estop": 4
+      },
+      "false_stops": 3,
+      "latency": {
+        "n": 3600,
+        "median_us": 1638.5595,
+        "p99_us": 8310.417759999998,
+        "max_us": 10423.672
+      }
+    },
+    {
+      "scenario": "S17",
+      "seed": 339866399,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 5,
+        "robot_collisions": 0,
+        "separation_violations": 5,
+        "near_misses": 10
+      },
+      "final_hash": "3e6907e7892d6a22da01b99e870f7ecc44eeecf67c94562ecc4f4527311f4083",
+      "distance_m": 91.95694639632717,
+      "speed_sums": {
+        "requested": 18681.360000000404,
+        "limited": 3814.126324092208
+      },
+      "stop_episodes": {
+        "cpa": 1,
+        "envelope": 162,
+        "estop": 12,
+        "occlusion": 68
+      },
+      "false_stops": 228,
+      "latency": {
+        "n": 12000,
+        "median_us": 2195.2465,
+        "p99_us": 9911.466140000002,
+        "max_us": 12822.308
+      }
+    },
+    {
+      "scenario": "S17",
+      "seed": 601969674,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 1,
+        "robot_collisions": 0,
+        "separation_violations": 2,
+        "near_misses": 2
+      },
+      "final_hash": "32ceaceab88db7e701aa6f4e2c6ee725e34f59176f1131bc067f7f6dc45d2ea3",
+      "distance_m": 122.19326383081984,
+      "speed_sums": {
+        "requested": 18955.799999999974,
+        "limited": 5086.270720852893
+      },
+      "stop_episodes": {
+        "envelope": 352,
+        "estop": 16,
+        "occlusion": 13
+      },
+      "false_stops": 247,
+      "latency": {
+        "n": 12000,
+        "median_us": 2439.5365,
+        "p99_us": 9967.366550000002,
+        "max_us": 13288.94
+      }
+    },
+    {
+      "scenario": "S17",
+      "seed": 962258108,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 1,
+        "robot_collisions": 0,
+        "separation_violations": 2,
+        "near_misses": 3
+      },
+      "final_hash": "d237a21118df8a9094d4bd84e637209817a3988b32379f1ecf8bf03daf44e22a",
+      "distance_m": 131.87891913138358,
+      "speed_sums": {
+        "requested": 17800.70000000088,
+        "limited": 5449.184639031643
+      },
+      "stop_episodes": {
+        "cpa": 3,
+        "envelope": 173,
+        "estop": 29,
+        "occlusion": 40
+      },
+      "false_stops": 238,
+      "latency": {
+        "n": 12000,
+        "median_us": 2264.084,
+        "p99_us": 8211.61497,
+        "max_us": 26863.027
+      }
+    },
+    {
+      "scenario": "S17",
+      "seed": 217899087,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 2,
+      "counts": {
+        "human_collisions": 2,
+        "robot_collisions": 0,
+        "separation_violations": 2,
+        "near_misses": 4
+      },
+      "final_hash": "45423813e01b19c6d4cc77bbff0fd4a3245886783e93fdc41afcb17c4019a009",
+      "distance_m": 109.78127911619633,
+      "speed_sums": {
+        "requested": 19276.679999999553,
+        "limited": 4575.042061537
+      },
+      "stop_episodes": {
+        "envelope": 27,
+        "estop": 17,
+        "occlusion": 69
+      },
+      "false_stops": 106,
+      "latency": {
+        "n": 12000,
+        "median_us": 2217.3405000000002,
+        "p99_us": 8448.948530000009,
+        "max_us": 31491.703
+      }
+    },
+    {
+      "scenario": "S17",
+      "seed": 281201543,
+      "robots": 10,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 0,
+        "robot_collisions": 0,
+        "separation_violations": 0,
+        "near_misses": 0
+      },
+      "final_hash": "d1e9695bcbb402c31346ff77b5c803dc625848d3f8cd2ab11ae9d159b96a2335",
+      "distance_m": 131.674091856965,
+      "speed_sums": {
+        "requested": 17620.260000000515,
+        "limited": 5419.95739521503
+      },
+      "stop_episodes": {
+        "envelope": 219,
+        "estop": 29,
+        "occlusion": 38
+      },
+      "false_stops": 285,
+      "latency": {
+        "n": 12000,
+        "median_us": 2256.552,
+        "p99_us": 8063.77980000001,
+        "max_us": 10876.13
+      }
+    },
+    {
+      "scenario": "S18",
+      "seed": 493284782,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 10,
+        "robot_collisions": 0,
+        "separation_violations": 13,
+        "near_misses": 22
+      },
+      "final_hash": "31953cf53f2e4aaf490d583003bd1be50d9b5f15e0c133712b4b9de839da74c8",
+      "distance_m": 84.73550575651872,
+      "speed_sums": {
+        "requested": 57188.849999997736,
+        "limited": 3541.9141963603065
+      },
+      "stop_episodes": {
+        "cpa": 7,
+        "envelope": 864,
+        "estop": 150,
+        "occlusion": 39
+      },
+      "false_stops": 930,
+      "latency": {
+        "n": 36000,
+        "median_us": 3428.5615,
+        "p99_us": 10627.01722,
+        "max_us": 25250.067
+      }
+    },
+    {
+      "scenario": "S18",
+      "seed": 375870558,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 7,
+        "robot_collisions": 0,
+        "separation_violations": 15,
+        "near_misses": 16
+      },
+      "final_hash": "d7ed44cfaa0dc142cb8b9d65435dda12ea9ca1e718251ba3c25e6d2597a77cbe",
+      "distance_m": 76.75160340984945,
+      "speed_sums": {
+        "requested": 56910.919999998885,
+        "limited": 3203.4867278264055
+      },
+      "stop_episodes": {
+        "cpa": 4,
+        "envelope": 1113,
+        "estop": 103,
+        "occlusion": 85
+      },
+      "false_stops": 1190,
+      "latency": {
+        "n": 36000,
+        "median_us": 3368.7385,
+        "p99_us": 11353.149730000003,
+        "max_us": 32157.272
+      }
+    },
+    {
+      "scenario": "S18",
+      "seed": 141178730,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 6,
+        "robot_collisions": 0,
+        "separation_violations": 6,
+        "near_misses": 13
+      },
+      "final_hash": "8bf149e55a499f42c181a97b44222423cb4052879885d0f27d4fe4c290e00ad4",
+      "distance_m": 88.0990049125832,
+      "speed_sums": {
+        "requested": 56289.4799999988,
+        "limited": 3641.970173645955
+      },
+      "stop_episodes": {
+        "cpa": 1,
+        "envelope": 943,
+        "estop": 127,
+        "occlusion": 95
+      },
+      "false_stops": 1154,
+      "latency": {
+        "n": 36000,
+        "median_us": 3315.2075000000004,
+        "p99_us": 9958.389730000006,
+        "max_us": 16041.373
+      }
+    },
+    {
+      "scenario": "S18",
+      "seed": 730892012,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 8,
+        "robot_collisions": 0,
+        "separation_violations": 11,
+        "near_misses": 16
+      },
+      "final_hash": "4bed6521abc442ef58204d1e7008cba2c9f99db36fdd10c6205348faa05e8f42",
+      "distance_m": 74.21436532507956,
+      "speed_sums": {
+        "requested": 57926.72000000003,
+        "limited": 3105.2784969656072
+      },
+      "stop_episodes": {
+        "cpa": 5,
+        "envelope": 1187,
+        "estop": 117,
+        "occlusion": 71
+      },
+      "false_stops": 1289,
+      "latency": {
+        "n": 36000,
+        "median_us": 3033.3305,
+        "p99_us": 9855.467810000002,
+        "max_us": 15372.439
+      }
+    },
+    {
+      "scenario": "S18",
+      "seed": 47264320,
+      "robots": 30,
+      "ticks": 1200,
+      "unavoidable_at_spawn": false,
+      "tasks_completed": 3,
+      "counts": {
+        "human_collisions": 2,
+        "robot_collisions": 0,
+        "separation_violations": 2,
+        "near_misses": 4
+      },
+      "final_hash": "0a507588d7b2d10a6e96450be14fac5bdc6de4732a6b64e12d29b6ae7e426737",
+      "distance_m": 64.98662982846861,
+      "speed_sums": {
+        "requested": 57571.19999999888,
+        "limited": 2707.090202295114
+      },
+      "stop_episodes": {
+        "cpa": 1,
+        "envelope": 1657,
+        "estop": 91,
+        "occlusion": 114
+      },
+      "false_stops": 1842,
+      "latency": {
+        "n": 36000,
+        "median_us": 1870.6245,
+        "p99_us": 7550.056810000012,
+        "max_us": 11197.608
+      }
+    }
+  ],
+  "model_ids": {},
+  "prompt_versions": {},
+  "notes": "Development seeds only. Every control value is an assumption, not calibrated. Reflex limits (watchdog, geofence, e-stop) are off in E1. Throughput is waypoints reached per simulated hour. distance_m is the path length of all robots and speed_ratio the limited over the requested speed per control call; both read slowing without the waypoint cliff."
+}
