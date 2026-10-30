@@ -1,0 +1,21 @@
+{
+  "experiment": "e8",
+  "seed_set": "dev",
+  "label": "code speed on this machine, not a real-time guarantee on hardware",
+  "commit": "f337c9aa3b228081e911e585d6aae3ca2c4aebea",
+  "date": "2026-10-30T00:45:53+00:00",
+  "numpy_version": "2.5.4",
+  "platform": "Windows-11-10.0.22631-SP0",
+  "dt": 0.025,
+  "entities": 10,
+  "empty_loop": {
+    "ticks": 200000,
+    "ticks_per_second": 1865894.4373848608
+  },
+  "fork_rollout": {
+    "forks": 5,
+    "ticks_per_fork": 1800,
+    "ticks_per_second": 14445.560143556364,
+    "note": "toy random-walk system; the 10-robot rollout with lidar is measured in B8"
+  }
+}

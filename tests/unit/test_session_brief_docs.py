@@ -44,3 +44,17 @@ def test_agents_section_18_uses_contingency_order_and_gates() -> None:
     for term in ("Contingency order", "G1", "G2", "G3", "G4", "I decide", "Reserved and never cut"):
         assert term in section or term.replace("I decide", "maintainer decides") in section, term
     assert "Predictive maintenance" in section and "crisis replanning" in section.lower()
+
+
+def test_adr_022_records_the_push_guard_conditions() -> None:
+    text = _read("docs/DECISIONS.md")
+    adr = text.split("## ADR-022:")[1].split("\n## ADR-")[0]
+    for term in (
+        "type/short-description",
+        "pre_push_check.py",
+        "gitleaks",
+        "uv run ci",
+        "results/**/heldout/",
+        "gh pr merge",
+    ):
+        assert term in adr, term

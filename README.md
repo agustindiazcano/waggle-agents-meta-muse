@@ -14,16 +14,17 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
-| Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick | No |
-| Coordination | Zone leases with monotonic fencing tokens, checked inside the tool in one transaction | No |
-| Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit | No |
+| Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
+| Coordination | Zone leases with monotonic fencing tokens, checked inside the tool in one transaction (designed, not implemented) | No |
+| Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
 | Input screening | Deterministic sanitizers, then an LLM guard classifier (Muse Glimmer) on all untrusted input, fails closed | Yes, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
-| Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) | Yes, bounded |
-| Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback | Yes, optional |
+| Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) (designed, not implemented) | Yes, bounded |
+| Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback (designed, not implemented) | Yes, optional |
+| Crisis replanning | Muse Spark proposes a plan, a simulation-based validator returns counterexamples, at most 3 iterations, then the operator (designed, not implemented) | Yes, proposal only |
 | Sensing and prediction | Simulated 2D lidar, closest point of approach predictor that can only restrict (designed, not implemented) | No |
 | Missions and handoff | Task graph, handoff with idempotency key and fencing token (designed, not implemented) | No |
-| Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part | RAG text only |
+| Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part (designed, not implemented) | RAG text only |
 
 ## Models used
 
@@ -39,16 +40,20 @@ All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](do
 
 | Experiment | Metric | Without layer | With layer | Status |
 |---|---|---|---|---|
-| E1 Fast layer | Human collisions and separation violations per N scenarios | TBD | TBD | not run |
+| E1 Fast layer | Human collisions and separation violations per N scenarios | No control, 90 runs on development seeds: 107 human collisions, 1027 robot collisions, 125 separation violations (`no_control_20261030T022921Z.json`) | TBD | baseline on development seeds only, fast layer not built |
 | E2 Leases and chaos | Double assignments in 500 tasks with killed workers | TBD | TBD | not run |
 | E3 Injection matrix | Attempts rejected per layer, by ablation | TBD | TBD | not run |
 | E4 Court | Correct blocks, false blocks, reviewer correlation | TBD | TBD | not run |
 | E5 Per-robot advisors | Near-misses, false stops, tasks per hour | TBD | TBD | not run |
 | E6 Predictive maintenance | Lead time, false alarms, missed failures vs fixed threshold | TBD | TBD | not run |
 | E7 Multimodal | ID error rate in transcription, label verification accuracy | TBD | TBD | not run |
-| E8 Latency and cost | Fast loop latency, cost per task, LLM latency distribution | TBD | TBD | not run |
+| E8 Latency and cost | Fast loop latency, cost per task, LLM latency distribution | 10 robots, 4 humans, 45 s simulated, lidar included: 22.3 s per rollout, 81 ticks/s, code speed on this machine (`sim_speed_20261030T023049Z.json`) | TBD | simulator only |
 
 Scaling to thousands of agents is reported as an extrapolation from a stub calibrated on measured latency distributions. It is not a claim about real fleets.
+
+## Third-party libraries
+
+- numpy 2.5.4 (pinned): the only runtime dependency, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
 
 ## Scope and limits
 
@@ -56,6 +61,7 @@ Scaling to thousands of agents is reported as an extrapolation from a stub calib
 - The separation formula is inspired by speed and separation monitoring. This project does not claim compliance with any standard.
 - The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D and the FPV vision check renders the 3D scene.
 - Exact reproduction of a run holds on the same platform and numpy version. Published results come from the cloud run (Linux).
+- Plan validation in crisis replanning is simulation-based with counterexample feedback. It is not formal verification and not a safety proof. The reflex layer stays the safety mechanism against humans.
 - The lidar is simulated (designed, not implemented). Failure history and purchase orders are synthetic (designed, not implemented).
 - Vision inputs are synthetic renders, not in the control loop, so ground truth is known by construction.
 - Human behavior is scripted or adversarial by design, not learned from real data.

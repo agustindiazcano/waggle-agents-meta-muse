@@ -42,7 +42,8 @@ def test_test_target_excludes_heavy_and_llm(recorder: Recorder) -> None:
     assert recorder.commands[0][-2:] == ["-m", "not heavy and not llm"]
 
 
-def test_ci_runs_everything_in_order(recorder: Recorder) -> None:
+def test_ci_runs_everything_in_order(recorder: Recorder, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("waggle.tasks._write_ci_stamp", lambda: None)
     assert tasks.ci() == 0
     names = [c[2] if len(c) > 2 else Path(c[0]).stem for c in recorder.commands]
     assert names == ["ruff", "ruff", "mypy", "pytest", "lint-imports"]
@@ -97,3 +98,34 @@ def test_experiments_test_other_configuration_is_independent(tmp_path: Path) -> 
     other = ["--results-dir", str(tmp_path), "--configuration", "ablation-a"]
     assert tasks.experiments_test(other) == 0
     assert _result(tmp_path, "ablation-a").exists()
+
+
+def test_ci_writes_the_stamp_only_after_a_green_run(
+    recorder: Recorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    written: list[int] = []
+    monkeypatch.setattr("waggle.tasks._write_ci_stamp", lambda: written.append(1))
+    assert tasks.ci() == 0
+    assert written == [1]
+
+
+def test_ci_writes_no_stamp_when_a_check_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    rec = Recorder(codes=[0, 0, 1])
+    monkeypatch.setattr("waggle.tasks.subprocess.run", rec)
+    written: list[int] = []
+    monkeypatch.setattr("waggle.tasks._write_ci_stamp", lambda: written.append(1))
+    assert tasks.ci() == 1
+    assert written == []
+
+
+def test_stamp_holds_the_head_sha(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    git_dir = tmp_path / ".git"
+    git_dir.mkdir()
+
+    def fake_run(cmd: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+        out = "abc123\n" if "HEAD" in cmd else str(git_dir) + "\n"
+        return subprocess.CompletedProcess(cmd, 0, stdout=out)
+
+    monkeypatch.setattr("waggle.tasks.subprocess.run", fake_run)
+    tasks._write_ci_stamp()
+    assert (git_dir / "waggle_ci_stamp").read_text(encoding="utf-8").strip() == "abc123"

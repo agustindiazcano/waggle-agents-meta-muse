@@ -29,6 +29,8 @@ Difficulty is raised on purpose so that ablations can show differences.
 
 Each scenario has: seed, map, entities, scripted events, declared target layer, expected outcome.
 
+Zone state FAULT_OCCUPIED applies to S31 to S36: a zone is never released while the last known odometry puts a chassis in it.
+
 Coordinated handoff (designed, not implemented):
 
 | ID | Scenario | Target layer |
@@ -44,10 +46,13 @@ Coordinated handoff (designed, not implemented):
 
 - Question: how many human collisions and separation violations happen with and without the fast layer.
 - Method: N scenarios (S01 to S18) times seeds. Detector is the independent exact detector from Phase 1.
-- Seeds: S01 to S18 with 5 development seeds and 12 held-out seeds each, fixed once in `data/seeds.json`, disjoint and never regenerated. That is 90 development runs and 216 held-out runs per configuration. With 216 runs and zero collisions the Wilson 95% upper bound is about 1.7%. With 100 runs it would be 3.7%.
-- Configurations (designed, not implemented): sensing is ground truth, lidar only, or lidar with beacons; control is envelope only or envelope with prediction. Contribution is measured by ablation.
+- Seeds: S01 to S18 with 5 development seeds and 12 held-out seeds each, generated once from a fixed master seed and stored in `data/seeds.json`, disjoint and never regenerated. Each scenario carries a flag `unavoidable_at_spawn`, computed from geometry: a human spawns inside the minimum possible stopping distance of a robot at its speed cap. E1 reports unavoidable cases separately and never hides them. That is 90 development runs and 216 held-out runs per configuration. With 216 runs and zero collisions the Wilson 95% upper bound is about 1.7%. With 100 runs it would be 3.7%.
+- Control configurations (designed, not implemented): no control; radial 1D distance; swept footprint; swept footprint plus occlusion cap; swept footprint plus occlusion cap plus CPA prediction.
+- Sensing configurations (designed, not implemented): sensing is ground truth, lidar only, or lidar with beacons; control is envelope only or envelope with prediction. Contribution is measured by ablation.
 - Metrics: collisions with humans, collisions between robots, near-misses, separation violations, false stops, throughput (tasks per hour), loop latency. Proportions with Wilson 95% intervals and raw counts.
 - Baseline: no envelope, no e-stop.
+- No-control baseline (Phase 1, configuration `no_control`): the waypoint driver of `waggle.sim.scripted` only, which has no safety logic and is not the control layer. Run on development seeds only, written to `results/e1/dev/`. S01 to S18 run on map A (S01 to S15) and map B (S16 to S18). S13 to S18 are 3, 10 and 30 robots on map A and then on map B.
+- Definitions (declared per scenario, assumptions): a collision is contact between a robot footprint and a human disc or another robot, closed sets. A separation violation is a gap below 0.5 m, strictly below, and a collision is also a violation. A near miss is no contact and a gap below 0.2 m. All three are counted as episodes, not ticks. Unavoidable cases are counted in the totals, listed separately and also subtracted in a second set of totals.
 - Report: counts, intervals, every failing seed, latency as code latency.
 
 ## E2: Leases, fencing and chaos
@@ -75,10 +80,12 @@ Coordinated handoff (designed, not implemented):
 - Configurations:
   - A: single Muse Spark
   - B: two Muse members
-  - C: default Muse court (Muse Spark, Muse Spark Open, Muse Glimmer)
-  - D: Muse Spark, Muse Spark Open and a non-Muse member on Vertex, run once on the held-out set within the Vertex cap
+  - C: three Muse members with identical prompts (Muse Spark, Muse Spark Open, Muse Glimmer)
+  - D: three Muse members with role-specialized checklists (SOP compliance, provenance and injection, operational conflict)
+  - E: two Muse members plus a non-Muse member on Vertex, run once on the held-out set within the Vertex cap
+  - An LLM never checks inventory, chassis capability or zone invariants: code does.
 - The default court for the live demo is whatever the held-out results support.
-- Metrics: false approvals, false blocks, escalation rate, agreement and pairwise error correlation (Muse pairs, and Muse versus non-Muse in D), latency, cost per task.
+- Metrics: false approvals, false blocks, escalation rate, agreement and pairwise error correlation (Muse pairs, and Muse versus non-Muse in E), latency, cost per task.
 - Repeats per case, reported as repeats.
 
 ## E5: Per-robot advisors
@@ -109,6 +116,19 @@ Coordinated handoff (designed, not implemented):
 - LLM latency distributions per model and role.
 - Cost per task, by role, from the `llm_calls` table.
 - Extrapolation to large fleets: a stub that samples the measured latency distributions and failure rates. Reported as extrapolation, with the assumptions listed and what is not validated.
+
+## E10: Crisis replanning
+
+- Question: does an LLM planner with counterexample feedback recover from compound faults better than a strong deterministic baseline, and how often does an accepted plan still fail.
+- Setup (designed, not implemented): compound-fault templates combining the thermal fault that triggers the geofence, blocked aisles, a robot dead mid hand-off (zone state FAULT_OCCUPIED), and urgent orders by text or voice, with an optional vision input and an always available text incident report. Held-out seeds.
+- Configurations:
+  - strong deterministic recovery baseline: A* routing, reassignment, lease release, and the same repair moves that the planner prompt describes
+  - Muse open loop
+  - Muse with validator feedback
+  - Muse with validator feedback and the role-specialized court
+- Metrics: violations in validation and in execution, deadlocks, recovery time, iterations, calls, cost, escalations, and the fraction of accepted plans that produce a violation in an extended 120 s rollout or in execution.
+- Sensitivity: a run with H in 30, 45 and 60 seconds.
+- Report what the LLM adds beyond the deterministic baseline per template. The validation is simulation-based, not a proof, and the hidden human prior, K and H are stated with every result.
 
 ## Reproduction
 

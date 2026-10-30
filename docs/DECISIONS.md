@@ -128,6 +128,10 @@ Decision:
 
 Consequences: a correlated court may agree on a mistake, and E4 reports how often. A guard outage raises the escalation rate.
 
+### Amendment (crisis replanning session): E4 configurations
+
+E4 stays a standalone experiment with unanimity at full scope. Configurations: A single Muse Spark; B two Muse members; C three Muse members with identical prompts; D three Muse members with role-specialized checklists (SOP compliance, provenance and injection, operational conflict); E two Muse members plus a non-Muse member on Vertex. An LLM never checks inventory, chassis capability or zone invariants: code does. Report false approvals first, then false blocks, escalation rate and pairwise correlation. The earlier configuration list above is replaced by this one.
+
 ## ADR-018: Sensing model and predictive caution
 
 Status: proposed. Designed, not implemented.
@@ -177,13 +181,20 @@ Status: proposed.
 Context: Phase 1 builds the simulator that every experiment depends on. Reproducible runs and a clean split between ground truth and what control sees are the base of E1.
 
 Decision:
-- Units and step: SI units (meters, seconds, radians). The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D (Three.js) and the FPV vision check renders the 3D scene. Fixed step dt = 0.025 s (40 Hz), one constant that every layer reads, never a wall clock. Every actuation delay must be an integer multiple of dt (the forklift 0.15 s is 6 ticks). The loader rejects a config that breaks this. The lidar runs at 10 Hz, every 4 ticks.
+- Units and step: SI units (meters, seconds, radians). The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D (Three.js) and the FPV vision check renders the 3D scene. Fixed step dt = 0.025 s (40 Hz), one constant that every layer reads, never a wall clock. Every actuation delay must be an integer multiple of dt (carrier, parts_runner and tech_repair 0.10 s are 4 ticks, the forklift 0.15 s is 6 ticks). The loader rejects a config that breaks this. The lidar runs at 10 Hz, every 4 ticks.
 - Seeds: one root seed per run. Independent streams per entity and per subsystem come from numpy `SeedSequence.spawn`, so adding an entity does not change the other streams. A generator is built only from a spawned child, with `default_rng(child)`.
-- Determinism scan: a test parses the sources of `waggle.sim` and `waggle.control` with `ast` and rejects global `random`, `time`, `datetime`, network, `os.urandom`, `uuid`, `secrets`, global numpy random functions, `np.random.seed`, `default_rng` without a `SeedSequence` child, builtin `hash()` on strings, and iteration over a set when building state or the hash.
+- Determinism scan: a test parses the sources of `waggle.sim`, `waggle.control` and `waggle.validation` with `ast` and rejects global `random`, `time`, `datetime`, network, `os.urandom`, `uuid`, `secrets`, global numpy random functions, `np.random.seed`, `default_rng` without a `SeedSequence` child, builtin `hash()` on strings, and iteration over a set when building state or the hash. Comments and strings must not cause false positives, and fixture sources check each forbidden construct.
 - State hash: a canonical serialization with sorted keys and floats rounded to a fixed number of decimals (documented next to the code). No golden hash values are committed. Determinism tests compare two runs in the same process. Every result file records the numpy version and the platform.
 - Reproduction scope: exact reproduction holds on the same platform and numpy version. Published results come from the cloud run (Linux).
-- Ground truth versus observation: `waggle.control` never reads ground truth. It reads only the types in `waggle.sim.observations`. That module is a leaf: it imports nothing from the project, and `waggle/sim/__init__.py` imports nothing, because import-linter also flags indirect chains. The contract `control-no-ground-truth` forbids `waggle.control` from importing `world`, `entities`, `engine`, `detector` and `sensors` in `waggle.sim`.
-- Detector conventions: closed sets, so an exact touch counts as contact. Contact is a collision. Separation below the declared margin is a violation. The human footprint is a disc or an oriented rectangle, declared per scenario.
+- Ground truth versus observation: `waggle.control` never reads ground truth. It may import only two leaf modules of `waggle.sim`: `waggle.sim.observations` (observation types) and `waggle.sim.params` (frozen dataclasses with the robot class parameters, which a robot knows about itself). Everything else in `waggle.sim` is forbidden to control, including world, detector, sensors, humans and robots. Leaf modules import nothing from the forbidden side, and `waggle/sim/__init__.py` imports nothing, because import-linter also flags indirect chains. The contract `control-no-ground-truth` lists every other module of `waggle.sim`, and a test fails when a module is added without being listed. Streams are built with `SeedSequence(root_seed, spawn_key=(subsystem_index,)).spawn(count)`, so the i-th stream of a subsystem does not depend on how many are spawned.
+- Detector conventions: closed sets, so an exact touch counts as contact. Contact is a collision. Separation below the declared margin is a violation. The human footprint is a disc with a radius of 0.30 m by default (assumption), or an oriented rectangle declared per scenario (a disc or an oriented rectangle). Robot footprints are oriented rectangles per class (length and width are assumptions to calibrate, see ARCHITECTURE.md).
+- Kinematics are non-holonomic. Forklift: bicycle model with a wheelbase and a maximum steering angle that give the minimum turning radius (default 1.6 m and 0.569 rad, which give 2.5 m, an assumption inside the 1.5 to 2.5 m range). Carrier, parts_runner and tech_repair: differential drive with a maximum angular speed (about 1.5 rad/s, per class in ARCHITECTURE.md). Optional forklift parameter `load_raised` lowers maximum speed and the deceleration limit by documented factors (assumption).
+- Stationary actions PICK, HANDOFF, DELIVER and DISPATCH_REPAIR have durations that are simulation parameters recorded in the scenario config (assumptions).
+- The simulation state type is the same for ground truth and for belief states. The difference is what populates it.
+- Scenarios carry a flag `unavoidable_at_spawn`, computed from geometry. E1 reports those cases separately (EXPERIMENTS.md).
+- Stopping distance bound (B4). Integration is explicit Euler: position and heading advance with the speed and heading at the start of the tick, then the speed moves toward the command by at most `a*dt`. A stop command issued at a steady speed `v` becomes active after `delay_ticks` ticks, so the quantization of the delay to ticks adds no error: the robot covers exactly `v*t_r` with `t_r = delay_ticks*dt`. During braking the speeds at the start of the ticks are `v - k*a*dt`, for `k = 0` to `n - 1`, with `n = ceil(v/(a*dt))`. With `m = v/(a*dt)` the covered distance is `a*dt^2*(m*n - n*(n-1)/2)`, and the continuous distance is `v^2/(2a) = a*dt^2*m^2/2`. Their difference is `a*dt^2*(n - (n-m)^2)/2`, and since `0 <= n - m < 1` this lies in `(a*dt^2*(m-1)/2, a*dt^2*(m+1)/2]`. So the simulated stopping distance differs from `v*t_r + v^2/(2a)` by at most `v*dt/2 + a*dt^2/2`. Path length is the sum of the step lengths, so the bound also holds in a turn. The B4 property test uses this bound, and on the four classes at full speed the observed error is 98 percent of it (measured, so the bound is tight).
+- Detector tolerance (B6). A step is checked as a continuous interval in the frame of the second body and cut into pieces that turn at most 0.005 rad; each piece is the convex hull of two footprints, reduced by the rotation sagitta. A Hypothesis property test compares it with a brute-force fine-substep check (400 substeps): there are no false negatives, and the exact gap is smaller than the fine one only by a documented bound. In a measurement over 1500 random cases the largest difference was 1.58 mm, which is 70 percent of the bound. Grazing cases within that bound can be reported as contact when the fine check sees a gap of a few millimeters.
+- Corners (B4). A forklift follows a bicycle model, so its turning radius never falls below `wheelbase / tan(max_steer)`, at any speed. A differential drive turns with a radius of `v / max_angular_speed`. In a 90 degree corner of an aisle 2.4 m wide, the reference point may stray from the centerline by `(aisle width - robot width) / 2`. The measured sharpest left turn strays 0.73 m for the forklift against 0.65 m allowed, and 0.375 m for the carrier at full speed against 0.8 m allowed. This is a centerline check. The swept-footprint check with the detector comes in B6.
 
 Consequences: results are comparable run to run on one platform and are not claimed bit-identical across platforms. The lidar rate and the delay rule are checked at load time, not at run time.
 
@@ -196,7 +207,56 @@ Context: this is a hackathon with a fixed deadline, and waiting for the maintain
 Decision:
 - Agents push their own task branch and open the PR with `gh pr create`, using the PR text from AGENTS.md section 2.
 - Unchanged: agents never merge, never push to `main` or `master`, never force push, never delete remote refs, never create or change remote repositories. The maintainer reviews and merges.
-- The PreToolUse guard (`tools/hooks/safety_guard.py`) allows a plain `git push` and denies force flags, `+` and `:` refspecs, delete flags and any push whose target is `main` or `master`. A bare `git push` while checked out on `main` is not detected by the guard, and committing to `main` stays forbidden.
+- The PreToolUse guard (`tools/hooks/safety_guard.py`) allows only `git push [-u|--set-upstream] origin <branch>` with an explicit branch named type/short-description (types feat, fix, test, docs, exp, chore, ci) that is not main or master. It denies a bare push, any other flag (force, delete, tags, all, mirror), refspecs, `HEAD` and tag names, and any push or `gh pr create` while the current branch is main or master or the HEAD is detached. `gh pr merge` is denied.
+- Before it allows a push or `gh pr create`, the guard runs `tools/ci/pre_push_check.py` (standard library only): `uv run ci` must have passed on the current HEAD (a stamp under `.git/`) with a clean working tree, gitleaks must find nothing in the commits not yet on the remote, and those commits must contain no `.env` file and nothing under `results/**/heldout/`. If gitleaks is missing or any check cannot run, the push is denied.
 - Before each push the agent runs `uv run ci` and checks the diff for secrets and held-out results (AGENTS.md section 2, Git rule 11).
 
 Consequences: a pushed secret cannot be taken back by deleting a later commit, so the pre-push check is mandatory. Branch protection (PENDING 19) is now the main control on `main`.
+
+## ADR-023: Crisis replanning with counterexample-guided validation
+
+Status: proposed. Designed, not implemented.
+
+Context: a compound fault (a machine overheats and sets a geofence, an aisle is blocked, a robot dies mid hand-off, urgent orders arrive) needs a new plan. An LLM can propose one, but it cannot be trusted to know whether the plan is safe.
+
+Decision:
+- Muse Spark receives a structured world summary, retrieved SOP excerpts (fenced as untrusted data), an optional obstacle class from vision, and the operator request or a text incident report. It proposes a plan in the schema of ARCHITECTURE.md (Plan schema).
+- The validator builds a belief state from what the control layer may know at t = 0: the static map, the entities currently tracked from lidar, and K seeded human variants (default K = 5, streams spawned from the snapshot RNG state). The variants include humans spawned inside initially occluded regions, consistent with the declared density of the scenario. A sampled variant is rejected at sampling when it puts a human inside the minimum stopping distance of a robot at t = 0, because no plan can fix that. The validator does not fork ground truth. Snapshot and fork of the true state exist for determinism tests and replay only.
+- The rollout runs the same dynamics as execution: simulated 10 Hz lidar raycasting against the belief state, the dynamic occlusion-boundary speed cap (ADR-024), the fast reflex layer and the in-memory lease logic, over H simulated seconds (default 45, configurable). Occlusion boundaries are recomputed from the simulated robot pose at every lidar tick of the rollout. They are never frozen as static phantom entities from t = 0.
+- Acceptance. A plan is accepted only if, in every one of the K rollouts over [0, H]: zero collisions, zero separation violations, zero hazard geofence intrusions, zero deadlocks (acyclic wait-for graph), no lease conflict, and the route is feasible. Progress is also required: every robot with an active node either completes a node, strictly reduces its remaining geodesic route length, strictly decrements its stationary action timer (PICK, HANDOFF, DELIVER, DISPATCH_REPAIR), or waits legitimately on an acyclic dependency edge or on a lease whose holder makes strict progress toward releasing it. At t = H the state must be recoverable: each robot is either stopped outside shared capacity-1 zones or holds valid leases for its occupied and next committed segments. Mission completion within H is reported as a metric and is not required.
+- Receding horizon: execute at most H/2 simulated seconds, then revalidate from the new belief state.
+- Counterexample types: COLLISION, SEPARATION_VIOLATION, GEOFENCE_INTRUSION, CORRIDOR_DEADLOCK, LEASE_CONFLICT, ROUTE_INFEASIBLE, NO_PROGRESS, UNSAFE_TERMINAL_STATE. Fields, in SI units: time, place, entities, minimum clearance, violated rule. ROUTE_INFEASIBLE names the undeclared capacity-1 corridor that the route needs, or the avoided zone that cannot be avoided. Maximum 3 iterations. If no plan passes, escalate to the operator and the affected robots hold safely.
+- Naming: simulation-based plan validation with counterexample feedback. It is not formal verification and not a safety proof. The assumptions are the hidden human prior, the K variants and the horizon, and they are stated with every result. Safety against humans stays in the reflex layer, which runs inside the rollout. CEGIS and LLM-Modulo are prior art to verify and cite. The pattern is not claimed as new.
+- Lidar gives free-space geometry. Vision, when present, gives only an obstacle class and a label check mapped through SOP text. Every crisis scenario has a text incident report as fallback.
+- The rationale field of a plan is logged for the operator and never forwarded to another model.
+- Plan schema (full table in ARCHITECTURE.md). A plan has `mission_id` (set by code), at most 20 nodes, a free-text rationale, `escalate` and an escalation reason. A node has a unique label, `robot_id`, an action (MOVE, PICK, HANDOFF, DELIVER, DISPATCH_REPAIR), `target_zone_id`, `corridor_zone_ids` (ordered capacity-1 corridors), `avoid_zone_ids` (can only add avoidance), `wait_for` (acyclic labels), `item_id` and `speed_cap_mps` (can only reduce speed). Unknown fields are rejected, and ids are validated against the map, the fleet and the inventory in code. Idempotency keys and task ids are derived by code from the mission id and the node, never produced by the model.
+
+Consequences: a new package `waggle.validation` (Phase 5C), a rollout cost that is measured in Phase 1 (ADR-025), and the experiment E10. Threats T17 and T18 cover an unmodeled human and indirect injection into the planner.
+
+## ADR-024: Occlusion-aware speed cap
+
+Status: proposed. Designed, not implemented.
+
+Context: a lidar cannot see behind a rack. A robot that follows only the detected objects can meet a human who steps out of the shadow.
+
+Decision:
+- For each occlusion boundary derived from the lidar scan, assume a phantom human at the nearest possible point approaching at v_h.
+- Cap the speed at the largest v such that S_sep(v) is at most the distance to that boundary along the swept curvilinear path.
+- Edge cases: if there is no non-negative root (v_h*t_r + C is at least the distance), the cap is zero. Near zero speed the curvature term uses a minimum speed floor. Every discontinuity threshold is a documented parameter with its rationale. There are no other new parameters.
+- The cap can only reduce speed. The cost is throughput, reported in E1.
+
+Consequences: E1 adds the configuration swept footprint plus occlusion cap. The same cap runs inside the rollout of ADR-023.
+
+## ADR-025: Simulator state layout and rollout cost
+
+Status: proposed. Designed, not implemented.
+
+Context: the validator runs K rollouts of H seconds for every plan and every iteration. If a rollout is slow, the design fails.
+
+Decision:
+- The state is a structure of contiguous numpy arrays (poses, velocities, zone tokens and expiries) plus a small dict of RNG states, with `snapshot()` and `from_snapshot()`. No deepcopy and no JSON in the hot path.
+- No timing figure is written in the documents. The rollout cost is measured in Phase 1 and reported as code speed on this machine.
+- Optimizations are considered only if the measurement demands them, each documented as a deviation: a lower lidar rate inside rollouts, cached static visibility, process-level parallelism across the K variants.
+- The lidar model is a pure function over geometry arrays (static map, dynamic footprints, pose, params, rng), so the validator can reuse it on a belief state.
+
+Consequences: B3 (feat/sim-core) implements the state layout and measures the empty loop and a fork rollout. If the measured cost makes ADR-023 doubtful, work stops and the maintainer is asked.

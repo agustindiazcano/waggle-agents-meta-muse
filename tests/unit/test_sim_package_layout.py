@@ -11,7 +11,19 @@ from pathlib import Path
 import pytest
 
 SIM = Path(__file__).resolve().parents[2] / "src" / "waggle" / "sim"
-GROUND_TRUTH = ["world", "entities", "engine", "detector", "sensors"]
+LEAVES = {"__init__", "observations", "params"}
+GROUND_TRUTH = [
+    "world",
+    "state",
+    "streams",
+    "engine",
+    "robots",
+    "humans",
+    "detector",
+    "sensors",
+    "scenarios",
+    "scripted",
+]
 
 
 def _imports(path: Path) -> list[str]:
@@ -26,6 +38,28 @@ def _imports(path: Path) -> list[str]:
 
 def test_sim_package_init_imports_nothing() -> None:
     assert _imports(SIM / "__init__.py") == []
+
+
+def test_params_module_is_a_leaf() -> None:
+    path = SIM / "params.py"
+    assert path.is_file()
+    offending = [n for n in _imports(path) if "waggle" in n or n.startswith(".")]
+    assert offending == [], f"params must not import project modules: {offending}"
+
+
+def test_every_sim_module_is_a_leaf_or_forbidden_to_control() -> None:
+    """The contract lists each non-leaf module, so a new module cannot slip past it."""
+    import tomllib
+
+    config = tomllib.loads((SIM.parents[2] / "pyproject.toml").read_text(encoding="utf-8"))
+    contract = next(
+        c
+        for c in config["tool"]["importlinter"]["contracts"]
+        if c["id"] == "control-no-ground-truth"
+    )
+    forbidden = {m.removeprefix("waggle.sim.") for m in contract["forbidden_modules"]}
+    modules = {p.stem for p in SIM.glob("*.py")} - LEAVES
+    assert modules == forbidden, f"contract and modules differ: {modules ^ forbidden}"
 
 
 def test_observations_module_exists_and_is_a_leaf() -> None:

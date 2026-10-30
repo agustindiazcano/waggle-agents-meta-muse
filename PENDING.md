@@ -25,10 +25,12 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 19 | P2 | Set branch protection on the repository by hand: require pull request review and code owner review, block force pushes. CODEOWNERS is a weak control until then | M | pending |
 | 20 | P2 | Open /hooks in Claude Code to review and trust the project hooks in .claude/settings.json | M | pending |
 | 21 | P1 | Superseded by row 23. Was: Phase 1 part 1 plan approval. Prompt in LASTCONTEXT.md. `docs/design-extensions` is done | A | next |
-| 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim` (Phase 1 prompt). Agent adds it with uv pin, README line and this row updated when branch 1 is built | A | approved |
+| 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim`, `waggle.control` and `waggle.validation`. Added as numpy==2.5.4 with uv and listed in the README (B3) | A | done |
 | 23 | P1 | Execute `docs/PHASE1_BRIEF.md` in branch order B0 to B8 (B1 and the contract of B3 partly exist, see its status notes). Stop points: after B0 and after B8 | A | next |
 | 24 | P1 | Review the hooks diff and approve the settings change after B0 (`chore/push-guard-hardening`). Restore `.claude/settings.json` by hand when required | M | pending |
 | 25 | P1 | Gates G1 Oct 30 night, G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night: read the progress report and decide what to cut from the contingency order in AGENTS.md section 18 | M | pending |
 | 26 | P2 | After B8: decide whether to approve FastAPI, uvicorn and the JavaScript toolchain (Node, Vite, TypeScript, three) for viewer v0 | M | pending |
-| 27 | P2 | Install gitleaks locally (it is not installed; B0 pre-push check fails closed without it) | M | pending |
+| 27 | P2 | gitleaks 8.30.1 installed with winget (B0 pre-push check fails closed without it). Restart the shell so it is on PATH; the check also finds the WinGet path | M | done |
 | 28 | P3 | Verify CEGIS and LLM-Modulo as prior art before ADR-023 cites them | A | pending |
+| 29 | P2 | The brief refers to E9 but docs/EXPERIMENTS.md has no E9 (only E1 to E8 and the new E10). Define E9 or tell the agent to drop the reference | M | pending |
+| 31 | P1 | STOP POINT from the brief: the measured rollout cost (10 robots, 4 humans, 45 s simulated, lidar every 4 ticks) is 22.3 s on this machine, of which about 8.7 s is the core loop and detector and about 10.5 s the lidar (2.3 ms per scan). K = 5 variants serial is about 2 minutes per validation iteration. Decide: accept, lower the lidar rate inside rollouts, cache static visibility, parallelize the K variants across processes (each is a documented deviation in ADR-025), or change the design | M | pending |

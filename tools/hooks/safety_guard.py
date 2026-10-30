@@ -8,6 +8,7 @@ allows. Rules come from AGENTS.md (git rules, hard rules) and the maintainer.
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Callable
@@ -35,6 +36,10 @@ DOTNET_WRITES = ("writealltext", "writealllines", "writeallbytes", "appendalltex
 EMPTY_WORDS = {":", "true", "echo", "-n", "cat", "/dev/null", "printf", ""}
 STAGED_UNREADABLE = "could not read the staged files, so the commit cannot be checked"
 MAX_SHELL_DEPTH = 3
+PRE_PUSH_TIMEOUT = 240
+PROTECTED_BRANCHES = frozenset({"main", "master"})
+TASK_BRANCH = re.compile(r"(feat|fix|test|docs|exp|chore|ci)/[a-z0-9]+(-[a-z0-9]+)*")
+PUSH_FLAGS = frozenset({"-u", "--set-upstream"})
 
 
 class MalformedEventError(ValueError):
@@ -69,6 +74,8 @@ class Context:
     root: Path
     protected: list[str]
     staged_files: Callable[[], list[str]]
+    current_branch: Callable[[], str]
+    pre_push: Callable[[], list[str]]
 
 
 def git_staged_files(root: Path) -> list[str]:
@@ -84,6 +91,39 @@ def git_staged_files(root: Path) -> list[str]:
     if result.returncode != 0:
         raise OSError(result.stderr.strip() or "git diff --cached failed")
     return [n for n in result.stdout.split("\0") if n]
+
+
+def git_current_branch(root: Path) -> str:
+    """Name of the checked out branch, or ``HEAD`` when detached. Raises OSError on failure."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise OSError(result.stderr.strip() or "git rev-parse failed")
+    return result.stdout.strip()
+
+
+def run_pre_push_check(root: Path) -> list[str]:
+    """Run tools/ci/pre_push_check.py. Returns the problems it printed, empty when it passed."""
+    script = root / "tools" / "ci" / "pre_push_check.py"
+    if not script.is_file():
+        return ["tools/ci/pre_push_check.py is missing, so the push cannot be checked"]
+    result = subprocess.run(
+        [sys.executable, str(script), "--root", str(root)],
+        capture_output=True,
+        text=True,
+        timeout=PRE_PUSH_TIMEOUT,
+        check=False,
+    )
+    if result.returncode == 0:
+        return []
+    lines = [line for line in result.stderr.splitlines() if line.strip()]
+    return lines or [f"the pre-push check failed with exit code {result.returncode}"]
 
 
 # ---------------------------------------------------------------- git and gh rules
@@ -127,7 +167,7 @@ def _git_rules(args: list[str], ctx: Context) -> Verdict:
             "deny", "Hooks and CI are never skipped. Run the commit without --no-verify."
         )
     if sub == "push":
-        return _git_push(rest, long_flags, short)
+        return _git_push(rest, ctx)
     if sub == "merge":
         return Verdict("deny", "Agents never merge. Ask the maintainer to merge the pull request.")
     if sub == "reset" and "--hard" in long_flags:
@@ -154,22 +194,47 @@ def _git_rules(args: list[str], ctx: Context) -> Verdict:
     return ALLOW
 
 
-PROTECTED_BRANCHES = frozenset({"main", "master"})
+def _push_gate(ctx: Context) -> Verdict:
+    """Checks shared by git push and gh pr create. Any failure to check denies."""
+    try:
+        branch = ctx.current_branch()
+    except (OSError, subprocess.SubprocessError):
+        return Verdict("deny", "could not read the current branch, so the push is denied")
+    if branch in PROTECTED_BRANCHES or branch == "HEAD":
+        return Verdict(
+            "deny",
+            f"Never push or open a PR from {branch}. Work on a type/short-description branch.",
+        )
+    try:
+        problems = ctx.pre_push()
+    except (OSError, subprocess.SubprocessError) as err:
+        return Verdict("deny", f"the pre-push check could not run, so the push is denied: {err}")
+    if problems:
+        return Verdict("deny", "Pre-push check failed: " + "; ".join(problems))
+    return ALLOW
 
 
-def _git_push(rest: list[str], long_flags: set[str], short: set[str]) -> Verdict:
-    """Allow a plain push of a task branch. Deny force, deletion and pushes to main."""
-    if _forces(long_flags, short):
-        return Verdict("deny", "Force push is never allowed. Push a new commit instead.")
-    if {"--delete", "--mirror", "--prune"} & long_flags or "d" in short:
-        return Verdict("deny", "Deleting remote refs is reserved for the maintainer.")
-    for ref in (a for a in rest if not a.startswith("-")):
-        if ref.startswith(("+", ":")):
-            return Verdict("deny", "Force and delete refspecs are not allowed.")
-        target = ref.rsplit(":", 1)[-1].removeprefix("refs/heads/")
-        if target in PROTECTED_BRANCHES:
-            return Verdict("deny", "Never push to main. Push the task branch and open a PR.")
-    return Verdict("allow", "")
+def _git_push(rest: list[str], ctx: Context) -> Verdict:
+    """Allow only ``git push [-u] origin <type/short-description>`` that passes the gate."""
+    flags = [a for a in rest if a.startswith("-")]
+    if any(f not in PUSH_FLAGS for f in flags):
+        return Verdict(
+            "deny",
+            "Only -u or --set-upstream are allowed. Force, delete, tags and other flags are not.",
+        )
+    positional = [a for a in rest if not a.startswith("-")]
+    if len(positional) != 2 or positional[0] != "origin":
+        return Verdict("deny", "Use exactly: git push [-u] origin <type/short-description>.")
+    branch = positional[1]
+    if branch in PROTECTED_BRANCHES:
+        return Verdict("deny", "Never push to main. Push the task branch and open a PR.")
+    if TASK_BRANCH.fullmatch(branch) is None:
+        return Verdict(
+            "deny",
+            "The branch must be an explicit name like feat/short-description. "
+            "Refspecs, HEAD and tags are not allowed.",
+        )
+    return _push_gate(ctx)
 
 
 def _forces(long_flags: set[str], short: set[str]) -> bool:
@@ -236,6 +301,8 @@ def _segment_rules(words: list[str], redirects: list[str], ctx: Context, depth: 
         verdicts.append(_git_rules(args, ctx))
     elif name == "gh" and [a.lower() for a in args[:2]] == ["pr", "merge"]:
         verdicts.append(Verdict("deny", "Agents never merge. Ask the maintainer to merge."))
+    elif name == "gh" and [a.lower() for a in args[:2]] == ["pr", "create"]:
+        verdicts.append(_push_gate(ctx))
     elif name in SHELLS and depth < MAX_SHELL_DEPTH:
         verdicts.append(_nested_shell(args, ctx, depth))
     arg_paths = [a.split("=", 1)[-1] if a.startswith("of=") else a for a in args]
@@ -330,6 +397,8 @@ def main(
     protected: list[str] | None = None,
     root: Path | None = None,
     staged_files: Callable[[], list[str]] | None = None,
+    current_branch: Callable[[], str] | None = None,
+    pre_push: Callable[[], list[str]] | None = None,
 ) -> int:
     """Run the guard. Always exits 0 and reports ask or deny in JSON."""
     project = root or Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd())
@@ -337,6 +406,8 @@ def main(
         root=project,
         protected=protected if protected is not None else gc.load_protected(),
         staged_files=staged_files or (lambda: git_staged_files(project)),
+        current_branch=current_branch or (lambda: git_current_branch(project)),
+        pre_push=pre_push or (lambda: run_pre_push_check(project)),
     )
     try:
         event = json.loads(stdin.read().lstrip(chr(0xFEFF)))

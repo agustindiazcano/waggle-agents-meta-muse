@@ -137,3 +137,113 @@ def test_route_planner_is_recorded_in_plan_architecture_and_e2() -> None:
 def test_phase_1_lists_kinematics() -> None:
     phase = _phase("1").lower()
     assert "non-holonomic" in phase and "swept footprint" in phase and "load_raised" in phase
+
+
+@pytest.mark.parametrize(
+    "term",
+    [
+        "waggle.sim.params",
+        "waggle.validation",
+        "Comments and strings",
+        "4 ticks",
+        "6 ticks",
+        "radius of 0.30 m",
+        "maximum steering angle",
+        "load_raised",
+        "PICK, HANDOFF, DELIVER and DISPATCH_REPAIR",
+        "belief states",
+        "unavoidable_at_spawn",
+    ],
+)
+def test_adr_021_matches_the_brief(term: str) -> None:
+    assert term in _adr(21), f"ADR-021 lacks {term!r}"
+
+
+def test_architecture_lists_the_sim_module_layout_and_footprints() -> None:
+    text = _read("docs/ARCHITECTURE.md")
+    section = text.split("## Simulator module layout", 1)[1].split("\n## ", 1)[0]
+    for module in (
+        "world",
+        "params",
+        "observations",
+        "robots",
+        "humans",
+        "detector",
+        "sensors",
+        "scenarios",
+        "scripted",
+    ):
+        assert f"`{module}`" in section, module
+    assert "Footprint (length x width, m)" in text
+
+
+def test_experiments_define_unavoidable_at_spawn_and_master_seed() -> None:
+    text = _read("docs/EXPERIMENTS.md")
+    assert "unavoidable_at_spawn" in text
+    assert "fixed master seed" in text
+
+
+@pytest.mark.parametrize(
+    "term",
+    [
+        "explicit Euler",
+        "v*dt/2 + a*dt^2/2",
+        "n = ceil(v/(a*dt))",
+        "quantization of the delay",
+        "2.4 m wide",
+    ],
+)
+def test_adr_021_derives_the_stopping_distance_bound(term: str) -> None:
+    assert term in _adr(21), f"ADR-021 lacks {term!r}"
+
+
+@pytest.mark.parametrize(
+    "term", ["no false negatives", "0.005 rad", "brute-force fine-substep", "1.58 mm"]
+)
+def test_adr_021_records_the_detector_tolerance(term: str) -> None:
+    assert term in _adr(21), f"ADR-021 lacks {term!r}"
+
+
+def test_architecture_documents_the_lidar_defaults() -> None:
+    section = _read("docs/ARCHITECTURE.md").split("## Sensing and prediction", 1)[1]
+    section = section.split("\n## ", 1)[0]
+    for term in ("360 rays", "12 m", "0.02 m", "dropout probability 0.01", "10 Hz", "NaN"):
+        assert term in section, term
+
+
+@pytest.mark.parametrize(
+    "term",
+    [
+        "no_control",
+        "0.5 m",
+        "0.2 m",
+        "counted as episodes",
+        "waypoint driver",
+        "results/e1/dev/",
+        "development seeds only",
+        "map A",
+        "map B",
+    ],
+)
+def test_experiments_define_the_no_control_baseline(term: str) -> None:
+    text = _read("docs/EXPERIMENTS.md")
+    section = text.split("## E1:", 1)[1].split("\n## ", 1)[0]
+    assert term in section, f"E1 lacks {term!r}"
+
+
+def test_readme_numbers_come_from_result_files() -> None:
+    """Every figure the README gives for the no-control baseline is read from its result file."""
+    import glob
+    import json
+
+    readme = _read("README.md")
+    baseline = sorted(glob.glob(str(ROOT / "results" / "e1" / "dev" / "no_control_*.json")))[-1]
+    data = json.loads(Path(baseline).read_text(encoding="utf-8"))
+    assert Path(baseline).name in readme
+    assert f"{data['counts']['human_collisions']} human collisions" in readme
+    assert f"{data['counts']['robot_collisions']} robot collisions" in readme
+    speed = sorted(glob.glob(str(ROOT / "results" / "e8" / "dev" / "sim_speed_*.json")))[-1]
+    rollout = json.loads(Path(speed).read_text(encoding="utf-8"))["scenario_rollout"]
+    assert Path(speed).name in readme
+    assert f"{rollout['seconds_per_rollout']:.1f} s" in readme
+    assert "code speed on this machine" in readme
