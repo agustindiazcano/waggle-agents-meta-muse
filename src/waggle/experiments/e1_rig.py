@@ -38,6 +38,8 @@ class Tally:
     stop_episodes: dict[str, int] = field(default_factory=dict)
     false_stops: int = 0
     latency_us: list[float] = field(default_factory=list)
+    requested_speed: float = 0.0
+    limited_speed: float = 0.0
 
 
 def streams_for(config: E1Config, robots: int) -> dict[str, int]:
@@ -180,6 +182,8 @@ class ControlRig:
             self.tally.latency_us.append((time.perf_counter_ns() - started) / 1000.0)
             self.tally.control_calls += 1
             commands[i] = (out.speed, out.turn)
+            self.tally.requested_speed += abs(float(requested[0]))
+            self.tally.limited_speed += abs(out.speed)
             self._count_stop(
                 i, float(requested[0]), out.speed, out.reason.value, humans, poses[i, :2]
             )

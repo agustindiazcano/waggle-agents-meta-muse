@@ -31,6 +31,8 @@ REQUIRED = {
     "unavoidable_cases",
     "tasks_completed",
     "tasks_per_simulated_hour",
+    "distance_m",
+    "speed_ratio",
     "stops",
     "latency",
     "failing_seeds",
@@ -171,3 +173,13 @@ def test_an_unknown_configuration_is_an_error(
 def test_the_command_has_no_heldout_option() -> None:
     with pytest.raises(SystemExit):
         e1_run.main(["--seed-set", "heldout"])
+
+
+def test_a_run_records_distance_and_the_limited_over_requested_speed() -> None:
+    free = e1_run.run_one(RunSpec("no_control", "S07", SEED, SHORT))
+    limited = e1_run.run_one(RunSpec("envelope_oracle", "S07", SEED, SHORT))
+    assert free["distance_m"] > 0.0
+    assert free["speed_sums"] == {"requested": 0.0, "limited": 0.0}
+    sums = limited["speed_sums"]
+    assert 0.0 < sums["limited"] <= sums["requested"]
+    assert limited["distance_m"] > 0.0

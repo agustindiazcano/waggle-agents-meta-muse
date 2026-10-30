@@ -10,8 +10,16 @@ from waggle.experiments import e1_report, e1_run
 from waggle.experiments.e1_config import BY_NAME, CONFIGS
 
 
-def _run(scenario: str, seed: int, tasks: int, human: int = 0, stops: int = 0) -> dict[str, Any]:
-    return {
+def _run(
+    scenario: str,
+    seed: int,
+    tasks: int,
+    human: int = 0,
+    stops: int = 0,
+    distance: float | None = None,
+    speeds: tuple[float, float] = (0.0, 0.0),
+) -> dict[str, Any]:
+    record: dict[str, Any] = {
         "scenario": scenario,
         "seed": seed,
         "robots": 1,
@@ -26,6 +34,10 @@ def _run(scenario: str, seed: int, tasks: int, human: int = 0, stops: int = 0) -
         if stops
         else {"n": 0, "median_us": 0.0, "p99_us": 0.0, "max_us": 0.0},
     }
+    if distance is not None:
+        record["distance_m"] = distance
+        record["speed_sums"] = {"requested": speeds[0], "limited": speeds[1]}
+    return record
 
 
 def _write(results: Path, name: str, runs: list[dict[str, Any]], date: str | None = None) -> Path:
@@ -124,3 +136,22 @@ def test_the_ratio_only_compares_runs_that_both_configurations_have(tmp_path: Pa
     _write(tmp_path, "envelope_lidar", [_run("S07", 1, 10, stops=3)])
     docs = e1_report.load_latest(tmp_path)
     assert e1_report._ratio(docs, "envelope_lidar") == pytest.approx(0.25)
+
+
+def test_distance_is_the_ratio_to_no_control_on_the_same_runs(tmp_path: Path) -> None:
+    _write(tmp_path, "no_control", [_run("S07", 1, 40, distance=100.0)])
+    _write(tmp_path, "envelope_lidar", [_run("S07", 1, 0, stops=1, distance=40.0, speeds=(10, 4))])
+    docs = e1_report.load_latest(tmp_path)
+    assert e1_report._distance_ratio(docs, "envelope_lidar") == pytest.approx(0.40)
+    assert docs["envelope_lidar"]["speed_ratio"] == pytest.approx(0.4)
+    text = e1_report.render(docs)
+    assert "| 0.40 | 0.40 |" in text
+
+
+def test_files_without_the_speed_fields_give_n_a_and_do_not_crash(tmp_path: Path) -> None:
+    _write(tmp_path, "no_control", [_run("S07", 1, 40)])
+    _write(tmp_path, "envelope_lidar", [_run("S07", 1, 10, stops=3)])
+    docs = e1_report.load_latest(tmp_path)
+    assert e1_report._distance_ratio(docs, "envelope_lidar") is None
+    assert docs["envelope_lidar"]["speed_ratio"] is None
+    assert "n/a | n/a |" in e1_report.render(docs)

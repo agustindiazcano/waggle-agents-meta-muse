@@ -71,7 +71,7 @@ def _safety(docs: Mapping[str, Document]) -> list[str]:
     for config in CONFIGS:
         d = docs.get(config.name)
         if d is None:
-            rows.append([f"`{config.name}`", "missing", "", "", "", "", ""])
+            rows.append([f"`{config.name}`", "missing", "", "", "", "", "", "", ""])
             continue
         c, x = d["counts"], d["counts_excluding_unavoidable"]
         rows.append(
@@ -105,6 +105,25 @@ def _ratio(docs: Mapping[str, Document], name: str) -> float | None:
     return None if base_tasks == 0 else float(doc_tasks) / float(base_tasks)
 
 
+def _distance_ratio(docs: Mapping[str, Document], name: str) -> float | None:
+    """Distance of a configuration over distance of no_control on the same runs."""
+    base, doc = docs.get("no_control"), docs.get(name)
+    if base is None or doc is None:
+        return None
+    if any("distance_m" not in r for r in (*base["runs"], *doc["runs"])):
+        return None
+    shared = {(r["scenario"], r["seed"]) for r in base["runs"]} & {
+        (r["scenario"], r["seed"]) for r in doc["runs"]
+    }
+    base_d = sum(r["distance_m"] for r in base["runs"] if (r["scenario"], r["seed"]) in shared)
+    doc_d = sum(r["distance_m"] for r in doc["runs"] if (r["scenario"], r["seed"]) in shared)
+    return None if base_d <= 0.0 else float(doc_d) / float(base_d)
+
+
+def _fmt(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}"
+
+
 def _cost(docs: Mapping[str, Document]) -> list[str]:
     header = [
         "Configuration",
@@ -112,6 +131,8 @@ def _cost(docs: Mapping[str, Document]) -> list[str]:
         "False stops",
         "Tasks",
         "Throughput vs no_control",
+        "Distance vs no_control",
+        "Mean speed / request",
         "Median latency (us)",
         "Worst run p99 (us)",
     ]
@@ -130,6 +151,8 @@ def _cost(docs: Mapping[str, Document]) -> list[str]:
                 str(d["stops"]["false_stops"]),
                 str(d["tasks_completed"]),
                 "n/a" if ratio is None else f"{ratio:.2f}",
+                _fmt(_distance_ratio(docs, config.name)),
+                _fmt(d.get("speed_ratio")),
                 f"{latency['median_of_run_medians_us']:.0f}" if latency["calls"] else "n/a",
                 f"{latency['max_of_run_p99_us']:.0f}" if latency["calls"] else "n/a",
             ]
