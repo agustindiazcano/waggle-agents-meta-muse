@@ -134,7 +134,7 @@ Control path (fast, every tick): every motion command, from any source, passes t
 
 ## Control module layout
 
-Rows marked B12 are implemented and tested; the others are designed, not implemented (ADR-026 to ADR-028). `waggle.control` imports only `waggle.sim.params` and `waggle.sim.observations`. Every function is pure with explicit state.
+Rows marked B12 or B13 are implemented and tested; the others are designed, not implemented (ADR-026 to ADR-028). `waggle.control` imports only `waggle.sim.params` and `waggle.sim.observations`. Every function is pure with explicit state.
 
 | Module | Role | Branch |
 |---|---|---|
@@ -145,6 +145,7 @@ Rows marked B12 are implemented and tested; the others are designed, not impleme
 | `limiter` | Envelope limits for one command on robot-frame detections, then the arbiter | B12 |
 | `perception` | Scan validation, NaN handling, clusters, size class | B13 |
 | `tracking` | Association, velocity estimate, coasting | B13 |
+| `step` | `control_step`: perception, tracking, then `limit_command`; fail closed | B13 |
 | `occlusion` | Phantom human cap from occlusion boundaries (ADR-024) | B14 |
 | `cpa` | Constant velocity closest point of approach, can only restrict | B15 |
 | `reflex` | Heartbeat, geofences, e-stop, telemetry threshold | B16 |

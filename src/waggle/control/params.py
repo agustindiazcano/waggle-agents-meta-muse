@@ -3,6 +3,9 @@
 import math
 from dataclasses import dataclass
 
+HUMAN_SPEED_BOUND = 1.6
+"""Worst case human speed in m/s, above the nominal walking speed of the simulator (assumption)."""
+
 
 class ControlParamsError(ValueError):
     """A control parameter is not a finite positive number."""
@@ -17,7 +20,7 @@ class ControlParams:
     robot reaches full speed only when the gap is at least ``interp_k`` times ``S_sep``.
     """
 
-    human_speed_bound: float = 1.6
+    human_speed_bound: float = HUMAN_SPEED_BOUND
     human_margin: float = 0.3
     structure_margin: float = 0.2
     lateral_margin: float = 0.1
@@ -33,3 +36,50 @@ class ControlParams:
 
 
 DEFAULT_CONTROL_PARAMS = ControlParams()
+
+
+@dataclass(frozen=True)
+class PerceptionParams:
+    """Thresholds of scan checks, clustering and tracking (ADR-026). All are assumptions.
+
+    Ticks are simulator ticks of 0.025 s. ``gap_base`` plus ``gap_per_meter`` times the range is
+    the largest gap between two neighbouring returns of one cluster.
+    """
+
+    max_scan_age_ticks: int = 8
+    max_nan_fraction: float = 0.2
+    nan_window: int = 2
+    gap_base: float = 0.15
+    gap_per_meter: float = 0.05
+    human_max_extent: float = 1.0
+    assoc_gate_base: float = 0.5
+    velocity_alpha: float = 0.5
+    max_coast_ticks: int = 80
+    ring_points: int = 12
+    beacon_sigma: float = 0.1
+    human_speed_bound: float = HUMAN_SPEED_BOUND
+
+    def __post_init__(self) -> None:
+        for name in ("max_scan_age_ticks", "nan_window", "max_coast_ticks", "ring_points"):
+            if getattr(self, name) < 1:
+                raise ControlParamsError(f"{name} must be at least 1")
+        for name in (
+            "gap_base",
+            "gap_per_meter",
+            "human_max_extent",
+            "assoc_gate_base",
+            "beacon_sigma",
+            "human_speed_bound",
+        ):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0.0:
+                raise ControlParamsError(f"{name} must be a finite number above zero")
+        if not 0.0 <= self.max_nan_fraction < 1.0:
+            raise ControlParamsError("max_nan_fraction must be in [0, 1)")
+        if not 0.0 < self.velocity_alpha <= 1.0:
+            raise ControlParamsError("velocity_alpha must be in (0, 1]")
+        if self.ring_points < 4:
+            raise ControlParamsError("ring_points must be at least 4")
+
+
+DEFAULT_PERCEPTION_PARAMS = PerceptionParams()

@@ -143,3 +143,9 @@ def test_adding_a_limit_never_raises_the_speed(limits: list[Limit], extra: Limit
     before = arbitrate(request, CARRIER, limits)
     after = arbitrate(request, CARRIER, [*limits, extra])
     assert abs(after.speed) <= abs(before.speed) + 1e-12
+
+
+def test_a_tiny_request_is_still_held_to_a_zero_limit() -> None:
+    out = arbitrate(ControlRequest(speed=1e-9, turn=0.0), CARRIER, [Limit(0.0, Reason.ENVELOPE)])
+    assert out.speed == 0.0
+    assert out.reason is Reason.ENVELOPE

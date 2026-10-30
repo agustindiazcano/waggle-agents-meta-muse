@@ -272,7 +272,7 @@ Outcome: 3.1x measured against a 5x minimum and 2.0 s per rollout target. Stoppe
 
 ## ADR-026: Perception and tracking
 
-Status: proposed. Designed, not implemented.
+Status: proposed. Implemented in B13, with the deviations listed at the end of this record.
 
 Context: `waggle.control` reads only `waggle.sim.observations` and `waggle.sim.params` (ADR-021). It has no map. Everything it knows about humans comes from a `LidarScan`, a `RobotOdometry`, and optionally `BeaconReport` items.
 
@@ -287,7 +287,15 @@ Decision:
 - Pure function with explicit state: `perceive(state, inputs) -> (state, tracks)`. No wall clock, no global random, deterministic.
 - Static structures are never classified as safe: they stay in the point set and the swept footprint check stops the robot before contact (ADR-027).
 
-Consequences: B13 (`feat/control-tracking`) implements this with tests for stale scans, NaN rays, merge and split of clusters, coasting and gating. The tests use `LidarScan` values built by hand, never the simulator internals.
+Consequences: B13 (`feat/control-tracking`) implements this with tests for stale scans, NaN rays, merge and split of clusters, coasting and gating. The tests use `LidarScan` values built by hand (`tests/support/control_support.py`), never the simulator internals.
+
+Deviations in B13, each deliberate:
+- A beacon does not mark a cluster. A beacon within `beacon_sigma + human radius + v_h_max * delay` of a human-sized cluster is absorbed by that cluster. Any other beacon becomes its own detection, also when it lies beside a structure, and the structure stays a structure. Same effect, no reclassification of a large cluster.
+- A track is covered by a ring of `ring_points` points at the body radius (at least the human radius) plus the position sigma plus `v_h_max` times the time since it was seen. The ring is used even for a fresh track, so the scan delay is covered. It is more cautious than the visible surface, and E1 reports the cost as false stops.
+- The extent of a cluster is measured on the returns that exist. Rays are 1 degree apart, so a disc of 0.6 m at 3 m reads about 0.5 m. This is why the human size limit is 1.0 m and not 0.6 m.
+- Velocity comes from the last two detections with exponential smoothing and is clipped to `v_h_max`. Beacons arrive every tick with noise, so their velocity is noisy. Only CPA (B15) uses velocity, and it must smooth over more than one tick.
+- Odometry older than `max_scan_age_ticks` is `INPUT_MISSING`, and a scan from the future is `SCAN_INVALID`.
+- `control_step` is in `waggle.control.step`. It leaves the state unchanged on bad input, and an exception inside it is logged and stops the robot with `INPUT_MISSING`.
 
 ## ADR-027: Control interface and limit arbitration
 
