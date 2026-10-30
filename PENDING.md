@@ -28,7 +28,7 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 22 | P2 | numpy approved by the maintainer as a runtime dependency of `waggle.sim`, `waggle.control` and `waggle.validation`. Added as numpy==2.5.4 with uv and listed in the README (B3) | A | done |
 | 23 | P1 | Execute `docs/PHASE1_BRIEF.md` in branch order B0 to B8 (B1 and the contract of B3 partly exist, see its status notes). Stop points: after B0 and after B8 | A | next |
 | 24 | P1 | Review the hooks diff and approve the settings change after B0 (`chore/push-guard-hardening`). Restore `.claude/settings.json` by hand when required | M | pending |
-| 25 | P1 | Gates G1 Oct 30 night, G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night: read the progress report and decide what to cut from the contingency order in AGENTS.md section 18 | M | pending |
+| 25 | P1 | Gates G1 Oct 30 night, G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night: read the progress report against the build order in AGENTS.md section 18 (nothing is cut) | M | pending |
 | 26 | P2 | Approved, not installed: fastapi, uvicorn[standard], and in web/ Node, Vite, TypeScript, three, @types/three, Playwright (ADR-029). Viewer v0 has its own brief for another agent | M | done |
 | 27 | P2 | gitleaks 8.30.1 installed with winget (B0 pre-push check fails closed without it). Restart the shell so it is on PATH; the check also finds the WinGet path | M | done |
 | 28 | P3 | Verify CEGIS and LLM-Modulo as prior art before ADR-023 cites them | A | pending |

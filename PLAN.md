@@ -2,7 +2,7 @@
 
 Build window: Oct 27 to Nov 3, 2026. Buffer and submission: Nov 4. Submission deadline: Wed Nov 4, 9:00 PM ET (23:00 in Argentina, since US daylight time ends Nov 1). Confirm the exact time on the submission platform.
 
-The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 3 morning.
+The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. The full scope stays: nothing is cut. The order below is the build order. Phase 8 stays reserved from Nov 3 morning.
 
 ## Priority order
 
@@ -13,12 +13,12 @@ Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 3 morning.
 3. MCP boundary, guard, injection matrix E3, full court E4.
 4. Crisis replanning loop and E10.
 5. Technical viewer with overlays (envelopes, lidar shadows, rollout ghost paths).
-6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7. If voice is cut, the video uses text commands.
+6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7.
 7. E8 extended, E9, GLB models.
 
-Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+Reserved time: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
 
-Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. The maintainer decides what to cut at each gate. Details in `docs/PHASE1_BRIEF.md`.
+Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. Each gate is a progress check, not a point to cut scope. Details in `docs/PHASE1_BRIEF.md`.
 
 ## Rules
 

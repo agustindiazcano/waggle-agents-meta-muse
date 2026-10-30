@@ -67,6 +67,6 @@ Tasks, ask the maintainer which first if unsure:
 2. Commit the E1 development results from the cloud artifacts into results/e1/dev/ (gh run download 41100237070), in a branch docs/e1-dev-results. Check there is no secret or large file. Held-out files are never committed by an agent.
 3. MCP boundary and guard: the design is ADR-032. After the maintainer confirms the allowlist and the first branch (PENDING 47, 48), implement it tests first, starting with the pure schemas and allowlist. Do not write the database layer or a migration, and ask before touching the fencing check, the audit logic or .env.
 4. The LLM smoke test branch needs PENDING 4, 5, 9 and 12 first (balances, caps, HTTP client, Meta credits by Nov 4 9 PM ET). Do not start it until the maintainer confirms them. No paid API call before that.
-Gates: G2 is tonight (fast layer and E1 on development seeds), G3 Nov 1 night (leases, MCP, E2, E3). Report progress against AGENTS section 18 in a table when asked.
+Gates: G2 is tonight (fast layer and E1 on development seeds), G3 Nov 1 night (leases, MCP, E2, E3). Report progress against the build order in AGENTS section 18 in a table when asked. Nothing is cut (maintainer decision, 2026-10-30).
 Constraints: numpy and the standard library only, waggle.control reads only waggle.sim.observations and waggle.sim.params, fail closed, held-out seeds not run, ask before touching the fencing check, the MCP boundary, the audit logic or .env.
 ```
