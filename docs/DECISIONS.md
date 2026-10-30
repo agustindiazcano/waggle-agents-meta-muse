@@ -128,6 +128,10 @@ Decision:
 
 Consequences: a correlated court may agree on a mistake, and E4 reports how often. A guard outage raises the escalation rate.
 
+### Amendment (crisis replanning session): E4 configurations
+
+E4 stays a standalone experiment with unanimity at full scope. Configurations: A single Muse Spark; B two Muse members; C three Muse members with identical prompts; D three Muse members with role-specialized checklists (SOP compliance, provenance and injection, operational conflict); E two Muse members plus a non-Muse member on Vertex. An LLM never checks inventory, chassis capability or zone invariants: code does. Report false approvals first, then false blocks, escalation rate and pairwise correlation. The earlier configuration list above is replaced by this one.
+
 ## ADR-018: Sensing model and predictive caution
 
 Status: proposed. Designed, not implemented.
@@ -206,3 +210,51 @@ Decision:
 - Before each push the agent runs `uv run ci` and checks the diff for secrets and held-out results (AGENTS.md section 2, Git rule 11).
 
 Consequences: a pushed secret cannot be taken back by deleting a later commit, so the pre-push check is mandatory. Branch protection (PENDING 19) is now the main control on `main`.
+
+## ADR-023: Crisis replanning with counterexample-guided validation
+
+Status: proposed. Designed, not implemented.
+
+Context: a compound fault (a machine overheats and sets a geofence, an aisle is blocked, a robot dies mid hand-off, urgent orders arrive) needs a new plan. An LLM can propose one, but it cannot be trusted to know whether the plan is safe.
+
+Decision:
+- Muse Spark receives a structured world summary, retrieved SOP excerpts (fenced as untrusted data), an optional obstacle class from vision, and the operator request or a text incident report. It proposes a plan in the schema of ARCHITECTURE.md (Plan schema).
+- The validator builds a belief state from what the control layer may know at t = 0: the static map, the entities currently tracked from lidar, and K seeded human variants (default K = 5, streams spawned from the snapshot RNG state). The variants include humans spawned inside initially occluded regions, consistent with the declared density of the scenario. A sampled variant is rejected at sampling when it puts a human inside the minimum stopping distance of a robot at t = 0, because no plan can fix that. The validator does not fork ground truth. Snapshot and fork of the true state exist for determinism tests and replay only.
+- The rollout runs the same dynamics as execution: simulated 10 Hz lidar raycasting against the belief state, the dynamic occlusion-boundary speed cap (ADR-024), the fast reflex layer and the in-memory lease logic, over H simulated seconds (default 45, configurable). Occlusion boundaries are recomputed from the simulated robot pose at every lidar tick of the rollout. They are never frozen as static phantom entities from t = 0.
+- Acceptance. A plan is accepted only if, in every one of the K rollouts over [0, H]: zero collisions, zero separation violations, zero hazard geofence intrusions, zero deadlocks (acyclic wait-for graph), no lease conflict, and the route is feasible. Progress is also required: every robot with an active node either completes a node, strictly reduces its remaining geodesic route length, strictly decrements its stationary action timer (PICK, HANDOFF, DELIVER, DISPATCH_REPAIR), or waits legitimately on an acyclic dependency edge or on a lease whose holder makes strict progress toward releasing it. At t = H the state must be recoverable: each robot is either stopped outside shared capacity-1 zones or holds valid leases for its occupied and next committed segments. Mission completion within H is reported as a metric and is not required.
+- Receding horizon: execute at most H/2 simulated seconds, then revalidate from the new belief state.
+- Counterexample types: COLLISION, SEPARATION_VIOLATION, GEOFENCE_INTRUSION, CORRIDOR_DEADLOCK, LEASE_CONFLICT, ROUTE_INFEASIBLE, NO_PROGRESS, UNSAFE_TERMINAL_STATE. Fields, in SI units: time, place, entities, minimum clearance, violated rule. ROUTE_INFEASIBLE names the undeclared capacity-1 corridor that the route needs, or the avoided zone that cannot be avoided. Maximum 3 iterations. If no plan passes, escalate to the operator and the affected robots hold safely.
+- Naming: simulation-based plan validation with counterexample feedback. It is not formal verification and not a safety proof. The assumptions are the hidden human prior, the K variants and the horizon, and they are stated with every result. Safety against humans stays in the reflex layer, which runs inside the rollout. CEGIS and LLM-Modulo are prior art to verify and cite. The pattern is not claimed as new.
+- Lidar gives free-space geometry. Vision, when present, gives only an obstacle class and a label check mapped through SOP text. Every crisis scenario has a text incident report as fallback.
+- The rationale field of a plan is logged for the operator and never forwarded to another model.
+- Plan schema (full table in ARCHITECTURE.md). A plan has `mission_id` (set by code), at most 20 nodes, a free-text rationale, `escalate` and an escalation reason. A node has a unique label, `robot_id`, an action (MOVE, PICK, HANDOFF, DELIVER, DISPATCH_REPAIR), `target_zone_id`, `corridor_zone_ids` (ordered capacity-1 corridors), `avoid_zone_ids` (can only add avoidance), `wait_for` (acyclic labels), `item_id` and `speed_cap_mps` (can only reduce speed). Unknown fields are rejected, and ids are validated against the map, the fleet and the inventory in code. Idempotency keys and task ids are derived by code from the mission id and the node, never produced by the model.
+
+Consequences: a new package `waggle.validation` (Phase 5C), a rollout cost that is measured in Phase 1 (ADR-025), and the experiment E10. Threats T17 and T18 cover an unmodeled human and indirect injection into the planner.
+
+## ADR-024: Occlusion-aware speed cap
+
+Status: proposed. Designed, not implemented.
+
+Context: a lidar cannot see behind a rack. A robot that follows only the detected objects can meet a human who steps out of the shadow.
+
+Decision:
+- For each occlusion boundary derived from the lidar scan, assume a phantom human at the nearest possible point approaching at v_h.
+- Cap the speed at the largest v such that S_sep(v) is at most the distance to that boundary along the swept curvilinear path.
+- Edge cases: if there is no non-negative root (v_h*t_r + C is at least the distance), the cap is zero. Near zero speed the curvature term uses a minimum speed floor. Every discontinuity threshold is a documented parameter with its rationale. There are no other new parameters.
+- The cap can only reduce speed. The cost is throughput, reported in E1.
+
+Consequences: E1 adds the configuration swept footprint plus occlusion cap. The same cap runs inside the rollout of ADR-023.
+
+## ADR-025: Simulator state layout and rollout cost
+
+Status: proposed. Designed, not implemented.
+
+Context: the validator runs K rollouts of H seconds for every plan and every iteration. If a rollout is slow, the design fails.
+
+Decision:
+- The state is a structure of contiguous numpy arrays (poses, velocities, zone tokens and expiries) plus a small dict of RNG states, with `snapshot()` and `from_snapshot()`. No deepcopy and no JSON in the hot path.
+- No timing figure is written in the documents. The rollout cost is measured in Phase 1 and reported as code speed on this machine.
+- Optimizations are considered only if the measurement demands them, each documented as a deviation: a lower lidar rate inside rollouts, cached static visibility, process-level parallelism across the K variants.
+- The lidar model is a pure function over geometry arrays (static map, dynamic footprints, pose, params, rng), so the validator can reuse it on a belief state.
+
+Consequences: B3 (feat/sim-core) implements the state layout and measures the empty loop and a fork rollout. If the measured cost makes ADR-023 doubtful, work stops and the maintainer is asked.

@@ -67,6 +67,7 @@ Exit
 Tasks
 - Stopping distance per class: `S_stop = v*t_r + v^2/(2a)`.
 - Separation to humans: `S_sep = v_h*(t_r + v/a) + S_stop + C`. Speed cap scales between full speed at `k*S_sep` and zero at `S_sep`.
+- Swept curvilinear footprint envelope for `S_stop` and `S_sep` along the current arc, and the occlusion-aware speed cap from the lidar scan (ADR-024). The control layer reads only `waggle.sim.observations` and `waggle.sim.params`.
 - Hazard geofences (static and dynamic) and e-stop.
 - Heartbeat watchdog: a robot with no heartbeat stops.
 - Telemetry threshold to geofence, directly in the fast layer.
@@ -85,6 +86,7 @@ Exit
 Tasks
 - PostgreSQL schema: zones with monotonic fencing token, tasks with state machine, task events.
 - Deterministic route planner: A* on the aisle graph, one-lane aisles as zones with capacity one, reservation through leases with fencing tokens.
+- Local lease view in control (zone, token, expiry_tick) pushed by coordination, clamping speed before an ungranted zone and failing closed when stale. Multi-zone corridors acquired in one transaction with rows locked in canonical order. Zone state FAULT_OCCUPIED: the sweeper never releases a zone while the last known odometry puts a chassis in it, and triggers replanning.
 - Task queue on PostgreSQL (`FOR UPDATE SKIP LOCKED`), workers, expiry sweeper.
 - Lease manager: acquire increments the token, tools carry (zone, token), the tool checks inside one transaction with row lock.
 - Fault injection: kill worker mid-task, drop network, delay the database, expire leases early, duplicate delivery.
@@ -95,6 +97,7 @@ Tasks
 
 Exit
 - Robots reach their targets in the S13 to S18 density scenarios without deadlock, and a deadlock counter is reported in E2.
+- Hypothesis property test: the in-memory lease model used by the rollout and the PostgreSQL implementation accept and reject the same sequences of acquire, release, expire and stale-token operations.
 - E2: 500 tasks with workers killed at random points: 0 double assignments, 0 two robots in a one-lane aisle, 0 stale-token writes accepted. The no-fencing baseline shows nonzero counts.
 - Thin slice runs from a script.
 
@@ -105,7 +108,7 @@ Tasks
 - Identity by chassis: token hash (SHA-256), constant-time compare, identity derived from the token only.
 - Per-tool allowlist by chassis. `tools/list` filtered by identity if the transport allows it, otherwise documented as a known gap.
 - Strict schemas, unknown fields rejected, physical bounds per chassis (max speed, max payload, allowed zones).
-- Rate limit per client and tool, computed from the audit table.
+- Rate limit per client and tool, computed from the audit table. Serialized per chassis with a transaction-scoped advisory lock on a 64-bit key, taken before counting and held until the intent row is inserted. Test: 30 simultaneous calls from one chassis.
 - Audit: an intent row before forwarding (fail closed) and a correlated result row after. Insert-only by code convention, database role restriction documented.
 - Per-call timeouts so a rejected request cannot hang the client.
 - Deterministic sanitizers (length, charset, delimiter escaping), then the guard classifier (Muse Glimmer on Modal, strict structured output: benign, injection or uncertain, plus a reason code) on every untrusted input: voice transcript, package label, SOP text, manual text, messages between robots. Fail closed on untrusted input. The guard is the first screen, not the boundary.
@@ -143,6 +146,17 @@ Tasks
 Exit
 - E5: ablation with and without each advisor and with the fleet planner as an extra configuration, same seeds. Report near-misses, false stops, throughput cost, tasks per hour against the code-only assigner, calls and cost per task. If an advisor shows no effect, report that.
 
+## Phase 5C: Crisis replanning and validation
+
+Tasks
+- New package `waggle.validation`: belief state, rollout and counterexample types as frozen dataclasses. Imports `waggle.sim` and `waggle.control`, never `waggle.llm`, `waggle.governance` or `waggle.mcp_server`. An import-linter contract is added with the package.
+- Plan schema and its hand-written validation (ARCHITECTURE.md, Plan schema).
+- Crisis planner prompt (versioned file), counterexample feedback loop with at most 3 iterations, receding horizon at H/2.
+- Compound-fault templates for E10, each with a text incident report.
+
+Exit
+- E10 on development seeds: the four configurations run, with violations in validation and in execution, deadlocks, recovery time, iterations, calls, cost, escalations, and the fraction of accepted plans that fail in an extended 120 s rollout or in execution. The sensitivity run for H in 30, 45 and 60 seconds is reported. What the LLM adds beyond the deterministic baseline is reported per template, including when it adds nothing.
+
 ## Phase 6: Predictive maintenance
 
 Tasks
@@ -173,6 +187,10 @@ Tasks
 
 Exit
 - E7: transcription error rate on item ids (spoken ids set, with noise), label verification accuracy on synthetic labels including adversarial text on the label.
+
+## Phase 7B: Technical viewer v0
+
+Starts after branch B8 of `docs/PHASE1_BRIEF.md`. Sources in `web/`, WebSocket bridge in `src/waggle/api`. Primitives, top-down camera, envelope, lidar and ghost overlays, one-click chaos buttons that call the scenario format with seeds, deterministic replay with a state hash bar. The web server, WebSocket and JavaScript dependencies need maintainer approval first (PENDING 26).
 
 ## Phase 8: Delivery
 

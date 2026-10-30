@@ -14,16 +14,17 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
-| Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick | No |
-| Coordination | Zone leases with monotonic fencing tokens, checked inside the tool in one transaction | No |
-| Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit | No |
+| Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
+| Coordination | Zone leases with monotonic fencing tokens, checked inside the tool in one transaction (designed, not implemented) | No |
+| Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
 | Input screening | Deterministic sanitizers, then an LLM guard classifier (Muse Glimmer) on all untrusted input, fails closed | Yes, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
-| Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) | Yes, bounded |
-| Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback | Yes, optional |
+| Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) (designed, not implemented) | Yes, bounded |
+| Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback (designed, not implemented) | Yes, optional |
+| Crisis replanning | Muse Spark proposes a plan, a simulation-based validator returns counterexamples, at most 3 iterations, then the operator (designed, not implemented) | Yes, proposal only |
 | Sensing and prediction | Simulated 2D lidar, closest point of approach predictor that can only restrict (designed, not implemented) | No |
 | Missions and handoff | Task graph, handoff with idempotency key and fencing token (designed, not implemented) | No |
-| Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part | RAG text only |
+| Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part (designed, not implemented) | RAG text only |
 
 ## Models used
 
@@ -56,6 +57,7 @@ Scaling to thousands of agents is reported as an extrapolation from a stub calib
 - The separation formula is inspired by speed and separation monitoring. This project does not claim compliance with any standard.
 - The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D and the FPV vision check renders the 3D scene.
 - Exact reproduction of a run holds on the same platform and numpy version. Published results come from the cloud run (Linux).
+- Plan validation in crisis replanning is simulation-based with counterexample feedback. It is not formal verification and not a safety proof. The reflex layer stays the safety mechanism against humans.
 - The lidar is simulated (designed, not implemented). Failure history and purchase orders are synthetic (designed, not implemented).
 - Vision inputs are synthetic renders, not in the control loop, so ground truth is known by construction.
 - Human behavior is scripted or adversarial by design, not learned from real data.

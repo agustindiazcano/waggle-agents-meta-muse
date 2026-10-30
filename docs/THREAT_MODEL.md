@@ -42,6 +42,8 @@ All of these are treated as data. None can change identity, allowlists, schemas 
 | T14 | Spoofed or duplicated handoff | Idempotency key, fencing token |
 | T15 | Lidar dropout or occlusion | Conservative default, watchdog |
 | T16 | Duplicate purchase order | Idempotency key per failure event |
+| T17 | A plan passes the rollout and meets an unmodeled human behavior in execution | Reflex layer stays active, receding horizon revalidates |
+| T18 | Indirect injection through SOP text, package label text or incident text into the planner | Untrusted-data boundary, plan schema, validator, MCP identity |
 
 Each scenario in the corpus declares its target layer in advance. Layers are evaluated by ablation (see [EXPERIMENTS.md](EXPERIMENTS.md) E3).
 
@@ -59,6 +61,7 @@ Each scenario in the corpus declares its target layer in advance. Layers are eva
 | Read-back and item resolution | T4 |
 | Catalog check in code | T3 |
 | Idempotency keys | T8, T9, T14, T16 |
+| Simulation-based plan validation | T17, T18 (partly) |
 | Audit with result rows | Incident reconstruction |
 | Degraded mode | T10 |
 
