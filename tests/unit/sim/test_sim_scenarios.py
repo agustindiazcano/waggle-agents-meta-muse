@@ -215,3 +215,14 @@ def test_run_record_carries_counts_and_tasks() -> None:
         "near_misses",
     }
     assert record.ticks == 80 and record.tasks_completed >= 0
+
+
+def test_a_raised_load_forklift_scenario_times_the_human_with_the_reduced_speed() -> None:
+    """S05 is S01 with the load raised: the robot is slower, so the human must start later."""
+    for seed in (1, 2, 3):
+        plain, raised = scenarios.generate("S01", seed), scenarios.generate("S05", seed)
+        assert raised.robots[0].load_raised and not plain.robots[0].load_raised
+        assert raised.humans[0].plan.start_tick > plain.humans[0].plan.start_tick
+        assert raised.robots[0].initial_speed == pytest.approx(
+            plain.robots[0].initial_speed * params.LOAD_RAISED_SPEED_FACTOR
+        )
