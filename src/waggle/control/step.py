@@ -11,14 +11,16 @@ from dataclasses import dataclass, field
 import numpy as np
 from numpy.typing import NDArray
 
-from waggle.control import occlusion, perception, tracking
+from waggle.control import cpa, occlusion, perception, tracking
 from waggle.control.arbiter import arbitrate
 from waggle.control.limiter import EnvelopeMode, limit_command
 from waggle.control.params import (
     DEFAULT_CONTROL_PARAMS,
+    DEFAULT_CPA_PARAMS,
     DEFAULT_OCCLUSION_PARAMS,
     DEFAULT_PERCEPTION_PARAMS,
     ControlParams,
+    CpaParams,
     OcclusionParams,
     PerceptionParams,
 )
@@ -48,6 +50,7 @@ class ControlInputs:
     beacons: tuple[BeaconReport, ...] = ()
     mode: EnvelopeMode = EnvelopeMode.SWEPT
     use_occlusion: bool = False
+    use_cpa: bool = False
 
 
 @dataclass(frozen=True)
@@ -129,6 +132,7 @@ def control_step(
     cp: ControlParams = DEFAULT_CONTROL_PARAMS,
     pp: PerceptionParams = DEFAULT_PERCEPTION_PARAMS,
     op: OcclusionParams = DEFAULT_OCCLUSION_PARAMS,
+    cpap: CpaParams = DEFAULT_CPA_PARAMS,
 ) -> tuple[ControlState, ControlOutput]:
     """Limit one motion command. Missing or stale input gives a stop with its reason."""
     reason = perception.check_inputs(inputs.scan, inputs.odometry, inputs.tick, pp)
@@ -147,6 +151,19 @@ def control_step(
             boundaries = occlusion.boundary_points(scan, pp, op)
             extra.append(
                 occlusion.occlusion_limit(inputs.request, inputs.params, boundaries, cp, op)
+            )
+        if inputs.use_cpa:
+            extra.append(
+                cpa.cpa_limit(
+                    inputs.request,
+                    inputs.params,
+                    odom,
+                    new_state.tracks.tracks,
+                    inputs.tick,
+                    cp,
+                    pp,
+                    cpap,
+                )
             )
         output = limit_command(
             inputs.request, inputs.params, human, structure, odom.speed, cp, inputs.mode, extra

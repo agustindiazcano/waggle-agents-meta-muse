@@ -28,7 +28,8 @@ class Detection:
 
 @dataclass(frozen=True)
 class Track:
-    """A tracked human. ``sigma`` is the position uncertainty at ``seen_tick``."""
+    """A tracked human. ``sigma`` is the position uncertainty at ``seen_tick``. ``trail`` holds
+    the recent detections as ``(tick, x, y)``, oldest first."""
 
     track_id: int
     x: float
@@ -38,6 +39,7 @@ class Track:
     body_radius: float
     sigma: float
     seen_tick: int
+    trail: tuple[tuple[int, float, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -74,9 +76,18 @@ def _pairs(
     return matches
 
 
+def _extend_trail(
+    trail: tuple[tuple[int, float, float], ...], det: Detection, pp: PerceptionParams
+) -> tuple[tuple[int, float, float], ...]:
+    """Add a detection and drop entries older than ``trail_ticks``."""
+    added = (*trail, (det.seen_tick, det.x, det.y))
+    return tuple(e for e in added if det.seen_tick - e[0] <= pp.trail_ticks)
+
+
 def _merge(track: Track, det: Detection, pp: PerceptionParams) -> Track:
     if det.seen_tick < track.seen_tick:
         return track
+    trail = _extend_trail(track.trail, det, pp)
     dt = (det.seen_tick - track.seen_tick) * DT
     vx, vy = track.vx, track.vy
     if dt > 0.0:
@@ -86,7 +97,9 @@ def _merge(track: Track, det: Detection, pp: PerceptionParams) -> Track:
         speed = math.hypot(vx, vy)
         if speed > pp.human_speed_bound:
             vx, vy = vx * pp.human_speed_bound / speed, vy * pp.human_speed_bound / speed
-    return Track(track.track_id, det.x, det.y, vx, vy, det.body_radius, det.sigma, det.seen_tick)
+    return Track(
+        track.track_id, det.x, det.y, vx, vy, det.body_radius, det.sigma, det.seen_tick, trail
+    )
 
 
 def update_tracks(
@@ -104,7 +117,17 @@ def update_tracks(
     for j, det in enumerate(detections):
         if j not in matched_dets:
             tracks.append(
-                Track(next_id, det.x, det.y, 0.0, 0.0, det.body_radius, det.sigma, det.seen_tick)
+                Track(
+                    next_id,
+                    det.x,
+                    det.y,
+                    0.0,
+                    0.0,
+                    det.body_radius,
+                    det.sigma,
+                    det.seen_tick,
+                    ((det.seen_tick, det.x, det.y),),
+                )
             )
             next_id += 1
     alive = tuple(t for t in tracks if tick - t.seen_tick <= pp.max_coast_ticks)
@@ -124,3 +147,24 @@ def track_points(state: TrackState, tick: int, pp: PerceptionParams) -> NDArray[
         radius = max(track.body_radius, HUMAN_RADIUS) + track.sigma + pp.human_speed_bound * age
         rings.append(np.array([track.x, track.y]) + radius * unit)
     return np.vstack(rings)
+
+
+def smoothed_velocity(track: Track, pp: PerceptionParams) -> tuple[float, float] | None:
+    """Least squares velocity over the trail in m/s, clipped to the human speed bound.
+
+    None when the trail spans fewer than ``velocity_min_ticks`` ticks. Beacons give a position
+    every tick with noise, so a velocity from two neighbouring ticks is useless for the CPA.
+    """
+    if len(track.trail) < 3:
+        return None
+    ticks = np.array([e[0] for e in track.trail], dtype=np.float64)
+    if ticks.max() - ticks.min() < pp.velocity_min_ticks:
+        return None
+    t = (ticks - ticks.mean()) * DT
+    denominator = float(np.sum(t * t))
+    vx = float(np.sum(t * np.array([e[1] for e in track.trail])) / denominator)
+    vy = float(np.sum(t * np.array([e[2] for e in track.trail])) / denominator)
+    speed = math.hypot(vx, vy)
+    if speed > pp.human_speed_bound:
+        vx, vy = vx * pp.human_speed_bound / speed, vy * pp.human_speed_bound / speed
+    return vx, vy

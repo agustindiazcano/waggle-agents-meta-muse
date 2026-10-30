@@ -216,3 +216,33 @@ def test_the_occlusion_cap_is_inactive_on_an_open_floor() -> None:
     )
     _, out = _run(ControlState(), inputs)
     assert (out.speed, out.reason) == (2.0, Reason.REQUEST)
+
+
+def _crossing_run(use_cpa: bool) -> list[ControlOutput]:
+    """A person walks across the lane at 1.2 m/s, one scan every four ticks."""
+    state, outputs = ControlState(), []
+    scan = make_scan(tick=0)
+    for tick in range(0, 61):
+        if tick % 4 == 0:
+            scan = make_scan(tick=tick, discs=[(1.8, 3.0 - 1.2 * tick * 0.025, 0.3)])
+        inputs = ControlInputs(
+            request=ControlRequest(2.0, 0.0),
+            params=CARRIER,
+            tick=tick,
+            odometry=make_odometry(tick=tick),
+            scan=scan,
+            use_cpa=use_cpa,
+        )
+        state, out = _run(state, inputs)
+        outputs.append(out)
+    return outputs
+
+
+def test_cpa_restricts_a_crossing_person_earlier_than_the_envelope() -> None:
+    without, with_cpa = _crossing_run(False), _crossing_run(True)
+    assert all(a.speed <= b.speed + 1e-12 for a, b in zip(with_cpa, without, strict=True))
+    assert any(Reason.CPA in out.limits_hit for out in with_cpa)
+    assert all(Reason.CPA not in out.limits_hit for out in without)
+    first_without = next((i for i, out in enumerate(without) if out.speed < 2.0), len(without))
+    first_with = next(i for i, out in enumerate(with_cpa) if out.speed < 2.0)
+    assert first_with < first_without
