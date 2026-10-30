@@ -40,7 +40,7 @@ All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](do
 
 | Experiment | Metric | Without layer | With layer | Status |
 |---|---|---|---|---|
-| E1 Fast layer | Human collisions and separation violations per N scenarios | No control, 90 runs on development seeds: 107 human collisions, 1027 robot collisions, 125 separation violations (`no_control_20261030T022921Z.json`) | TBD | baseline on development seeds only, fast layer not built |
+| E1 Fast layer | Human collisions and separation violations per N scenarios | No control, 90 runs on development seeds: 107 human collisions, 1027 robot collisions, 125 separation violations (`no_control_20261030T173638Z.json`) | TBD | baseline on development seeds only, fast layer not built |
 | E2 Leases and chaos | Double assignments in 500 tasks with killed workers | TBD | TBD | not run |
 | E3 Injection matrix | Attempts rejected per layer, by ablation | TBD | TBD | not run |
 | E4 Court | Correct blocks, false blocks, reviewer correlation | TBD | TBD | not run |
