@@ -291,7 +291,7 @@ Consequences: B13 (`feat/control-tracking`) implements this with tests for stale
 
 ## ADR-027: Control interface and limit arbitration
 
-Status: proposed. Designed, not implemented.
+Status: proposed. Partly implemented in B12 (types, params, envelope, arbiter, limiter); `control_step` is assembled in B13 once perception exists.
 
 Context: every motion command passes through the fast layer and can only be reduced. Several limits act at once (envelope, occlusion cap, CPA, geofence, watchdog, advisors later). Their interaction must be order independent and testable.
 
@@ -304,9 +304,9 @@ Decision:
 - The layer must fail closed: a missing field, an invalid scan, a stale heartbeat or an exception in a limit function gives a limit of zero with its reason. The exception is logged and not swallowed, and the step still returns an output.
 - Reasons are a closed enum (`REQUEST`, `CLASS_MAX`, `ENVELOPE`, `OCCLUSION`, `CPA`, `GEOFENCE`, `WATCHDOG`, `SCAN_INVALID`, `INPUT_MISSING`, `ESTOP`), recorded per tick in the run log so E1 can attribute each stop.
 - Purity and latency: `control_step` reads no clock. The harness measures its code latency around the call with a monotonic timer and reports it as code latency (ADR-028).
-- Separation formula, per class and human candidate at distance `d` along the swept path: `S_stop = v*t_r + v^2/(2a)` and `S_sep = v_h*(t_r + v/a) + S_stop + C`, with `C` a margin per class (assumption, to calibrate). The cap is full speed at `d >= k*S_sep` (k = 1.5, assumption), linear to zero at `d <= S_sep`, and a stop below `S_stop`.
+- Separation formula, per class and human candidate at distance `d` along the swept path: `S_stop = v*t_r + v^2/(2a)` and `S_sep = v_h*(t_r + v/a) + S_stop + C`, with `C` a margin per class (assumption, to calibrate). The cap is the largest speed `v` with `k*S_sep(v) <= d` (k = 1.5, assumption), solved in closed form from the quadratic. It is full speed when `d >= k*S_sep(v_max)` and zero when `d <= k*S_sep(0)`. The first wording of this ADR, a linear ramp between `k*S_sep` and `S_sep`, was replaced in B12 because a ramp on `S_sep(v_max)` stops the robot far from a human at any speed. Structures use `S_stop(v) + structure_margin <= d`. A gap inside `S_stop` at the current speed is a stop with reason `ESTOP`.
 
-Consequences: B12 (`feat/control-envelope`) implements types, the envelope and the arbiter with property tests: result at most each limit, invariant to the order of the limits, never above the request, zero wins, same factor on speed and angular speed. The failing run is shown first. B16 adds the reflex items (heartbeat, geofence, e-stop, telemetry threshold) as further limits in the same arbiter.
+Consequences: B12 (`feat/control-envelope`) implements types, the envelope, the arbiter and `limit_command` (envelope plus arbiter on detections in the robot frame; a swept mode and the radial mode of E1 configuration 1) with property tests, and checks the swept gap against an independent brute-force sweep of the footprint: result at most each limit, invariant to the order of the limits, never above the request, zero wins, same factor on speed and angular speed. The failing run is shown first. B16 adds the reflex items (heartbeat, geofence, e-stop, telemetry threshold) as further limits in the same arbiter.
 
 ## ADR-028: E1 metrics and the eight configurations
 

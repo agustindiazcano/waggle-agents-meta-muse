@@ -134,7 +134,7 @@ Control path (fast, every tick): every motion command, from any source, passes t
 
 ## Control module layout
 
-Designed, not implemented (ADR-026 to ADR-028). `waggle.control` imports only `waggle.sim.params` and `waggle.sim.observations`. Every function is pure with explicit state.
+Rows marked B12 are implemented and tested; the others are designed, not implemented (ADR-026 to ADR-028). `waggle.control` imports only `waggle.sim.params` and `waggle.sim.observations`. Every function is pure with explicit state.
 
 | Module | Role | Branch |
 |---|---|---|
@@ -142,6 +142,7 @@ Designed, not implemented (ADR-026 to ADR-028). `waggle.control` imports only `w
 | `params` | Control assumptions (gaps, gates, margins, `k`), frozen dataclasses | B12 |
 | `envelope` | `S_stop`, `S_sep`, swept path distance, speed cap, reflex stop | B12 |
 | `arbiter` | Minimum over all limits, curvature preserving scaling, reasons | B12 |
+| `limiter` | Envelope limits for one command on robot-frame detections, then the arbiter | B12 |
 | `perception` | Scan validation, NaN handling, clusters, size class | B13 |
 | `tracking` | Association, velocity estimate, coasting | B13 |
 | `occlusion` | Phantom human cap from occlusion boundaries (ADR-024) | B14 |
