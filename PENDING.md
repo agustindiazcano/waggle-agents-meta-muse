@@ -30,5 +30,5 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 24 | P1 | Review the hooks diff and approve the settings change after B0 (`chore/push-guard-hardening`). Restore `.claude/settings.json` by hand when required | M | pending |
 | 25 | P1 | Gates G1 Oct 30 night, G2 Oct 31 night, G3 Nov 1 night, G4 Nov 2 night: read the progress report and decide what to cut from the contingency order in AGENTS.md section 18 | M | pending |
 | 26 | P2 | After B8: decide whether to approve FastAPI, uvicorn and the JavaScript toolchain (Node, Vite, TypeScript, three) for viewer v0 | M | pending |
-| 27 | P2 | Install gitleaks locally (it is not installed; B0 pre-push check fails closed without it) | M | pending |
+| 27 | P2 | gitleaks 8.30.1 installed with winget (B0 pre-push check fails closed without it). Restart the shell so it is on PATH; the check also finds the WinGet path | M | done |
 | 28 | P3 | Verify CEGIS and LLM-Modulo as prior art before ADR-023 cites them | A | pending |
