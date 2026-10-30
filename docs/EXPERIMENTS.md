@@ -51,6 +51,8 @@ Coordinated handoff (designed, not implemented):
 - Sensing configurations (designed, not implemented): sensing is ground truth, lidar only, or lidar with beacons; control is envelope only or envelope with prediction. Contribution is measured by ablation.
 - Metrics: collisions with humans, collisions between robots, near-misses, separation violations, false stops, throughput (tasks per hour), loop latency. Proportions with Wilson 95% intervals and raw counts.
 - Baseline: no envelope, no e-stop.
+- No-control baseline (Phase 1, configuration `no_control`): the waypoint driver of `waggle.sim.scripted` only, which has no safety logic and is not the control layer. Run on development seeds only, written to `results/e1/dev/`. S01 to S18 run on map A (S01 to S15) and map B (S16 to S18). S13 to S18 are 3, 10 and 30 robots on map A and then on map B.
+- Definitions (declared per scenario, assumptions): a collision is contact between a robot footprint and a human disc or another robot, closed sets. A separation violation is a gap below 0.5 m, strictly below, and a collision is also a violation. A near miss is no contact and a gap below 0.2 m. All three are counted as episodes, not ticks. Unavoidable cases are counted in the totals, listed separately and also subtracted in a second set of totals.
 - Report: counts, intervals, every failing seed, latency as code latency.
 
 ## E2: Leases, fencing and chaos

@@ -26,7 +26,7 @@ ADVERSARIAL_FRACTION_RANGE = (0.5, 1.5)
 stopping distance away. Below 1 the human appears inside that distance (assumption)."""
 
 _WALKER_TURN_AWAY = math.pi / 2
-_STEP_OUT_EXTENSION = 3.0
+_STEP_OUT_EXTENSION = 2.0
 
 
 # ---------------------------------------------------------------- geometry
