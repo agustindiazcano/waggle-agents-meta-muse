@@ -344,7 +344,7 @@ Reflex layer in B16 (`waggle.control.reflex`), each item one more limit in the s
 
 ## ADR-028: E1 metrics and the eight configurations
 
-Status: proposed. Designed, not implemented.
+Status: proposed. Harness implemented in B17 (`waggle.experiments`); development seed results come from the cloud workflow.
 
 Context: E1 must show what each block contributes by ablation, not by summing blocks (AGENTS.md section 9). The Phase 1 baseline is the first configuration.
 

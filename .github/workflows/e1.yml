@@ -1,0 +1,67 @@
+name: Waggle Hive E1 development runs
+
+# Cloud-only E1 sweep on the development seeds (AGENTS.md section 3, rule 8).
+# One job per configuration of ADR-028. The maintainer starts it by hand and commits the files.
+# There is no seed set input: held-out seeds are never run from this workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - no_control
+          - radial_lidar
+          - envelope_oracle
+          - envelope_lidar
+          - envelope_lidar_beacons
+          - envelope_occlusion_lidar
+          - envelope_occlusion_cpa_lidar
+          - envelope_occlusion_cpa_lidar_beacons
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - name: Run E1 on the development seeds
+        env:
+          CONFIG: ${{ matrix.config }}
+        run: uv run experiments-dev --config "$CONFIG" --workers 4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e1-dev-${{ matrix.config }}
+          path: results/e1/dev/*.json
+          if-no-files-found: error
+
+  report:
+    needs: run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: e1-dev-*
+          path: results/e1/dev
+          merge-multiple: true
+      - name: Write the report
+        run: uv run report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e1-dev-report
+          path: results/e1/dev/report.md
+          if-no-files-found: error

@@ -60,11 +60,6 @@ def test_venv_tool_missing_raises() -> None:
         tasks.venv_tool("definitely-not-installed-tool")
 
 
-@pytest.mark.parametrize("target", ["experiments-dev", "report"])
-def test_placeholder_targets_succeed(target: str) -> None:
-    assert tasks.PLACEHOLDER_TARGETS[target]() == 0
-
-
 def _result(results_dir: Path, configuration: str = "placeholder") -> Path:
     return results_dir / "placeholder" / "heldout" / f"{configuration}.json"
 
