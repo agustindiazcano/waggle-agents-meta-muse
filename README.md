@@ -96,7 +96,7 @@ tools/hooks/             Claude Code hook scripts (safety guard, lint check, ses
 
 Claude Code hooks in `.claude/settings.json` run scripts from `tools/hooks/`: a PreToolUse safety guard (denies push, merge, force options, `git add -A`, staged `.env` and held-out result writes; asks first for branch deletion, rebase, amend and protected paths), a PostToolUse lint check and a SessionStart context loader. `tools/hooks/protected_paths.txt` is the single list of protected paths, and `CODEOWNERS` covers every entry.
 
-This is a weak control in a single-maintainer repository. The hooks help an agent stay inside the rules, but the maintainer can change them, and CODEOWNERS has an effect only when branch protection requires code owner review. Branch protection is a repository setting that the maintainer sets by hand.
+This is a weak control in a single-maintainer repository. The hooks help an agent stay inside the rules, but the maintainer can change them, and CODEOWNERS has an effect only when branch protection requires code owner review. Branch protection is a repository setting that the maintainer sets by hand. The command guard also reads interpreter one-liners (python -c, node -e, powershell -Command) for the text git push, git remote and gh api, which is a best-effort text match: a command built at run time, a script file or an encoded string passes it. Branch protection on main is the real control.
 
 ## Run
 

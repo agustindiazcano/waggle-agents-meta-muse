@@ -260,3 +260,16 @@ Decision:
 - The lidar model is a pure function over geometry arrays (static map, dynamic footprints, pose, params, rng), so the validator can reuse it on a belief state.
 
 Consequences: B3 (feat/sim-core) implements the state layout and measures the empty loop and a fork rollout. If the measured cost makes ADR-023 doubtful, work stops and the maintainer is asked.
+
+## ADR-029: Test tiers, rollout optimization approval and approved dependencies
+
+Context: the maintainer answered PENDING 26, 29, 30 and 31 at the start of Phase 2.
+
+Decision:
+- `uv run ci` is the fast tier and must finish in 3 minutes or less on the maintainer machine. Measured on 2026-10-30: 1 min 46 s, 988 tests. If it grows past the limit, the slow tests get the `heavy` marker, never a silent exclusion. The pre-push check keeps requiring the fast tier locally plus gitleaks. Heavy tests, seed sweeps and held-out experiments run only in the cloud workflow.
+- The rollout cost of ADR-025 (22.3 s for 45 s with 10 robots) is addressed by measurement: profile first, then vectorized kinematics with a broad phase, a cached static lidar with world-frame rays indexed by heading, and process-level parallelism across the K variants. Each is documented as a deviation in ADR-025. The exact lidar stays in execution. No new dependency such as numba. If the best result is below 5x, work stops and the profile is reported.
+- Dependencies approved, to be added only by the branch that needs them: fastapi and uvicorn[standard] as runtime dependencies of `waggle.api` only; in `web/`, Node, Vite, TypeScript, three, @types/three and Playwright as dev dependencies, with a committed lockfile and `npm ci`. When `waggle.api` exists, import-linter contracts forbid `sim`, `control` and `validation` from importing `waggle.api` or any web library.
+- E9 is regression detection (mutation testing and planted defects). E10 is crisis replanning.
+- AGENTS.md git rule 3 now reads: every commit passes the fast CI, and a test and the code that makes it pass go in the same commit.
+
+Consequences: intermediate red commits in published history stay.
