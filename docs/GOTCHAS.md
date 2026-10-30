@@ -69,3 +69,9 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### Healthchecks that start a heavy process keep an idle service busy
 - Symptom: an idle container uses CPU or memory in a steady pattern, and the check itself can time out.
 - What to do: use light checks, such as a short Python call to a health endpoint. Avoid checks that load the application or the model client.
+
+## Coordination
+
+### Lease expiry is not physical clearance
+- Symptom: a stopped robot loses its lease but still occupies a capacity-one aisle, and a replacement would be admitted into it.
+- What to do: use the corridor model with a current trusted occupancy observation. An expired occupied or unknown zone keeps `FAULT_OCCUPIED`; only a current empty observation permits reassignment. Never use the generic logical lease expiry as an entry permit. Tests cover a robot that never releases, an occupied expired corridor and missing occupancy (ADR-031).

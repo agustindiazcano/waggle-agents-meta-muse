@@ -15,7 +15,7 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
 | Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
-| Coordination | Zone leases with monotonic fencing tokens, checked inside the tool in one transaction (designed, not implemented) | No |
+| Coordination | Pure leases and atomic corridor reservations with monotonic fencing tokens (implemented, not evaluated). Database transactions and simulator admission are not implemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
 | Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
 | Input screening | Deterministic sanitizers, then an LLM guard classifier (Muse Glimmer) on all untrusted input, fails closed | Yes, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
