@@ -1,29 +1,47 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (B14 to B17 done and in review, the E1 development run is waiting for the cloud).
+Updated: 2026-10-30 (B14 to B17 on main, E1 dev run twice, map filter PR 34 open).
 
 ## Done last
-- B17 `feat/e1-harness` (PR 32): `waggle.sim.sensors.oracle_scan`, package `waggle.experiments` (`e1_config`, `e1_rig`, `e1_run`, `e1_stats`, `e1_report`), `uv run experiments-dev` (development seeds only, no held-out option), `uv run report` (writes `results/e1/dev/report.md`), `.github/workflows/e1.yml` (manual, one job per configuration). No E1 result is committed. 1351 tests.
-- B16 `feat/control-reflex` (PR 31): watchdog, e-stop, hazard geofences and telemetry thresholds as arbiter limits (`waggle.control.reflex`, `frames`). Off in E1.
-- B15 `feat/control-cpa` (PR 30): constant velocity CPA (`waggle.control.cpa`), track trails and a least squares velocity over at least 10 ticks.
-- B14 `feat/control-occlusion` (PR 29, base `main`): occlusion boundaries from range jumps of 0.6 m or more, phantom human cap with the footprint widened by the distance a person walks while the robot reacts and brakes, `extra_limits` in `limit_command`.
-- ADR-018, ADR-024, ADR-027 and ADR-028 carry the choices of B14 to B17. PRs 29 to 32 are stacked: 32 on 31 on 30 on 29 on `main`.
-- A correction: PR 29, 30 and 31 first said "Protected paths touched: none" although `src/waggle/control/` is protected. The three bodies were edited.
+- PRs 29 to 33 are on `main` (B14 occlusion, B15 CPA, B16 reflex, B17 E1 harness; PR 33 carried B15 to B17 because 30 to 32 were merged into stacked bases, the GOTCHAS trap).
+- E1 development run 1 (cloud run 41086309588, commit ce8f92d, 90 runs per configuration, dev seeds only): control cuts human collisions but throughput collapses.
+- Diagnosis (S08 seed 102612522, oracle scan): wall and rack faces seen at an angle split into clusters under `human_max_extent`, became human tracks, coasted up to 80 ticks with a ring growing at the human speed bound, and triggered ESTOP. The real human was 10 m away.
+- Fix on branch `exp/e1-diagnose-stops`, PR 34 (ADR-030): `ControlInputs.map_segments`; a cluster whose points are all within `map_margin` 0.25 m of a mapped segment is structure. Maintainer decision C: the filter is active only when `use_occlusion` is on (second commit on the branch, local CI to be rerun before the push).
+- E1 development run 2 (cloud run 41095424297, with the filter on in every configuration): throughput recovered, safety worse without the occlusion cap.
+
+### E1 dev run 1 versus run 2 (runs with a human collision out of 90, tasks as ratio to no_control)
+
+| Configuration | Collisions run 1 | Collisions run 2 | Throughput run 1 | Throughput run 2 |
+|---|---|---|---|---|
+| no_control | 62 | 62 | 1.00 | 1.00 |
+| radial_lidar | 12 | 10 | 0.01 | 0.01 |
+| envelope_oracle | 13 | 24 | 0.34 | 0.65 |
+| envelope_lidar | 11 | 21 | 0.11 | 0.65 |
+| envelope_lidar_beacons | 12 | 36 | 0.13 | 0.65 |
+| envelope_occlusion_lidar | 12 | 12 | 0.05 | 0.23 |
+| envelope_occlusion_cpa_lidar | 12 | 12 | 0.05 | 0.23 |
+| envelope_occlusion_cpa_lidar_beacons | 13 | 12 | 0.05 | 0.22 |
+
+Stop episodes stay near 19000 per configuration and most are false stops by definition. They come mostly from S14, S15, S18 (dense scenes) and S03.
 
 ## Current state
-- `waggle.control` is complete for E1: envelope, arbiter, limiter, perception, tracking, occlusion, CPA, reflex, `control_step`. About 260 control tests.
-- Smoke runs on this machine (a few seeds, not results): the oracle scan harness reproduces the Phase 1 baseline for `no_control` (same counts and final hash) and the baseline human collision of S07 seed 66447779 disappears under the envelope. Control also costs throughput: in the short samples some controlled runs complete 0 waypoints (S03 seed 7 has two robots head-on in a one lane aisle and no humans; S07 seed 66447779, cause not investigated). That is data for E1, not a tuned result.
-- The full E1 development run (8 configurations, 90 runs each) was NOT run. It needs `.github/workflows/e1.yml` on `main` first, then a manual dispatch. Held-out seeds were not run.
-- Traps met: (1) `waggle.sim.streams` allows only the subsystems robots, humans, lidar, beacons, scenario, so odometry noise uses the `robots` stream; (2) a false stop is defined against humans only, so in scenarios without humans every stop is false; (3) the Bash heredoc breaks on triple quotes, write scripts with the Write tool; (4) a lone return at a wall end is a human candidate (extent zero), so the envelope already slows there; (5) CRLF warnings from git are harmless.
-- Open maintainer decisions: PENDING 25 (gates), 34 (stale rows 1 and 3), 35 (merge order and protected paths of PRs 29 to 32), 36 (run the E1 development workflow), 37 (what to do with the stuck and slow runs once the table exists), and the ADR-026 beacon deviation.
+- `main` has B0 to B17. Branch `exp/e1-diagnose-stops` (PR 34) has the PENDING note, ADR-030, the map filter and the option C change.
+- Open problems, not fixed: (1) S03 two robots head on in a one-lane corridor never complete a task: a deadlock for corridor locking (Phase 3, E2), not for perception. (2) `envelope_lidar_beacons` has 36 of 90 collision runs without the occlusion cap, cause unknown (check whether a beacon no longer merges with a cluster, giving a wrong or duplicate track). (3) S08 completes 0 tasks because the route is about 38 m and the scene lasts 1013 ticks, so any slowdown misses the first waypoint: the task metric is a cliff, consider normalizing by scene length (maintainer and agent). (4) S06 and S11 are undiagnosed. (5) The occlusion cap gives 0.22 to 0.23 throughput: safe but slow.
+- Pending maintainer: merge PR 34 (touches `src/waggle/control/` and `docs/DECISIONS.md`), PENDING 25 (gates), 34.
+- Probe scripts used for the diagnosis were in the session scratchpad and are not in the repo. The idea: wrap `control_step` in `waggle.experiments.e1_rig` and print tracks, reasons and gaps at the first ESTOP.
+- Traps: the Bash tool heredoc breaks on triple quotes, write scripts to the scratchpad; `step.py` imports `limit_command` by name, so a probe must patch `waggle.control.step.limit_command`; `uv run ci` takes about 4 min now.
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive, session brief 2, after B17. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/EXPERIMENTS.md (E1), docs/DECISIONS.md (ADR-026 to ADR-028 and their addenda). Run git fetch, git status, git branch -r, git worktree list, gh pr list.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/DECISIONS.md (ADR-024, ADR-026, ADR-030), docs/GOTCHAS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
 
-State: B0 to B13 are on main. B14 to B17 are PRs 29, 30, 31, 32, stacked in that order. Do not merge anything, never push to main, no force push. Do not commit `index (1).html` and do not work on the viewer (PENDING 33).
+State: B0 to B17 are on main. PR 34 (exp/e1-diagnose-stops) holds the map filter (ADR-030, active only with the occlusion cap). If it is merged, branch from main; otherwise from exp/e1-diagnose-stops. Never merge, never push to main, no force push. Do not commit `index (1).html`.
 
-Do not start B18. Wait for the maintainer to say what comes next. Possible tasks, only on request: (a) read the E1 development result files the maintainer committed under results/e1/dev/ and write the analysis (false approvals first is for the court, here: human collisions first, then separation violations, then the cost in stops and throughput, with the Wilson intervals and every failing seed); (b) if the maintainer asks, investigate why some controlled runs finish with 0 waypoints, with a test first, without loosening any limit; (c) PENDING 36 follow-ups.
-
-Constraints: numpy and the standard library only. waggle.control reads only waggle.sim.observations and waggle.sim.params. Never loosen a safety check. Ask before touching the fencing check, the MCP boundary, the audit logic or the .env. No paid API call. Held-out seeds are not run.
+Task, tests first with the failing run shown, uv run ci green before each push:
+1. Explain the 36 of 90 collision runs of envelope_lidar_beacons in E1 run 2 (cloud run 41095424297): pick 2 or 3 failing seeds from its report, trace tracks and reasons at the collision, find the cause. Any fix is a new branch, never loosens a limit, and the filter and beacons interplay goes into ADR-030 or a new ADR.
+2. Diagnose S06, S11 and the remaining stops of S08 the same way. Report causes in a table.
+3. Propose, do not apply, a task metric normalized by scene length (S08 is a cliff). Ask the maintainer.
+4. Rerun E1 in the cloud (gh workflow run e1.yml --ref <branch>) after any control change and report the table versus run 2.
+Then stop and report. Phase 3 (leases, corridor locking for S03, E2) starts only when the maintainer says so.
+Constraints: numpy and the stdlib only, waggle.control reads only waggle.sim.observations and waggle.sim.params, fail closed, no paid API call, held-out seeds not run, ask before touching the fencing check, the MCP boundary, the audit logic or .env.
 ```
