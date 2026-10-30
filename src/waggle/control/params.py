@@ -62,6 +62,7 @@ class PerceptionParams:
     human_speed_bound: float = HUMAN_SPEED_BOUND
     trail_ticks: int = 40
     velocity_min_ticks: int = 10
+    map_margin: float = 0.25
 
     def __post_init__(self) -> None:
         for name in (

@@ -173,6 +173,7 @@ class ControlRig:
                 mode=self.config.mode,
                 use_occlusion=self.config.occlusion,
                 use_cpa=self.config.cpa,
+                map_segments=self.static,
             )
             started = time.perf_counter_ns()
             self.states[i], out = control_step(self.states[i], inputs)

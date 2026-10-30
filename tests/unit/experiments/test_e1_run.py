@@ -86,7 +86,7 @@ def test_the_oracle_and_the_lidar_configurations_see_different_scans() -> None:
 
 
 def test_a_stop_is_counted_once_per_episode_with_its_reason() -> None:
-    record = e1_run.run_one(RunSpec("envelope_oracle", "S07", SEED))
+    record = e1_run.run_one(RunSpec("envelope_oracle", "S01", 419688070))
     stops = record["stop_episodes"]
     assert stops and all(count >= 1 for count in stops.values())
     assert record["false_stops"] <= sum(stops.values())

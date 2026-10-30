@@ -2,7 +2,9 @@
 
 import logging
 import math
+from dataclasses import replace
 
+import numpy as np
 import pytest
 from control_support import make_odometry, make_scan
 
@@ -314,3 +316,38 @@ def test_a_hot_machine_ahead_sets_a_geofence_from_its_telemetry() -> None:
     _, free = _run(ControlState(), _reflex_inputs(telemetry=(cool,)))
     assert slowed.speed < 2.0 and slowed.reason is Reason.GEOFENCE
     assert free.speed == 2.0
+
+
+# A rack face seen at an angle is a small cluster. With the map it is structure, not a person.
+RACK_FACE = np.array([[3.0, -1.0, 3.0, 1.0]])
+RACK_PIECE = [(3.0, -0.3, 3.2, 0.3)]
+
+
+def _with_map(scan: LidarScan, segments: np.ndarray) -> ControlInputs:
+    return replace(_inputs(scan=scan), map_segments=segments)
+
+
+def test_a_small_cluster_on_the_map_is_structure_and_not_a_track() -> None:
+    state, out = _run(ControlState(), _with_map(make_scan(boxes=RACK_PIECE), RACK_FACE))
+    assert state.tracks.tracks == ()
+    assert len(state.structure_world) > 0
+    assert out.speed > 0.0
+
+
+def test_the_same_cluster_without_the_map_is_still_a_human_track() -> None:
+    state, _ = _run(ControlState(), _inputs(scan=make_scan(boxes=RACK_PIECE)))
+    assert len(state.tracks.tracks) == 1
+
+
+def test_a_human_standing_against_a_side_wall_is_still_a_track() -> None:
+    side_wall = np.array([[0.0, -1.0, 10.0, -1.0]])
+    scan = make_scan(discs=[(4.0, -0.7, 0.3)])
+    state, _ = _run(ControlState(), _with_map(scan, side_wall))
+    assert len(state.tracks.tracks) == 1
+
+
+def test_a_human_far_from_the_mapped_wall_is_still_a_track() -> None:
+    scan = make_scan(discs=[(2.0, 0.5, 0.3)])
+    state, out = _run(ControlState(), _with_map(scan, RACK_FACE))
+    assert len(state.tracks.tracks) == 1
+    assert out.reason is Reason.ENVELOPE

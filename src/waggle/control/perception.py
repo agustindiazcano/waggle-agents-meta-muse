@@ -154,3 +154,23 @@ def clusters_from_scan(scan: LidarScan, pp: PerceptionParams) -> list[Cluster]:
 def is_human_candidate(cluster: Cluster, pp: PerceptionParams) -> bool:
     """True when the cluster is small enough to be a person. Larger ones are structures."""
     return cluster.extent <= pp.human_max_extent
+
+
+def on_static_map(
+    points: NDArray[np.float64], segments: NDArray[np.float64], margin: float
+) -> bool:
+    """True when every point lies within ``margin`` of a mapped wall or rack segment.
+
+    An empty map or an empty cluster is never on the map, so a robot without a map keeps every
+    small cluster as a possible person. One point off the map keeps the whole cluster a person.
+    """
+    if len(points) == 0 or len(segments) == 0:
+        return False
+    a, b = segments[:, :2], segments[:, 2:]
+    ab = b - a
+    length2 = np.maximum(np.einsum("sk,sk->s", ab, ab), 1e-12)
+    ap = points[:, None, :] - a[None, :, :]
+    t = np.clip(np.einsum("psk,sk->ps", ap, ab) / length2, 0.0, 1.0)
+    nearest = a[None, :, :] + t[:, :, None] * ab[None, :, :]
+    distance = np.min(np.hypot(*(points[:, None, :] - nearest).transpose(2, 0, 1)), axis=1)
+    return bool(np.all(distance <= margin))

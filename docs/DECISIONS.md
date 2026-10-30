@@ -387,3 +387,14 @@ Decision:
 Consequences: intermediate red commits in published history stay.
 
 ADR-025 addendum, maintainer decision on PENDING 31 (2026-10-30, recommended mix): the measured 5.7 s per 45 s rollout is the design basis (K = 5, H = 45 s, lidar every 4 ticks). Variants for E10 and held-out runs run in the cloud. K, H or the lidar rate may be reduced for the live demo only, and the reduction is labeled in the demo. The walkers and driver are not vectorized now.
+
+## ADR-030: Map-aware human classification
+
+Context: the first E1 development run (cloud run 41086309588) gave throughput between 0.01 and 0.34 of `no_control`. In S08 with the oracle scan the cause was perception: wall and rack faces seen at an oblique angle split into clusters under `human_max_extent`, became human tracks, coasted up to 80 ticks with a ring growing at the human speed bound, and triggered ESTOP with the real human 10 m away.
+
+Decision (maintainer approved the strict version, 2026-10-30):
+- `ControlInputs.map_segments` carries the static map (walls, racks, bounds) as an (S, 4) array. The default is empty, which keeps the previous behavior.
+- A cluster is not a human candidate if every one of its points lies within `PerceptionParams.map_margin` (0.25 m, an assumption) of a mapped segment. One point off the map keeps the cluster a person. The cluster then counts as structure.
+- The margin covers the lag between scan and odometry. It stays below the 0.3 m body radius, so a person standing against a wall and seen along it (visible arc up to 0.6 m deep) is still a track. Tests cover that case and a person away from the wall.
+
+Consequences: a person who is seen only through a sliver within 0.25 m of a wall plane is read as wall. This is a known loss of safety for lower false stops. The occlusion cap and beacons do not cover it. It is measured by the next E1 run, not assumed. Single-ray clusters at 0.16 to 0.2 m from the map were the reason for 0.25 over 0.15. S03 (two robots head on in a one-lane corridor) is not a perception problem: it is a deadlock that belongs to corridor locking (Phase 3, E2).
