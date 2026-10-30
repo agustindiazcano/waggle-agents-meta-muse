@@ -134,7 +134,7 @@ E4 stays a standalone experiment with unanimity at full scope. Configurations: A
 
 ## ADR-018: Sensing model and predictive caution
 
-Status: proposed. Designed, not implemented.
+Status: proposed. The lidar (waggle.sim) and tracking (B13) are implemented; the CPA in B15, see the end of this record.
 
 Context: a fast layer that reads ground truth hides what a real robot cannot see around a blind corner. The detector that scores E1 must stay exact.
 
@@ -146,6 +146,15 @@ Decision:
 - Lidar dropout or a stale scan makes the layer assume the worst case (conservative default, watchdog).
 
 Consequences: E1 compares ground truth, lidar only and lidar with beacons, and envelope only against envelope with prediction. The lidar needs array math, so numpy as a runtime dependency of `waggle.sim` was approved by the maintainer (PENDING 22).
+
+Implementation in B15 (`waggle.control.cpa`), with the choices the first text left open:
+- Each track with a velocity estimate is walked forward for `horizon` (3.0 s, assumption) in steps of `step` (0.1 s) at constant velocity, while the robot follows the arc of its requested command at the requested speed. The meeting is the first step at which the person is inside the footprint widened by the body radius and the lateral margin.
+- The cap is the structure rule applied to the room before the meeting: the largest speed with `S_stop(v)` plus the structure margin at most `requested speed * meeting time`. The person's own motion is already in the prediction, so the human reaction term of the envelope is not added. It only restricts, and the envelope stays the floor: the CPA limit is one more item in the arbiter, reason `CPA`.
+- A person already inside the widened footprint gives zero. A track that is not finite gives zero.
+- A track adds no limit when it has no velocity estimate or was not seen within `max_scan_age_ticks`. Unknown is not treated as safe by the CPA, it is left to the envelope ring and the occlusion cap.
+- The velocity is a least squares slope over the track trail (`trail_ticks` 40, at least `velocity_min_ticks` 10, assumptions), clipped to `v_h_max`. Beacon positions arrive every tick with noise, so the two-detection velocity of ADR-026 is not used by the CPA.
+- A speed below the request is not re-predicted: the meeting is computed at the requested speed every tick. A person who would cross after a slower robot is therefore covered by the envelope, not by the CPA. The prediction is not monotone in speed, which is why it is not searched.
+- Switched on by `ControlInputs.use_cpa` (configurations 6 and 7 of ADR-028).
 
 ## ADR-019: Missions and handoff
 
