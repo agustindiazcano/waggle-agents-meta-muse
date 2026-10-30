@@ -32,3 +32,4 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 26 | P2 | After B8: decide whether to approve FastAPI, uvicorn and the JavaScript toolchain (Node, Vite, TypeScript, three) for viewer v0 | M | pending |
 | 27 | P2 | gitleaks 8.30.1 installed with winget (B0 pre-push check fails closed without it). Restart the shell so it is on PATH; the check also finds the WinGet path | M | done |
 | 28 | P3 | Verify CEGIS and LLM-Modulo as prior art before ADR-023 cites them | A | pending |
+| 29 | P2 | The brief refers to E9 but docs/EXPERIMENTS.md has no E9 (only E1 to E8 and the new E10). Define E9 or tell the agent to drop the reference | M | pending |
