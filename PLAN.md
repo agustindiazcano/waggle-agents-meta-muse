@@ -2,26 +2,29 @@
 
 Build window: Oct 27 to Nov 3, 2026. Buffer and submission: Nov 4. Submission deadline: Wed Nov 4, 9:00 PM ET (23:00 in Argentina, since US daylight time ends Nov 1). Confirm the exact time on the submission platform.
 
-The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 2.
+The plan is organized by phase, not by date. A phase ends when its exit criterion is met, and the next one starts. Phase order is build order. When time runs short, scope is cut by the priority order below, from the bottom. The top is never cut. Phase 8 stays reserved from Nov 3 morning.
 
 ## Priority order
 
-Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 2.
+Source: AGENTS.md section 18. Phase 8 stays reserved from Nov 3 morning.
 
-1. Simulator, exact detector, fast layer, E1, end-to-end slice.
-2. Leases, fencing tokens, E2.
-3. MCP boundary and injection matrix, E3.
-4. Director, item resolution, court, E4.
-5. README, video, deploy, submission.
-6. Predictive maintenance, E6.
-7. Per-robot advisors, E5.
-8. 3D scene, voice, vision, E7. If voice is cut, the video uses text commands.
+1. Simulator with snapshot and fork, exact detector, fast layer with occlusion cap, E1, end-to-end slice.
+2. Leases, atomic corridor locking, fencing, hand-off, E2.
+3. MCP boundary, guard, injection matrix E3, full court E4.
+4. Crisis replanning loop and E10.
+5. Technical viewer with overlays (envelopes, lidar shadows, rollout ghost paths).
+6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7. If voice is cut, the video uses text commands.
+7. E8 extended, E9, GLB models.
+
+Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+
+Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. The maintainer decides what to cut at each gate. Details in `docs/PHASE1_BRIEF.md`.
 
 ## Rules
 
 1. Every layer is measured by ablation: same seeds, layer on and off. The result goes in the README whether it is good or bad.
 2. A feature without its ablation is listed as "implemented, not evaluated". It is not presented as a contribution.
-3. Phase 8 is reserved from Nov 2 regardless of state. If a phase is open at that point, it ships with its real state documented.
+3. Phase 8 is reserved from Nov 3 morning regardless of state. If a phase is open at that point, it ships with its real state documented.
 4. A thin end-to-end slice (command, director, MCP, one robot moving, fast layer stopping it) must run by the end of Phase 3. Later phases deepen something that already runs.
 5. Seeds are split before any tuning: development seeds and held-out test seeds. Test seeds are run once per configuration.
 6. No code is copied from earlier repositories. Rewriting from design is allowed. See PRIOR_WORK.md.

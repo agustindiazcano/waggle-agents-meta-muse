@@ -207,16 +207,19 @@ When refusing an action, state the correct alternative in the same reply.
 
 ## 18. Priorities when time runs short
 
-Scope is cut from the bottom of this list. The top is never cut. Phase 8 (delivery) stays reserved from Nov 2.
+Contingency order, cut from the bottom only when the maintainer decides it at a gate. The maintainer applies it, the agent never does.
 
-1. Simulator, exact detector, fast layer, E1, end-to-end slice.
-2. Leases, fencing tokens, E2.
-3. MCP boundary and injection matrix, E3.
-4. Director, item resolution, court, E4.
-5. README, video, deploy, submission.
-6. Predictive maintenance, E6.
-7. Per-robot advisors, E5.
-8. 3D scene, voice, vision, E7. If voice is cut, the video uses text commands.
+1. Simulator with snapshot and fork, exact detector, fast layer with occlusion cap, E1, end-to-end slice.
+2. Leases, atomic corridor locking, fencing, hand-off, E2.
+3. MCP boundary, guard, injection matrix E3, full court E4.
+4. Crisis replanning loop and E10.
+5. Technical viewer with overlays (envelopes, lidar shadows, rollout ghost paths).
+6. Predictive maintenance full pipeline E6, per-robot advisors E5, vision and voice E7. If voice is cut, the video uses text commands.
+7. E8 extended, E9, GLB models.
+
+Reserved and never cut: delivery (README tables, demo video, live VM, submission) from Nov 3 morning.
+
+Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 night, fast layer and E1 on development seeds. G3 Nov 1 night, leases, MCP, E2 and E3. G4 Nov 2 night, court E4, crisis loop and E10 on development seeds, viewer with overlays. At each gate the agent reports actual progress against this list and the maintainer decides what to cut. The detailed brief is in `docs/PHASE1_BRIEF.md`.
 
 ## 19. Token budget
 
