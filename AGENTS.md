@@ -46,6 +46,10 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 5. The regular CI and `uv run ci` exclude both markers, identically.
 6. The heavy workflow uploads result JSON as an artifact. The maintainer commits it.
 7. Path filters are allowed only where safe. The link, style and import-contract tests always run.
+8. Cloud first (maintainer decision). Anything that can run in the cloud runs in the cloud: the full test suite, experiment sweeps, dev seeds baselines and long measurements. Locally run nothing, or only what finishes very fast (the test file being written, lint on the changed files). When in doubt, push the branch and let GitHub run the checks and read the result there.
+9. Do not wait on a long local run. A multi-minute local run (the full `uv run ci`, a 90-run baseline on dev seeds) is a reason to push the branch and use a workflow instead. Add or extend a `workflow_dispatch` workflow when a run has none yet.
+10. Held-out seeds follow section 9 whatever the place: they run once per configuration, in the cloud, and the maintainer commits the result.
+11. Until a workflow replaces it, the pre-push check (`tools/ci/pre_push_check.py`) still requires a green `uv run ci` stamp on HEAD. Changing that gate to rely on the cloud CI is a maintainer decision and touches protected paths (`tools/hooks/`), so propose it, do not edit it.
 
 ## 4. Hard rules
 
