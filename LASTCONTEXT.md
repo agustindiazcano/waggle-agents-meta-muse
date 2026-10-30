@@ -1,6 +1,6 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-30 (context sync after B10 merged, viewer mockup noted).
+Updated: 2026-10-30 (B12 and B13 done, next session starts at B14).
 
 ## Done last
 - B13 `feat/control-tracking` (stacked on B12): `waggle.control` perception (scan checks, dropped rays, clusters, human size class), tracking (nearest-first association, velocity, coasting, ring points) and `control_step`. A Hypothesis property found a real arbiter bug (tiny request above a zero limit), fixed and covered. Deviations are listed in ADR-026. Next: B14 `feat/control-occlusion`.
@@ -14,23 +14,27 @@ Updated: 2026-10-30 (context sync after B10 merged, viewer mockup noted).
 - Rules added: AGENTS.md section 18 (contingency order and gates), section 3 rules 8 to 11 (cloud first).
 
 ## Current state
-- Maintainer decision 2026-10-30: continue with B11 to B17 first (contingency order, G2 is Oct 31), then MCP, guard, court and advisors. The viewer mockup waits for the real logic.
-- `main` has B0 to B8. This handoff branch also carries the cloud-first rules of AGENTS.md section 3, which PR 17 merged into a stacked branch and never reached `main`. The trap is recorded in `docs/GOTCHAS.md` (merge a stacked chain from the top, or retarget each PR to `main`).
-- The guard allows only `git push [-u] origin <type/short-description>` and gates push and `gh pr create` on the pre-push check, which still needs a local green `uv run ci` on HEAD (PENDING 30). A full local `uv run ci` takes 2 to 3 minutes.
-- Open maintainer decisions: PENDING 31 (rollout cost), 30 (cloud gate and workflow), 29 (E9 undefined), 26 (viewer dependencies), 25 (gates G1 to G4).
+- Maintainer decision 2026-10-30: continue with B11 to B17 first (contingency order, G2 is Oct 31), then MCP, guard, court and advisors. The viewer mockup `index (1).html` is untracked and waits for the real logic (PENDING 33).
+- `main` has B0 to B12. B13 is NOT in `main` yet: PR 26 was merged into `feat/control-envelope` after PR 25 had landed, the stacked-merge trap of `docs/GOTCHAS.md`. PR 27 carries the same commits to `main` (retarget of 26). PR 28 (this handoff) carries the B13 commits too until PR 27 merges. Merge 27 first, then 28.
+- `waggle.control` today (all pure, deterministic): `types`, `params` (ControlParams, PerceptionParams, every value an assumption), `envelope` (S_stop, S_sep, closed-form caps, exact swept gap, radial gap), `arbiter` (minimum over limits, never above request), `limiter` (`limit_command`, swept and radial modes), `perception`, `tracking`, `step` (`control_step`). 164 control tests, `uv run ci` 1213 passed in about 2 min 10 s.
+- Not in `waggle.control` yet: occlusion cap (B14), CPA (B15), heartbeat, geofence, e-stop item and telemetry threshold (B16), the E1 harness and the oracle scan (B17).
+- Traps met in B12 and B13: (1) a Hypothesis property found the arbiter letting 1e-9 m/s through a zero limit, so keep property tests on every limit path; (2) clusters are measured on the returns that exist, a 0.6 m disc at 3 m reads about 0.5 m; (3) `limit_command` builds its own limits, so B14 and B15 need a way to pass extra `Limit` items into the arbiter (add a parameter, do not fork the function); (4) edits through the Bash heredoc of this tool can break on triple quotes, write the script to the scratchpad and run it; (5) git warns about CRLF on this machine, harmless.
+- The guard allows only `git push [-u] origin <type/short-description>` and gates push and `gh pr create` on the pre-push check, which needs a local green `uv run ci` on HEAD (PENDING 30).
+- Open maintainer decisions: PENDING 25 (gates G1 to G4), 34 (stale rows 1 and 3), and the ADR-026 deviation that beacons are absorbed by a visible cluster instead of marking it.
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive, session brief 2, from B14. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/PHASE1_BRIEF.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-021 to ADR-029), docs/EXPERIMENTS.md. Run git fetch, git status, git branch -r, git worktree list, gh pr list.
+Continue Waggle Hive, session brief 2, from B14. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, docs/ARCHITECTURE.md (Control module layout, Occlusion-aware speed cap), docs/DECISIONS.md (ADR-024, ADR-026 with its deviations, ADR-027, ADR-028), docs/EXPERIMENTS.md (E1). Run git fetch, git status, git branch -r, git worktree list, gh pr list.
 
-State: B9 (PR 19) and B10 (PR 22, retarget of 20) are merged into main, with PR 21. Base B14 on origin/main, or on feat/control-tracking if its PR is not merged yet (B12 is PR 25, B13 stacked on it). Never merge, never push to main, no force push. The viewer mockup `index (1).html` is untracked and stays as is (PENDING 33): do not commit it and do not work on the viewer.
-Decision taken (ADR-025 addendum, PENDING 31): rollout cost accepted at about 5.7 s per 45 s rollout (K = 5, H = 45 s, lidar every 4 ticks), variants for E10 and held-out runs go to the cloud, live-demo reductions are labeled, no more optimization now.
+State: B0 to B12 are on main. B13 (perception, tracking, control_step) is in PR 27 (retarget of 26); PR 28 is the handoff. If 27 is not merged, base B14 on feat/control-envelope (it contains B13), name the base in the PR and use gh pr create --base feat/control-envelope, then retarget to main after the merges. Never merge, never push to main, no force push. Do not commit `index (1).html` and do not work on the viewer (PENDING 33).
 
 Task, in order, tests first with the failing run shown, Conventional Commits, uv run ci green and gitleaks clean before each push, report every two branches in five lines (done, next, blockers):
-B11 is done and merged (PR 23). The design to implement is in ADR-026 to ADR-028 and the control module layout of ARCHITECTURE.md.
-B12 feat/control-envelope, B13 feat/control-tracking, B14 feat/control-occlusion, B15 feat/control-cpa, B16 feat/control-reflex, B17 feat/e1-harness (development seeds only, eight configurations, uv run report).
+B14 feat/control-occlusion: occlusion boundaries from the scan (a returning ray next to a ray with no return, and a gap between returns that hides a person), a phantom human at the nearest hidden point approaching at the human speed bound, cap = largest v with k*S_sep(v) <= distance to the boundary along the swept path (ADR-024), reason OCCLUSION, minimum speed floor near zero, no root gives zero. Add a way to pass extra Limit items into limit_command. Test against a hand-built scan with a rack and a hidden human, and with the brute-force path gap of tests/unit/control/test_control_envelope.py.
+B15 feat/control-cpa: constant velocity closest point of approach on tracks, can only restrict, the envelope stays the floor (ADR-018). Smooth velocity over more than one tick for beacon tracks.
+B16 feat/control-reflex: heartbeat watchdog, static and dynamic hazard geofences, e-stop item, telemetry threshold to geofence, all as further Limit items in the same arbiter, reasons WATCHDOG, GEOFENCE, ESTOP.
+B17 feat/e1-harness: the oracle scan in waggle.sim.sensors (zero noise, zero dropout, no occlusion shadow), the harness for the eight configurations of ADR-028 on development seeds only (90 runs each, 720 in all, so run it as a cloud workflow_dispatch and do not wait on a long local run), metrics with Wilson 95 percent intervals, false stops, throughput ratio to no_control, code latency measured outside control_step, results under results/e1/dev/, and `uv run report`.
 Stop after B17 and report the E1 development results with the tables. Do not start B18 until the maintainer says so.
 
-Constraints: numpy and the standard library only. waggle.control reads only waggle.sim.observations and waggle.sim.params. Pure functions with explicit state, deterministic, fail closed on a missing or stale scan. Never loosen a safety check. Ask before touching the fencing check, the MCP boundary, the audit logic or the .env. No paid API call in this session.
-Reminder: long or paid runs go to the cloud workflow. Rollout timings on this machine vary by 40 percent, so compare only alternating runs in one session.
+Constraints: numpy and the standard library only. waggle.control reads only waggle.sim.observations and waggle.sim.params. Pure functions with explicit state, deterministic, fail closed on a missing or stale scan. Never loosen a safety check. Ask before touching the fencing check, the MCP boundary, the audit logic or the .env. No paid API call in this session. Held-out seeds are not run.
+Reminder: long or paid runs go to the cloud workflow. Keep property tests (Hypothesis) on every limit path, they already found one real bug.
 ```
