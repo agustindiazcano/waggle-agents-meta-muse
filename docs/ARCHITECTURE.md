@@ -118,6 +118,9 @@ Control path (fast, every tick): every motion command, from any source, passes t
 
 | Module | Role |
 |---|---|
+| `state` | Contiguous numpy arrays, tick, snapshot, canonical hash |
+| `streams` | Seeded random streams per subsystem and entity |
+| `engine` | Fixed-step tick loop, fork |
 | `world` | Map, walls, racks, aisles, one-lane aisles, blind corners, stations, depots, JSON format |
 | `params` | Frozen dataclasses with robot class parameters (leaf) |
 | `observations` | LidarScan, RobotOdometry, BeaconReport (leaf) |
