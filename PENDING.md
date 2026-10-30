@@ -33,3 +33,4 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 27 | P2 | gitleaks 8.30.1 installed with winget (B0 pre-push check fails closed without it). Restart the shell so it is on PATH; the check also finds the WinGet path | M | done |
 | 28 | P3 | Verify CEGIS and LLM-Modulo as prior art before ADR-023 cites them | A | pending |
 | 29 | P2 | The brief refers to E9 but docs/EXPERIMENTS.md has no E9 (only E1 to E8 and the new E10). Define E9 or tell the agent to drop the reference | M | pending |
+| 30 | P2 | Cloud-first testing (AGENTS.md section 3, rules 8 to 11). Decide whether the pre-push gate may rely on the cloud CI instead of a local `uv run ci` stamp (touches tools/hooks/), and ask the agent to add a workflow_dispatch workflow for the E1 dev baseline and the speed measurement | M | pending |
