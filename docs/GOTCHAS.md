@@ -60,6 +60,10 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 
 ## Governance
 
+### Corpus construction metadata is not an evaluation label
+- Symptom: a case marked `reference` is scored as benign before the maintainer reviews it, or a missing target layer is counted as a successful rejection.
+- What to do: use only the reviewed label with a named reviewer and rationale. Reject pending cases and missing implementations before running evaluation. E3's declaration tests validate metadata only; the corpus README lists missing integration points, including incident text and catalog compatibility.
+
 ### An async classifier can swallow timeout cancellation
 - Symptom: an adapter catches `CancelledError` and returns benign after its deadline.
 - What to do: cooperate with cancellation and retain the explicit `deadline.expired()` check in the guard. The regression test rejects that late response. Async deadlines cannot interrupt blocking code in the event loop, so future provider adapters also need transport timeouts. See the [Python timeout contract](https://docs.python.org/3.12/library/asyncio-task.html#asyncio.timeout).

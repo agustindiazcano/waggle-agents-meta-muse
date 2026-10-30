@@ -76,6 +76,8 @@ Coordinated handoff (designed, not implemented):
 - Metrics: attempts that reach a side effect, attempts rejected per layer, false rejections on benign cases.
 - Each case declares its target layer before the run.
 
+- Development declarations: [E3 corpus](../data/e3/README.md), 25 synthetic cases in `data/e3/cases.json` for T1 to T6, T11 and T18, including reference near-lookalikes. All labels are pending maintainer review. Construction metadata is not a truth label. This is a small corpus, not an evaluated or held-out set. Tests validate declarations only; no E3 runner or model call is included. Missing production layers and entry points must fail explicitly before an evaluation rather than appear as passes.
+
 ## E4: Court
 
 - Question: does a unanimous court of related Muse models reduce unsafe approvals, and at what cost in false blocks.
