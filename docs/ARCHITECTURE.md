@@ -271,11 +271,15 @@ Control keeps a local lease view (zone, token, expiry_tick) pushed by the coordi
 - Expiry is handled by a sweeper using `FOR UPDATE SKIP LOCKED`. The token never decreases.
 - One-lane aisles and stations are zones with capacity one. Deadlocks are resolved by acquisition order and timeout.
 
-## Task state machine
+## Persistent corridor storage
 
 Persistent coordination foundation: `waggle.db.connection` opens bounded, separate PostgreSQL transactions. `waggle.db.schema` explicitly checks and migrates revision 0 to 1; migration is never automatic. `waggle.db.corridors` applies the pure model after locking all resource rows in canonical order, serializes same-holder calls with a transaction-scoped advisory lock and prevents resource insertion during transitions with a shared topology lock. Provisioning takes that topology lock exclusively and never resets existing rows. All model transitions, including fault latching on denial, commit atomically. The coarse lock scope is deliberate; performance has not been evaluated.
 
 `record_event` is an initial fencing proof: a complete bundle's exact live tokens are checked inside the transaction that inserts one uniquely identified `fenced_events` row. A stale or partial bundle inserts nothing. Matching repeats return historical success without reapplying the effect; a different payload for the same event id raises `IdempotencyConflict`. It is not a robot tool or MCP audit repository. Those integrations must check their own protected effect inside a locked transaction rather than use a preflight authorization snapshot. Missing configuration, unsupported revisions, database errors and exhausted database integer ranges raise real errors and do not authorize forwarding. Trusted occupancy ingestion, worker recovery, a `SKIP LOCKED` task queue and handoff remain pending.
+
+Cloud correctness verification: [run 41217047545](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41217047545), commit `7fa02c0`, passed all 10 selected heavy tests with PostgreSQL 16. This verifies the tested persistence and concurrency behavior, not the full E2 protocol or production wiring.
+
+## Task state machine
 
 `PENDING -> SCREENED -> REVIEWED -> APPROVED -> ASSIGNED -> EXECUTING -> DONE`
 Side exits: `ESCALATED` (operator inbox), `REJECTED`, `FAILED`, `ABORTED`.
