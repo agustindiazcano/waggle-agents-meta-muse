@@ -537,3 +537,13 @@ Revision 4 adds `mcp_audit`: one intent row and at most one result row per corre
 `McpAuditRepository.begin` takes a transaction-scoped advisory lock per chassis, returns the stored decision for a repeated correlation id, counts allowed intent rows in the sliding window and writes the intent as allowed or denied `rate_limited`. Denials are not counted, so a flood of bad calls cannot extend its own lockout. Reusing a correlation id with other content raises `IdempotencyConflict`. A database error propagates and the caller must not forward. `complete` writes the correlated result row only for an allowed intent, and a repeat with another outcome raises.
 
 This repository does not authenticate, check the allowlist or schemas, or forward a call. The server wiring (ADR-032 branch (e)) remains. Limit values are caller configuration and still need calibration. The window uses the database clock, which is the only wall-clock use and stays outside `waggle.sim` and `waggle.control`.
+
+## ADR-038: MCP boundary dispatcher
+
+Status: implemented against in-memory fakes, not evaluated. ADR-032 branch (e), first part, under the maintainer approval of 2026-10-31. No E3 result.
+
+`waggle.mcp_server.boundary.Boundary.handle(token, request_id, tool, args)` runs the ADR-032 order: authenticate, allowlist and schema, rate limit with the intent row, forward with a per-call timeout, result row. It never raises and returns a `CallResult` with a reason code and no argument values. Identity store, audit log and forwarder are injected protocols, so the module opens no connection. `McpAuditRepository` satisfies the audit protocol.
+
+Failure modes, all closed: an invalid request id is rejected before any work and, having no usable correlation id, is not audited; a failed intent or denial write returns `audit_unavailable` and nothing is forwarded; a reused request id with other content returns `request_id_conflict`. A tool exception becomes an `error` result row and a `tool_error` result with no exception text. A failed result-row write is logged and does not hide a completed effect.
+
+Limit: only the outcome of an allowed call is stored, not its data. A repeat of an allowed request therefore returns `duplicate_request` and is never forwarded twice; the caller must read state through `get_task`. Still pending: the PostgreSQL identity store (a `robot_identities` migration), the concrete forwarder that calls the fenced repositories, the transport and rate-limit calibration.
