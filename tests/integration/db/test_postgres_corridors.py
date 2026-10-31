@@ -1,17 +1,13 @@
 """Cloud-only PostgreSQL migration, concurrency, persistence and fencing tests."""
 
-import os
 import time
-from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
-from uuid import uuid4
 
 import psycopg
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from psycopg import sql
+from postgres_support import isolated_database
 
 from waggle.coordination.corridors import (
     CorridorRequest,
@@ -27,33 +23,9 @@ from waggle.coordination.corridors import (
 from waggle.coordination.leases import LeaseState
 from waggle.db.connection import Database
 from waggle.db.corridors import CorridorRepository, IdempotencyConflict
-from waggle.db.schema import SchemaVersionError, current_revision, migrate
+from waggle.db.schema import LATEST_REVISION, SchemaVersionError, current_revision, migrate
 
 pytestmark = pytest.mark.heavy
-
-
-@contextmanager
-def isolated_database() -> Iterator[Database]:
-    """Create and remove only a unique test schema on a cloud PostgreSQL service."""
-    if os.environ.get("GITHUB_ACTIONS") != "true":
-        raise RuntimeError("PostgreSQL integration tests are cloud-only")
-    root = Database.from_environ(os.environ)
-    name = "waggle_test_" + uuid4().hex
-    with root.transaction() as connection:
-        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(name)))
-    try:
-        yield Database(root.dsn, schema=name)
-    finally:
-        with root.transaction() as connection:
-            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(name)))
-
-
-@pytest.fixture
-def database() -> Iterator[Database]:
-    """A migrated isolated schema, without sample rows."""
-    with isolated_database() as db:
-        migrate(db, expected_revision=0)
-        yield db
 
 
 def _empty(tick: int) -> tuple[ZoneObservation, ...]:
@@ -63,9 +35,9 @@ def _empty(tick: int) -> tuple[ZoneObservation, ...]:
 def test_migration_checks_revision_and_never_silently_adopts_an_unknown_version() -> None:
     with isolated_database() as db:
         assert current_revision(db) == 0
-        assert migrate(db, expected_revision=0) == 1
-        assert current_revision(db) == 1
-        assert migrate(db, expected_revision=1) == 1
+        assert migrate(db, expected_revision=0) == LATEST_REVISION
+        assert current_revision(db) == LATEST_REVISION
+        assert migrate(db, expected_revision=LATEST_REVISION) == LATEST_REVISION
         with pytest.raises(SchemaVersionError):
             migrate(db, expected_revision=0)
         with db.transaction() as connection:
