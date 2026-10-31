@@ -571,3 +571,11 @@ Status: implemented; cloud run 41243437112 passed 66 PostgreSQL tests. Stacked o
 Revision 6 adds `trusted_tick` (a singleton, only moving forward) and `zone_occupancy` (one row per registered zone: observed tick and occupants, where a null array means unknown and an empty array means clear). `TrustedStateRepository` implements the forwarder `TickSource` and `OccupancySource`. A missing tick raises `UnknownTick`; a zone never recorded reads as unknown at tick 0; a lower tick raises `TickRegression`; an older observation never replaces a newer one; an observation later than the shared tick is rejected; occupants must have the robot id format. `release_zone` through these sources is refused while a zone is recorded occupied or unknown.
 
 Trust boundary: `advance_tick` and `record` have no MCP tool and no request path. They are for a trusted writer holding database credentials, such as the simulator bridge. That writer, and what feeds it real odometry, does not exist yet, so nothing writes these tables in a running system. The release and handoff checks are only as trustworthy as that writer.
+
+## ADR-042: Simulator bridge as the trusted writer
+
+Status: implemented; cloud verification pending. Stacked on ADR-041.
+
+`SimTrustedBridge.publish(sim)` is the first writer of the trusted tick and occupancy tables. It advances the shared tick to the simulator tick, then records one observation per zone using the occupancy derivation of the simulator admission adapter (conservative footprints; an unknown pose is published as unknown). A regressing tick raises before any observation. Only the live simulation publishes: a rollout fork must not, because the shared tick cannot move backwards.
+
+This closes the loop for simulator runs: the bridge writes, `TrustedStateRepository` stores, and `FencedForwarder` reads for `release_zone`. For real hardware the writer would be an odometry service, which does not exist. The bridge makes one transaction per zone and per tick, which is correct but not measured for speed. It is implemented, not evaluated, and is not part of E2.
