@@ -67,6 +67,22 @@ Coordinated handoff (designed, not implemented):
 - Handoff chaos test (designed, not implemented): S31 to S35 under random kills. Counts of double deliveries and double repair starts. Baseline without fencing, expected to show nonzero counts.
 - Property tests with Hypothesis: token monotonicity, mutual exclusion, no accepted write with a stale token.
 
+### E2 simulator admission component
+
+Status: implemented, not evaluated. The manual workflow `.github/workflows/e2.yml` runs `uv run python -m waggle.experiments.e2_simulator` in GitHub Actions. It selects only the existing S03 development seeds; there is no held-out input. This workflow has not been dispatched by this implementation task.
+
+This is an admission ablation, not the database no-fencing baseline above. Both configurations use `build_s03_admission` with identical map, exterior staging, one-shot routes, parking, robot parameters, control configuration (`envelope_oracle`), seed and sensor streams. Only the admission adapter is omitted in the disabled configuration. The original E1 S03 is unchanged. Each run lasts 3200 ticks; the enabled lease lasts 4000 ticks. These are bounded fixture assumptions, not a renewal policy or fault-injection sweep.
+
+The JSON artifact is written under `results/e2/dev/s03_admission_*.json` with exclusive creation. It records commit, UTC date, scenario version, seed set and seeds, configurations, horizon, lease and progress assumptions, Python and platform, raw per-run counts, final state hashes, and empty model/prompt lists with zero LLM calls. Each configuration reports completion, occupancy-violation, robot-collision and stall proportions using runs as trials, Wilson 95 percent intervals, failing seeds and a small-sample flag. Seeds vary noise in the same fixed geometry; they are not independent warehouse layouts.
+
+Occupancy is sampled after each dynamics tick using the existing conservative closed footprint bounding boxes against the capacity-one zone; it is not continuous swept zone occupancy. Robot collisions come from the independent simulator detector. A stall is an unfinished robot with neither 0.05 m displacement from its last progress anchor nor a waypoint change in the final 400 ticks. This can include planned waits and is not proof of a wait-cycle deadlock. Unknown occupancy, missing provenance, invalid counts and failed runs raise errors instead of yielding a passing report. Existing report files are never overwritten.
+
+Not measured here: cycle-proven deadlocks, S13 to S18 density, double assignments, stale database writes, worker recovery, database delays, expiry sweeps, handoff chaos and full control-rig snapshot replay. The full E2 protocol above remains required. No paid call, database operation, migration or held-out run is included.
+
+| Environment variable | Description | Default |
+|---|---|---|
+| `GITHUB_ACTIONS` | Runner-provided flag; the sweep CLI requires the value `true` | Unset locally; `true` in GitHub Actions |
+
 ## E3: Injection matrix
 
 - Question: which layer blocks which attack and what passes when a layer is off.
@@ -75,6 +91,8 @@ Coordinated handoff (designed, not implemented):
 - The guard is the Muse Glimmer classifier after deterministic sanitizers. The label policy is fixed before the run. Report misses and false rejections on benign near-lookalikes.
 - Metrics: attempts that reach a side effect, attempts rejected per layer, false rejections on benign cases.
 - Each case declares its target layer before the run.
+
+- Development declarations: [E3 corpus](../data/e3/README.md), 25 synthetic cases in `data/e3/cases.json` for T1 to T6, T11 and T18, including reference near-lookalikes. All labels are pending maintainer review. Construction metadata is not a truth label. This is a small corpus, not an evaluated or held-out set. Tests validate declarations only; no E3 runner or model call is included. Missing production layers and entry points must fail explicitly before an evaluation rather than appear as passes.
 
 ## E4: Court
 

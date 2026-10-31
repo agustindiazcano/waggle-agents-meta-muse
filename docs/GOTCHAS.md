@@ -60,6 +60,10 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 
 ## Governance
 
+### Corpus construction metadata is not an evaluation label
+- Symptom: a case marked `reference` is scored as benign before the maintainer reviews it, or a missing target layer is counted as a successful rejection.
+- What to do: use only the reviewed label with a named reviewer and rationale. Reject pending cases and missing implementations before running evaluation. E3's declaration tests validate metadata only; the corpus README lists missing integration points, including incident text and catalog compatibility.
+
 ### An async classifier can swallow timeout cancellation
 - Symptom: an adapter catches `CancelledError` and returns benign after its deadline.
 - What to do: cooperate with cancellation and retain the explicit `deadline.expired()` check in the guard. The regression test rejects that late response. Async deadlines cannot interrupt blocking code in the event loop, so future provider adapters also need transport timeouts. See the [Python timeout contract](https://docs.python.org/3.12/library/asyncio-task.html#asyncio.timeout).
@@ -77,6 +81,10 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 - What to do: use light checks, such as a short Python call to a health endpoint. Avoid checks that load the application or the model client.
 
 ## Coordination
+
+### A progress timeout does not establish a deadlock
+- Symptom: a robot waiting for a corridor grant has no measured movement and is counted as deadlocked, even though another robot can still finish and release the route.
+- What to do: the E2 simulator component reports `stalled_unfinished_robots` under its explicit displacement and tick window. Keep cycle-proven deadlocks unmeasured until a wait-cycle detector exists. Also distinguish sampled zone occupancy from the independent continuous collision detector. Tests check known occupancy counts, per-run denominators, Wilson intervals and explicit unmeasured scope.
 
 ### Lease expiry is not physical clearance
 - Symptom: a stopped robot loses its lease but still occupies a capacity-one aisle, and a replacement would be admitted into it.

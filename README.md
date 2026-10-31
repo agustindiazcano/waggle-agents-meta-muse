@@ -15,9 +15,9 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
 | Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
-| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests. Database transactions and E2 evaluation are not implemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
+| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. Database transactions and the full chaos evaluation remain unimplemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
 | Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
-| Input screening | Sanitizers and an async classifier interface with a fail-closed label policy and an offline mock (implemented, not evaluated). Production detection and E3 are not implemented | Planned, first screen only |
+| Input screening | Sanitizers and an async classifier interface with a fail-closed label policy and an offline mock (implemented, not evaluated). [E3 development declarations](data/e3/README.md) await maintainer labels; production detection and E3 evaluation are not implemented | Planned, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
 | Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) (designed, not implemented) | Yes, bounded |
 | Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback (designed, not implemented) | Yes, optional |

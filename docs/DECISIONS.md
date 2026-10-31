@@ -429,6 +429,10 @@ The original S03 fixture and all E1 results remain unchanged. `build_s03_admissi
 
 Validation: `uv run pytest tests/unit/experiments/test_corridor_admission.py -q` passes 10 tests, including both robots completing, no simultaneous occupants, no robot collision according to the independent detector, all-or-nothing multizone admission, unknown occupancy denial, occupied expiry, release only when clear and admission state replay. The initial failing run reported the missing adapter module before implementation. These are integration and unit tests, not E2 measurements. Status: implemented, not evaluated. E2, paid calls, held-out seeds, database implementation and migrations were not run or added.
 
+### ADR-031 addendum: simulator comparison harness (2026-10-30)
+
+The S03 fixture accepts a strict boolean `admission_enabled`, defaulting to true. Disabling it removes only the admission engine system, retaining the same initial arrays, routes, streams, fast layer and dynamics. A unit test checks equal initial hashes and movement of the previously waiting robot when admission is disabled. The E2 simulator component uses paired development seeds, typed raw results and Wilson intervals, and is manual and cloud-only at its CLI. It does not implement the database no-fencing baseline or the full chaos protocol. Stall counts are explicitly not deadlock counts, and zone occupancy is sampled rather than continuously swept. No E2 sweep was run by this task. Status: implemented, not evaluated.
+
 ### ADR-031 addendum: deterministic aisle routing (2026-10-31)
 
 Decision: `waggle.coordination.routing` provides a pure A* planner over a caller-supplied directed aisle graph. Nodes have finite map coordinates in metres. Every edge has a finite positive cost no lower than the Euclidean distance between its endpoints, so the straight-line heuristic is admissible. Stable node and edge ordering gives reproducible equal-cost choices. The result contains the node path, total cost and one atomic `CorridorRequest` for every capacity-one resource on that path. Each resource carries its own direction relative to that resource's fixed orientation.
