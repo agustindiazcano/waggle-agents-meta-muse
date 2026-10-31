@@ -105,3 +105,34 @@ def test_invalid_loop_configuration_rejects_before_recovery() -> None:
             poll_seconds=0,
         )
     repository.recover.assert_not_called()
+
+
+def test_worker_loop_can_drive_existing_worker_iteration() -> None:
+    from waggle.db.tasks import TaskRepository, TaskResult
+    from waggle.worker import HandlerOutcome, WorkerResult, WorkerStatus, run_once
+
+    repository = MagicMock()
+    repository.claim.return_value = TaskResult(False)
+    handler = MagicMock(return_value=HandlerOutcome.DONE)
+    results: list[WorkerResult] = []
+
+    def iterate(repo: TaskRepository, worker: str, request: str) -> WorkerResult:
+        result = run_once(repo, worker, request, lambda: 5, handler)
+        results.append(result)
+        return result
+
+    assert (
+        run_worker(
+            repository,
+            "robot",
+            lambda: 5,
+            lambda: "request",
+            Event(),
+            lambda _: None,
+            iterate,
+            max_iterations=1,
+        )
+        == 1
+    )
+    assert results[0].status == WorkerStatus.IDLE
+    handler.assert_not_called()
