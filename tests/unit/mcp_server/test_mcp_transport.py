@@ -28,9 +28,22 @@ class FakeBoundary:
         return self.result
 
 
+_INIT_LINE = json.dumps(
+    {
+        "jsonrpc": "2.0",
+        "id": "init",
+        "method": "initialize",
+        "params": {"protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {}},
+    }
+)
+
+
 def _server(boundary: FakeBoundary | None = None) -> tuple[LineServer, FakeBoundary]:
+    """A server after the initialize exchange, as an established session."""
     boundary = boundary or FakeBoundary()
-    return LineServer(boundary, TOKEN, "sess"), boundary
+    server = LineServer(boundary, TOKEN, "sess")
+    server.handle_line(_INIT_LINE)
+    return server, boundary
 
 
 def _call(server: LineServer, message: object) -> dict[str, object] | None:
@@ -169,8 +182,10 @@ def test_the_token_never_appears_in_any_reply() -> None:
 
 def test_each_session_prefixes_its_own_correlation_ids() -> None:
     boundary = FakeBoundary()
-    LineServer(boundary, TOKEN, "a").handle_line(json.dumps(_tools_call(1, "get_task", {})))
-    LineServer(boundary, TOKEN, "b").handle_line(json.dumps(_tools_call(1, "get_task", {})))
+    first, second = LineServer(boundary, TOKEN, "a"), LineServer(boundary, TOKEN, "b")
+    for server in (first, second):
+        server.handle_line(_INIT_LINE)
+        server.handle_line(json.dumps(_tools_call(1, "get_task", {})))
     assert [c[1] for c in boundary.calls] == ["a:1", "b:1"]
 
 
