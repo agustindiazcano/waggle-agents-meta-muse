@@ -538,10 +538,12 @@ Revision 4 adds `mcp_audit`: one intent row and at most one result row per corre
 
 This repository does not authenticate, check the allowlist or schemas, or forward a call. The server wiring (ADR-032 branch (e)) remains. Limit values are caller configuration and still need calibration. The window uses the database clock, which is the only wall-clock use and stays outside `waggle.sim` and `waggle.control`.
 
-## ADR-039: PostgreSQL identity store
+## ADR-038: MCP boundary dispatcher
 
-Status: implemented; cloud run 41241463775 passed 56 PostgreSQL tests. ADR-032 branch (e), second part, under the maintainer approval of 2026-10-31 for migrations. Revision 4 was the latest in the repository; no persistent database exists to migrate yet, only isolated cloud test schemas.
+Status: implemented against in-memory fakes, not evaluated. ADR-032 branch (e), first part, under the maintainer approval of 2026-10-31. No E3 result.
 
-Revision 5 adds `robot_identities`: the SHA-256 digest as primary key (checked as 64 lowercase hex digits, so a plain token cannot be stored by mistake), chassis, robot id, a revoked flag with its timestamp, and a unique index allowing one active token per chassis and robot. `PostgresIdentityStore` implements the `IdentityStore` protocol: `lookup` returns revoked records too, so authentication reports `revoked` rather than `unknown_token`; a malformed digest is a miss without a query; `register` validates chassis against the allowlist table and the robot id format; `revoke` is one-way. Rotation is revoke, then register. A database error raises and authentication denies.
+`waggle.mcp_server.boundary.Boundary.handle(token, request_id, tool, args)` runs the ADR-032 order: authenticate, allowlist and schema, rate limit with the intent row, forward with a per-call timeout, result row. It never raises and returns a `CallResult` with a reason code and no argument values. Identity store, audit log and forwarder are injected protocols, so the module opens no connection. `McpAuditRepository` satisfies the audit protocol.
 
-The token is generated and provisioned outside the repository (`generate_token`); only its digest reaches this table. There is no provisioning command yet. Still pending: the concrete forwarder, the transport and rate-limit calibration.
+Failure modes, all closed: an invalid request id is rejected before any work and, having no usable correlation id, is not audited; a failed intent or denial write returns `audit_unavailable` and nothing is forwarded; a reused request id with other content returns `request_id_conflict`. A tool exception becomes an `error` result row and a `tool_error` result with no exception text. A failed result-row write is logged and does not hide a completed effect.
+
+Limit: only the outcome of an allowed call is stored, not its data. A repeat of an allowed request therefore returns `duplicate_request` and is never forwarded twice; the caller must read state through `get_task`. Still pending: the PostgreSQL identity store (a `robot_identities` migration), the concrete forwarder that calls the fenced repositories, the transport and rate-limit calibration.
