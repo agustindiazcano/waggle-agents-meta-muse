@@ -67,6 +67,7 @@ class CorridorRequest:
     holder: str
     resource_ids: tuple[str, ...]
     direction: Direction
+    directions_by_resource: tuple[tuple[str, Direction], ...] = ()
 
     def __post_init__(self) -> None:
         _identity(self.holder, "holder")
@@ -77,6 +78,30 @@ class CorridorRequest:
         if not isinstance(self.direction, Direction):
             raise ValueError("invalid direction")
         object.__setattr__(self, "resource_ids", tuple(sorted(self.resource_ids)))
+        if self.directions_by_resource:
+            direction_ids = [resource_id for resource_id, _ in self.directions_by_resource]
+            if (
+                len(direction_ids) != len(set(direction_ids))
+                or set(direction_ids) != set(self.resource_ids)
+                or any(
+                    not isinstance(direction, Direction)
+                    for _, direction in self.directions_by_resource
+                )
+            ):
+                raise ValueError("directions must cover each requested resource exactly once")
+            object.__setattr__(
+                self,
+                "directions_by_resource",
+                tuple(sorted(self.directions_by_resource, key=lambda item: item[0])),
+            )
+
+    def direction_for(self, resource_id: str) -> Direction:
+        """Return the requested direction for one resource, using the legacy uniform value."""
+        if resource_id not in self.resource_ids:
+            raise ValueError("resource is not in this request")
+        if not self.directions_by_resource:
+            return self.direction
+        return dict(self.directions_by_resource)[resource_id]
 
 
 @dataclass(frozen=True)
@@ -211,7 +236,7 @@ def request_corridor(
         return _wait(current, CorridorReason.MUST_RELEASE)
     if any(z.lease.holder not in (None, request.holder) for z in required):
         return _wait(current, CorridorReason.HELD)
-    if owned and any(z.direction != request.direction for z in required):
+    if owned and any(z.direction != request.direction_for(z.lease.resource_id) for z in required):
         return _wait(current, CorridorReason.DIRECTION_CONFLICT)
     for zone in required:
         occupants = seen.get(zone.lease.resource_id)
@@ -227,7 +252,10 @@ def request_corridor(
             tuple(ZoneToken(z.lease.resource_id, z.lease.token) for z in required),
         )
     zones = tuple(
-        CorridorZone(grant(z.lease, request.holder, now_tick, lease_ticks).state, request.direction)
+        CorridorZone(
+            grant(z.lease, request.holder, now_tick, lease_ticks).state,
+            request.direction_for(z.lease.resource_id),
+        )
         if z.lease.resource_id in requested
         else z
         for z in current.zones

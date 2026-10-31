@@ -126,6 +126,54 @@ def test_holder_cannot_extend_reservation_or_change_direction_by_retry() -> None
     assert not disjoint.granted and disjoint.reason == CorridorReason.MUST_RELEASE
 
 
+def test_atomic_route_reservation_supports_per_zone_directions() -> None:
+    state = empty_state()
+    directions = (("east", Direction.FORWARD), ("west", Direction.REVERSE))
+    mixed = CorridorRequest("a", ("west", "east"), Direction.FORWARD, directions)
+    result = request_corridor(state, mixed, 0, observations(0), 10)
+    assert result.granted
+    assert tuple(zone.direction for zone in result.state.zones) == (
+        Direction.FORWARD,
+        Direction.REVERSE,
+    )
+    assert result.tokens == (ZoneToken("east", 1), ZoneToken("west", 1))
+
+
+def test_per_zone_directions_must_cover_exactly_the_requested_bundle() -> None:
+    for directions in [
+        (("east", Direction.FORWARD),),
+        (("east", Direction.FORWARD), ("east", Direction.REVERSE)),
+        (("east", Direction.FORWARD), ("unknown", Direction.REVERSE)),
+    ]:
+        with pytest.raises(ValueError):
+            CorridorRequest("a", ("east", "west"), Direction.FORWARD, directions)
+
+
+def test_retry_cannot_change_any_per_zone_direction() -> None:
+    first_request = CorridorRequest(
+        "a",
+        ("east", "west"),
+        Direction.FORWARD,
+        (("east", Direction.FORWARD), ("west", Direction.REVERSE)),
+    )
+    first = request_corridor(empty_state(), first_request, 0, observations(0), 10)
+    changed = CorridorRequest(
+        "a",
+        ("east", "west"),
+        Direction.FORWARD,
+        (("east", Direction.REVERSE), ("west", Direction.REVERSE)),
+    )
+    denied = request_corridor(first.state, changed, 1, observations(1), 10)
+    assert not denied.granted
+    assert denied.reason == CorridorReason.DIRECTION_CONFLICT
+    assert all(zone.lease.holder == "a" for zone in denied.state.zones)
+    assert all(zone.lease.token == 1 for zone in denied.state.zones)
+    assert tuple(zone.direction for zone in denied.state.zones) == (
+        Direction.FORWARD,
+        Direction.REVERSE,
+    )
+
+
 def test_release_is_atomic_and_rejects_occupied_missing_and_stale_grants() -> None:
     first = request_corridor(empty_state(), request(), 0, observations(0), 10)
     for tokens, seen, reason in [
