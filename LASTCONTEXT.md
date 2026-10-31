@@ -11,6 +11,8 @@ Updated: 2026-10-31 (handoff and worker loop merged; E3 labels in PR 66).
 
 - Branch `feat/mcp-audit-ratelimit` (PR 67) adds schema revision 4 (`mcp_audit`) and `McpAuditRepository` (ADR-037). `uv run ci` passes; cloud run 41239557152 passed all 48 PostgreSQL tests (12 new).
 
+- Branch `feat/mcp-identity-store` adds schema revision 5 (`robot_identities`) and `PostgresIdentityStore` (ADR-039). Unit tests and `uv run ci` pass; the eight PostgreSQL cases await the cloud run.
+
 ## Current state
 - Handoff correctness passed its cloud tests; it is not an E2 evaluation. Complete the worker loop integration with trusted adapters and process supervision. Complete trusted mission construction, occupancy ingestion, physical effects and worker integration. The repository cannot infer physical intent when an ordinary task is created. Follow `docs/MOCK_IMPLEMENTATION.md`.
 - Local mock implementation, migrations, fencing, audit and MCP work were approved. Paid calls, secret or cap changes, held-out seeds and global implementation remain unauthorized.
