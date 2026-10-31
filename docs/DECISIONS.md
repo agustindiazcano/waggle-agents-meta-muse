@@ -530,7 +530,7 @@ The caller must supply authenticated identity, current trusted occupancy and a t
 
 ## ADR-037: MCP audit rows and database rate limit
 
-Status: implemented, cloud verification pending. Realizes ADR-032 branch (d) under the maintainer approval of 2026-10-31. No E3 result.
+Status: implemented; cloud run 41239557152 passed 48 PostgreSQL tests. Realizes ADR-032 branch (d) under the maintainer approval of 2026-10-31. No E3 result.
 
 Revision 4 adds `mcp_audit`: one intent row and at most one result row per correlation id (unique on id and phase). Rows carry chassis, robot id, tool, the SHA-256 of the validated arguments and `clock_timestamp()`. Table checks keep a deny reason on denied intents, an outcome and latency only on result rows, and an allowed intent always tied to an identity. A failed authentication is a denial with no identity.
 
