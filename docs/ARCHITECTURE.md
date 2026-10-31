@@ -101,7 +101,7 @@ Designed, not implemented (ADR-018).
 
 ## Missions and handoff
 
-Designed, not implemented (ADR-019).
+Physical handoff is not implemented (ADR-019). A pure admission check exists in `waggle.coordination.handoff`; it is implemented, not evaluated. It requires a live executing task credential, a live zone token for the same holder, and a current trusted observation containing only that holder. It performs no transaction or physical effect. No caller may authorize an effect from this unlocked check alone.
 
 - A mission is a small task graph with dependency edges. A dependent task is eligible only when its predecessors are done.
 - A handoff happens at a rendezvous zone with capacity one, held by a lease with a fencing token. The handoff event carries an idempotency key, so the dependent task becomes eligible exactly once.
