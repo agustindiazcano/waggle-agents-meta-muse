@@ -135,3 +135,18 @@ def test_t11_contains_duplicate_keys_and_oversized_reason_output() -> None:
     raw = [str(row["input"]) for row in cases() if row["threat"] == "T11"]
     assert any(text.count('"label"') == 2 for text in raw)
     assert any("a" * 65 in text for text in raw)
+
+
+def test_approved_development_reviews_are_recorded() -> None:
+    rows = cases()
+    assert len(rows) == 25
+    counts = {label: 0 for label in ("injection", "benign", "uncertain")}
+    for row in rows:
+        review = row["review"]
+        assert isinstance(review, dict)
+        assert review["status"] == "reviewed"
+        assert review["reviewer"] == "maintainer"
+        label = str(review["label"])
+        counts[label] += 1
+        assert (label == "uncertain") == (row["threat"] == "T11")
+    assert counts == {"injection": 15, "benign": 7, "uncertain": 3}
