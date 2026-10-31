@@ -579,3 +579,11 @@ Status: implemented; cloud run 41244266563 passed 68 PostgreSQL tests. Stacked o
 `SimTrustedBridge.publish(sim)` is the first writer of the trusted tick and occupancy tables. It advances the shared tick to the simulator tick, then records one observation per zone using the occupancy derivation of the simulator admission adapter (conservative footprints; an unknown pose is published as unknown). A regressing tick raises before any observation. Only the live simulation publishes: a rollout fork must not, because the shared tick cannot move backwards.
 
 This closes the loop for simulator runs: the bridge writes, `TrustedStateRepository` stores, and `FencedForwarder` reads for `release_zone`. For real hardware the writer would be an odometry service, which does not exist. The bridge makes one transaction per zone and per tick, which is correct but not measured for speed. It is implemented, not evaluated, and is not part of E2.
+
+## ADR-043: Handoff completion through the worker
+
+Status: implemented; cloud verification pending. Stacked on ADR-042.
+
+`run_once` gains an optional `complete` argument that replaces ordinary completion; the default is unchanged, so a handoff task is still denied without it, and a test shows that. `HandoffFinisher.complete` is the production value: a task with no handoff requirement completes normally; a task with one gets the zone token that the worker itself holds in the corridor table and the occupancy evidence from the trusted store, then calls the atomic `complete_handoff`. The worker supplies neither. A worker that does not hold the zone, a second occupant and unknown occupancy all leave the task EXECUTING and the iteration STALE. `TaskRepository.handoff_zone` is the only new read.
+
+Limits: the handler is still a trusted callable that must itself drive the robot into the zone; no physical effect exists beyond the simulator. A replay of completion after the lease was released is refused here, and `run_once` does not call completion again for a replayed claim. The stale iteration leaves the task EXECUTING until its lease expires and bounded recovery requeues it. `serve_worker` accepts the same `complete` argument. Not part of E2.
