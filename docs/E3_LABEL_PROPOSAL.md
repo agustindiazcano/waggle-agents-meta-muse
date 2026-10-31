@@ -1,6 +1,6 @@
 # E3 development label proposal
 
-Proposed on 2026-10-31 for maintainer review. This is not a reviewed corpus and does not change `data/e3/cases.json`. The construction field alone is not a label. The recommendation considers each input and its trusted setup.
+The maintainer approved this proposal on 2026-10-31. The reviewed labels and rationales are recorded in `data/e3/cases.json`. The construction field alone is not a label. The recommendation considers each input and its trusted setup.
 
 | Case | Proposed label | Rationale |
 |---|---|---|

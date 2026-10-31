@@ -1,6 +1,6 @@
 # Waggle Hive: Mock implementation sequence
 
-Maintainer authorization: on 2026-10-31 the maintainer approved the remaining implementation plan, including database implementation and migrations, fencing, audit and MCP wiring. Use the mock provider. This does not authorize paid calls, held-out execution, new spend caps or secret changes. E3 labels remain a maintainer decision. Human review and merge remain required. No scope is removed.
+Maintainer authorization: on 2026-10-31 the maintainer approved the remaining implementation plan, including database implementation and migrations, fencing, audit and MCP wiring. Use the mock provider. This does not authorize paid calls, held-out execution, new spend caps or secret changes. The maintainer approved the E3 development labels on 2026-10-31; T11 requires separate structural scoring. Human review and merge remain required. No scope is removed.
 
 ## Implementation order
 
@@ -12,7 +12,7 @@ Each row is split into reviewable task branches. Tests include successful paths 
 | 2 | PostgreSQL schema and repositories, task queue, workers, recovery and mission handoff | Compare persistent and pure transitions; concurrent claim exclusion; stale token denial inside the effect transaction; occupied expiry remains faulted; duplicate handoff is idempotent | Corridor reference verified in PR 56; queue/recovery and worker iteration verified in PR 57 by 26 cloud PostgreSQL tests; physical handoff and daemon next |
 | 3 | Audit and rate-limit repositories, MCP transport, dispatch and tools | Thirty concurrent calls across connections respect the limit; failed intent write denies; result correlation; forbidden identity/tool pairs deny; tool errors remain results | Approved, pending |
 | 4 | Structured mock completions, director, catalog resolution, deterministic assignment, court orchestration and operator inbox | Valid command reaches one robot under fast control; ambiguity, rejected vote, invalid output and timeout escalate; preserve the existing unanimity rule | Pending |
-| 5 | Production untrusted-input entry points and E3 evaluator | Sanitization before classification; no unreviewed label scored; missing target implementations cause an error; ablations use production paths | Pending maintainer labels and integration |
+| 5 | Production untrusted-input entry points and E3 evaluator | Sanitization before classification; no unreviewed label scored; missing target implementations cause an error; ablations use production paths | Labels approved; integration pending |
 | 6 | Plan schema, belief state, validation rollouts, counterexamples, bounded crisis loop and E10 harness | Invalid plans reject; no more than three planner iterations; escalation on exhaustion; reflex control remains active; development cloud comparisons | Pending |
 | 7 | Simulator snapshots, replay bridge and technical viewer overlays | Renderer consumes simulator state only; envelope, lidar and ghost overlays; replay state hashes; retain the mockup until its prerequisites exist | Pending |
 | 8 | Machine degradation, independent predictor, severity, manual sheets, retrieval, catalog, tickets, parts and procurement | Seeded faults; conservative missing-data behavior; wrong part rejected; one event cannot duplicate a ticket or order; E6 baseline | Pending |
