@@ -385,4 +385,4 @@ See [MULTI_WAREHOUSE_PLAN.md](MULTI_WAREHOUSE_PLAN.md) and ADR-035. This is a pr
 
 ### Worker polling loop
 
-`waggle.worker_daemon.run_worker` runs a bounded recovery sweep before each injected worker iteration and stops cooperatively. The caller supplies trusted ticks, fresh request ids, a stop-aware pause and the iteration adapter. A recovery exception propagates and prevents a new claim. This is a loop library, not a configured process, supervisor, trusted clock or production handler. It is implemented, not evaluated.
+`waggle.worker_daemon.run_worker` runs a bounded recovery sweep before each injected worker iteration and stops cooperatively. `serve_worker` connects that loop to `run_once`, generates a fresh UUID for each claim and uses the stop event for interruptible waiting. The caller supplies a trusted shared tick source and trusted handler. A recovery exception propagates and prevents a new claim. This is a service library, not a configured process, supervisor, trusted clock or production handler. It is implemented, not evaluated.

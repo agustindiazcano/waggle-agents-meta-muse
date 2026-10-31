@@ -2,9 +2,11 @@
 
 from collections.abc import Callable
 from threading import Event
+from uuid import uuid4
 
+from waggle.coordination.task_model import TaskRecord
 from waggle.db.tasks import TaskRepository
-from waggle.worker import WorkerResult
+from waggle.worker import HandlerOutcome, WorkerResult, run_once
 
 
 def run_worker(
@@ -43,3 +45,37 @@ def run_worker(
         if not stop.is_set() and (max_iterations is None or count < max_iterations):
             pause(poll_seconds)
     return count
+
+
+def serve_worker(
+    repository: TaskRepository,
+    worker_id: str,
+    now_tick: Callable[[], int],
+    handler: Callable[[TaskRecord], HandlerOutcome],
+    stop: Event,
+    *,
+    poll_seconds: float = 1.0,
+    recovery_limit: int = 100,
+    max_iterations: int | None = None,
+) -> int:
+    """Drive worker iterations with fresh request ids and interruptible waiting.
+
+    The application must provide a shared trusted clock and a trusted handler.
+    Process configuration, authentication and physical handoff remain separate.
+    """
+
+    def iteration(repo: TaskRepository, name: str, request: str) -> WorkerResult:
+        return run_once(repo, name, request, now_tick, handler)
+
+    return run_worker(
+        repository,
+        worker_id,
+        now_tick,
+        lambda: uuid4().hex,
+        stop,
+        stop.wait,
+        iteration,
+        poll_seconds=poll_seconds,
+        recovery_limit=recovery_limit,
+        max_iterations=max_iterations,
+    )

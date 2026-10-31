@@ -136,3 +136,32 @@ def test_worker_loop_can_drive_existing_worker_iteration() -> None:
     )
     assert results[0].status == WorkerStatus.IDLE
     handler.assert_not_called()
+
+
+def test_service_connects_recovery_and_worker_with_fresh_request_ids() -> None:
+    from unittest.mock import patch
+
+    from waggle.db.tasks import TaskResult
+    from waggle.worker import HandlerOutcome
+    from waggle.worker_daemon import serve_worker
+
+    repository = MagicMock()
+    repository.claim.return_value = TaskResult(False)
+    handler = MagicMock(return_value=HandlerOutcome.DONE)
+    with patch("waggle.worker_daemon.uuid4") as uuid:
+        uuid.side_effect = [MagicMock(hex="request1"), MagicMock(hex="request2")]
+        assert (
+            serve_worker(
+                repository,
+                "robot",
+                lambda: 5,
+                handler,
+                Event(),
+                poll_seconds=0.001,
+                max_iterations=2,
+            )
+            == 2
+        )
+    assert repository.recover.call_count == 2
+    assert [call.args[1] for call in repository.claim.call_args_list] == ["request1", "request2"]
+    handler.assert_not_called()
