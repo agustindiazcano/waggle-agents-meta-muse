@@ -109,4 +109,4 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 
 ### Logical completion is not physical handoff evidence
 - Symptom: a dependent task starts when its predecessor is done even though no physical delivery was established.
-- What to do: declare the handoff zone in the task definition and use the atomic handoff operation with current trusted occupancy and live task and zone credentials. Ordinary completion denies such tasks. The declaration must come from trusted mission construction; the repository cannot infer physical intent from an ordinary task. Cloud PostgreSQL verification is pending.
+- What to do: declare the handoff zone in the task definition and use the atomic handoff operation with current trusted occupancy and live task and zone credentials. Ordinary completion denies such tasks. The declaration must come from trusted mission construction; the repository cannot infer physical intent from an ordinary task. Cloud PostgreSQL correctness tests passed; trusted production integration remains pending.

@@ -101,7 +101,7 @@ Designed, not implemented (ADR-018).
 
 ## Missions and handoff
 
-A task can declare a required handoff zone at creation. Its ordinary completion path denies; `TaskRepository.complete_handoff` locks the task and zone rows and records task completion and its handoff event in one transaction. It requires live task and zone credentials for the same holder and a current trusted occupancy observation containing only that holder. Matching request replays are historical. The caller must supply authenticated identity, trusted occupancy and a trusted tick; no robot effect or occupancy ingestion is implemented. The implementation is not evaluated and cloud PostgreSQL correctness tests remain pending.
+A task can declare a required handoff zone at creation. Its ordinary completion path denies; `TaskRepository.complete_handoff` locks the task and zone rows and records task completion and its handoff event in one transaction. It requires live task and zone credentials for the same holder and a current trusted occupancy observation containing only that holder. Matching request replays are historical. The caller must supply authenticated identity, trusted occupancy and a trusted tick; no robot effect or occupancy ingestion is implemented. The implementation is not evaluated by E2. Cloud PostgreSQL run 41235442937 passed all 36 correctness tests.
 
 - A mission is a small task graph with dependency edges. A dependent task is eligible only when its predecessors are done.
 - A handoff happens at a rendezvous zone with capacity one, held by a lease with a fencing token. The handoff event carries an idempotency key, so the dependent task becomes eligible exactly once.
@@ -381,3 +381,8 @@ Targets (not claims): 2.0 s per rollout and about 5 s for K = 5. Both are missed
 ## Planned multi-warehouse hierarchy
 
 See [MULTI_WAREHOUSE_PLAN.md](MULTI_WAREHOUSE_PLAN.md) and ADR-035. This is a proposed extension, not a connected service. Each warehouse retains the director, deterministic assignment, court, MCP and local control defined above. A network orchestrator requests transfers through a scoped cell API, without direct actuator authority. A separate simulated truck service owns graph-transit evidence. Cross-cell work uses durable sagas and custody receipts; no transaction spans sites. Local reservations, fencing and safe holds remain authoritative during network loss. Independent real sites still need a specified clock/lease authority; the proposed shared-tick demo does not solve that deployment problem.
+
+
+### Worker polling loop
+
+`waggle.worker_daemon.run_worker` runs a bounded recovery sweep before each injected worker iteration and stops cooperatively. `serve_worker` connects that loop to `run_once`, generates a fresh UUID for each claim and uses the stop event for interruptible waiting. The caller supplies a trusted shared tick source and trusted handler. A recovery exception propagates and prevents a new claim. This is a service library, not a configured process, supervisor, trusted clock or production handler. It is implemented, not evaluated.
