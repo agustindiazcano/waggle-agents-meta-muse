@@ -381,3 +381,8 @@ Targets (not claims): 2.0 s per rollout and about 5 s for K = 5. Both are missed
 ## Planned multi-warehouse hierarchy
 
 See [MULTI_WAREHOUSE_PLAN.md](MULTI_WAREHOUSE_PLAN.md) and ADR-035. This is a proposed extension, not a connected service. Each warehouse retains the director, deterministic assignment, court, MCP and local control defined above. A network orchestrator requests transfers through a scoped cell API, without direct actuator authority. A separate simulated truck service owns graph-transit evidence. Cross-cell work uses durable sagas and custody receipts; no transaction spans sites. Local reservations, fencing and safe holds remain authoritative during network loss. Independent real sites still need a specified clock/lease authority; the proposed shared-tick demo does not solve that deployment problem.
+
+
+### Worker polling loop
+
+`waggle.worker_daemon.run_worker` runs a bounded recovery sweep before each injected worker iteration and stops cooperatively. The caller supplies trusted ticks, fresh request ids, a stop-aware pause and the iteration adapter. A recovery exception propagates and prevents a new claim. This is a loop library, not a configured process, supervisor, trusted clock or production handler. It is implemented, not evaluated.
