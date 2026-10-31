@@ -4,8 +4,8 @@ from collections.abc import Callable
 from threading import Event
 from uuid import uuid4
 
-from waggle.coordination.task_model import TaskRecord
-from waggle.db.tasks import TaskRepository
+from waggle.coordination.task_model import TaskCredential, TaskRecord
+from waggle.db.tasks import TaskRepository, TaskResult
 from waggle.worker import HandlerOutcome, WorkerResult, run_once
 
 
@@ -57,6 +57,7 @@ def serve_worker(
     poll_seconds: float = 1.0,
     recovery_limit: int = 100,
     max_iterations: int | None = None,
+    complete: Callable[[TaskCredential, str, int], TaskResult] | None = None,
 ) -> int:
     """Drive worker iterations with fresh request ids and interruptible waiting.
 
@@ -65,7 +66,7 @@ def serve_worker(
     """
 
     def iteration(repo: TaskRepository, name: str, request: str) -> WorkerResult:
-        return run_once(repo, name, request, now_tick, handler)
+        return run_once(repo, name, request, now_tick, handler, complete=complete)
 
     return run_worker(
         repository,

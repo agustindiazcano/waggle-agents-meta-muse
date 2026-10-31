@@ -7,7 +7,7 @@ import pytest
 
 from waggle.coordination.task_model import TaskRecord, TaskState
 from waggle.db.tasks import TaskRepository, TaskResult
-from waggle.worker import WorkerStatus, run_once
+from waggle.worker import HandlerOutcome, WorkerStatus, run_once
 
 
 def _assigned() -> TaskRecord:
@@ -74,3 +74,39 @@ def test_untyped_handler_result_cannot_complete_a_task() -> None:
     result = run_once(repository, "worker-0", "request-1", lambda: 0, handler)
     assert result.status == WorkerStatus.FAILED
     repository.complete.assert_not_called()
+
+
+def test_a_custom_completion_replaces_ordinary_completion() -> None:
+    repository = MagicMock(spec=TaskRepository)
+    repository.claim.return_value = TaskResult(True, _assigned())
+    started = replace(_assigned(), state=TaskState.EXECUTING)
+    repository.start.return_value = TaskResult(True, started)
+    finish = MagicMock(return_value=TaskResult(True, started))
+    result = run_once(
+        repository,
+        "worker-0",
+        "request-1",
+        lambda: 3,
+        lambda task: HandlerOutcome.DONE,
+        complete=finish,
+    )
+    assert result.status == WorkerStatus.DONE
+    finish.assert_called_once()
+    repository.complete.assert_not_called()
+
+
+def test_a_refused_custom_completion_is_stale_not_done() -> None:
+    repository = MagicMock(spec=TaskRepository)
+    repository.claim.return_value = TaskResult(True, _assigned())
+    repository.start.return_value = TaskResult(
+        True, replace(_assigned(), state=TaskState.EXECUTING)
+    )
+    result = run_once(
+        repository,
+        "worker-0",
+        "request-1",
+        lambda: 3,
+        lambda task: HandlerOutcome.DONE,
+        complete=lambda credential, request, tick: TaskResult(False, None),
+    )
+    assert result.status == WorkerStatus.STALE

@@ -217,6 +217,15 @@ class TaskRepository:
             ).fetchone()
             return _decode(row) if row is not None else None
 
+    def handoff_zone(self, task_id: str) -> str | None:
+        """The zone a task must hand off at, or None for an ordinary task."""
+        identifier(task_id)
+        with self.database.transaction() as connection:
+            row = connection.execute(
+                "SELECT zone_id FROM task_handoffs WHERE task_id=%s", (task_id,)
+            ).fetchone()
+        return None if row is None else str(row[0])
+
     def advance(
         self, task_id: str, target: TaskState, request_id: str, now_tick: int
     ) -> TaskResult:
