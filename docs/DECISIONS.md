@@ -582,7 +582,7 @@ This closes the loop for simulator runs: the bridge writes, `TrustedStateReposit
 
 ## ADR-043: Handoff completion through the worker
 
-Status: implemented; cloud verification pending. Stacked on ADR-042.
+Status: implemented; cloud run 41245044162 passed 74 PostgreSQL tests. Stacked on ADR-042.
 
 `run_once` gains an optional `complete` argument that replaces ordinary completion; the default is unchanged, so a handoff task is still denied without it, and a test shows that. `HandoffFinisher.complete` is the production value: a task with no handoff requirement completes normally; a task with one gets the zone token that the worker itself holds in the corridor table and the occupancy evidence from the trusted store, then calls the atomic `complete_handoff`. The worker supplies neither. A worker that does not hold the zone, a second occupant and unknown occupancy all leave the task EXECUTING and the iteration STALE. `TaskRepository.handoff_zone` is the only new read.
 
