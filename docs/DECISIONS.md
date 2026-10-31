@@ -537,3 +537,11 @@ Revision 4 adds `mcp_audit`: one intent row and at most one result row per corre
 `McpAuditRepository.begin` takes a transaction-scoped advisory lock per chassis, returns the stored decision for a repeated correlation id, counts allowed intent rows in the sliding window and writes the intent as allowed or denied `rate_limited`. Denials are not counted, so a flood of bad calls cannot extend its own lockout. Reusing a correlation id with other content raises `IdempotencyConflict`. A database error propagates and the caller must not forward. `complete` writes the correlated result row only for an allowed intent, and a repeat with another outcome raises.
 
 This repository does not authenticate, check the allowlist or schemas, or forward a call. The server wiring (ADR-032 branch (e)) remains. Limit values are caller configuration and still need calibration. The window uses the database clock, which is the only wall-clock use and stays outside `waggle.sim` and `waggle.control`.
+
+## ADR-039: PostgreSQL identity store
+
+Status: implemented; cloud verification pending. ADR-032 branch (e), second part, under the maintainer approval of 2026-10-31 for migrations. Revision 4 was the latest in the repository; no persistent database exists to migrate yet, only isolated cloud test schemas.
+
+Revision 5 adds `robot_identities`: the SHA-256 digest as primary key (checked as 64 lowercase hex digits, so a plain token cannot be stored by mistake), chassis, robot id, a revoked flag with its timestamp, and a unique index allowing one active token per chassis and robot. `PostgresIdentityStore` implements the `IdentityStore` protocol: `lookup` returns revoked records too, so authentication reports `revoked` rather than `unknown_token`; a malformed digest is a miss without a query; `register` validates chassis against the allowlist table and the robot id format; `revoke` is one-way. Rotation is revoke, then register. A database error raises and authentication denies.
+
+The token is generated and provisioned outside the repository (`generate_token`); only its digest reaches this table. There is no provisioning command yet. Still pending: the concrete forwarder, the transport and rate-limit calibration.
