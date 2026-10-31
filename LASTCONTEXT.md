@@ -1,27 +1,25 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-31 (PRs 50 to 52 merged).
+Updated: 2026-10-31 (mock implementation authorized; map binding).
 
 ## Done last
-- PR 50 merged: 25 synthetic E3 development declarations for T1 to T6, T11 and T18. Target layers, probes and benign near-lookalikes are declared. All labels, reviewers and rationales remain null for maintainer review. No E3 evaluation ran.
-- PR 51 merged: paired S03 admission-on/off E2 simulator harness and manual cloud workflow. It records raw counts, Wilson intervals and limitations. No E2 sweep ran; the database chaos evaluation is still unimplemented.
-- PR 52 merged: deterministic A* on a caller-supplied aisle graph, with per-corridor directions and whole-route reservation requests. It is not connected to map loading or the S03 simulator adapter.
-- Main is at `942077e`. Local `uv run ci` passed for the merged work: 1565 passed, 4 skipped, 97% coverage, 3 import contracts kept.
+- Main is at `04fba9d`, including PRs 50 to 53. The principal checkout remains on main with `index (1).html` untracked and untouched.
+- The maintainer approved the remaining mock implementation plan, including database implementation/migrations, fencing, audit and MCP wiring. The sequence and acceptance criteria are in `docs/MOCK_IMPLEMENTATION.md`. Human review and merge remain required.
+- Branch `feat/map-aisle-graph` adds map binding for explicit A* graphs, conservative static clearance checks, exact capacity-one resource declarations and waypoint output. The first test failed on the missing module; 17 map-binding tests then passed. `uv run ci`: 1582 passed, 4 skipped, 97% coverage; Ruff, strict mypy and all 3 import contracts passed.
 
 ## Current state
-- Main contains B0 to B17, E1 development results, pure leases/corridors, S03 admission, A* routing, MCP schemas/identity/sanitizers, the fail-closed classifier interface and E3 declarations.
-- E2 is implemented only as a simulator comparison harness and has not been run. Do not dispatch it without explicit maintainer authorization. No held-out seeds or paid calls have run.
-- E3 declarations are merged but unlabeled. Production entry points and evaluation remain incomplete: incident text source, message schema, catalog compatibility, read-back, court prompt and planner integration. Pending cases or missing target layers must fail closed.
-- Database implementation and migrations require separate maintainer approval. PENDING 4, 5, 9 and 12 still block paid calls. Nothing is cut.
-- `index (1).html` remains untracked and must not be committed.
+- Map binding supports rectangular geometry and straight graph segments only. The caller supplies topology and a clearance enclosing the chassis at every heading. It does not certify curved tracking, turning feasibility or moving-obstacle avoidance. Status: implemented, not evaluated by E2.
+- S03 still uses explicit fixture routes and requests. Next, connect it to mapped A* routes and preserve per-resource directions when rebuilding admission state. Retain the original E1 S03 and paired E2 geometry.
+- E2 has a manual cloud simulator harness but no sweep has run. E3 has 25 declarations with pending maintainer labels; no pending label or missing target layer may be scored. Paid calls and held-out execution remain unauthorized; provider prerequisites PENDING 4, 5, 9 and 12 remain open.
+- Persistent database, production MCP, director/court orchestration, crisis loop, viewer integration, maintenance and multimodal work remain pending. Use mock providers and keep the full scope.
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, PLAN.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-028 addendum and ADR-030 to ADR-032), docs/THREAT_MODEL.md, docs/EXPERIMENTS.md (E1 to E3) and docs/GOTCHAS.md. Run git fetch, git status, git branch --show-current, git branch -r, git worktree list and gh pr list.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, PLAN.md, docs/MOCK_IMPLEMENTATION.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-028 through ADR-032), docs/THREAT_MODEL.md, docs/EXPERIMENTS.md and docs/GOTCHAS.md. Inspect remote PRs, status, branches and worktrees before acting.
 
-Main is at 942077e. PRs 50, 51 and 52 are merged. PR 50 added the E3 corpus with all 25 labels pending. PR 51 added the paired S03 E2 simulator harness and manual cloud workflow; E2 has not run. PR 52 added the pure deterministic A* route planner; it is not wired to map loading or S03 admission. Verify these facts against GitHub before acting.
+Main includes PRs 50 to 53 and was last at 04fba9d. Inspect feat/map-aisle-graph and its PR before duplicating the new map_graph implementation. Next is mapped A* route integration with S03 admission, including a regression for per-resource directions in restored state. Keep original E1 S03 unchanged and distinguish integration tests from E2 results.
 
-Continue Phase 3 and Phase 4 in AGENTS.md section 18; nothing is cut. Do not run E2, E3, paid calls or held-out seeds without explicit maintainer authorization. Keep pending E3 cases unscored and fail closed for missing labels or target layers. Do not implement the database or migration without separate approval. PENDING 4, 5, 9 and 12 still block paid calls.
+The maintainer approved the remaining implementation plan with mock, including database implementation and migrations, fencing, audit and MCP wiring. Do not ask again for that scope. Read docs/MOCK_IMPLEMENTATION.md for order and checks. Do not make paid calls, change caps or secrets, or run held-out seeds without specific authorization. Keep E3's pending labels unscored and fail closed for missing layers. No scope is cut.
 
-Use a new isolated worktree and task branch, tests first with the failing run shown, Conventional Commits with a Co-Authored-By trailer, and never commit to main, force push, merge a PR, or commit `index (1).html`. Before push, require `uv run ci`, clean gitleaks, a reviewed staged diff and a non-main branch. The maintainer reviews and merges.
+Use isolated worktrees and task branches, tests first with the failing run shown, Conventional Commits and Co-Authored-By trailers. Before push require uv run ci on HEAD, gitleaks and a reviewed diff. Never commit to main, force push, merge PRs or commit index (1).html. The maintainer reviews and merges.
 ```
