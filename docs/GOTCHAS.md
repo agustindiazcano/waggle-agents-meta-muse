@@ -101,3 +101,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### Admission reconstruction must retain each resource's direction
 - Symptom: a mixed-direction bundle is granted once but denied at the next tick, even though no token expired and no opponent holds a resource.
 - What to do: reconstruct each zone with `request.direction_for(zone.id)`. Reusing the request's legacy uniform direction loses the bundle's per-resource metadata. The regression checks a valid retry retains both motion commands and tokens and keeps the waiting opponent stopped.
+
+### Returning from a handler is not a completion receipt
+- Symptom: an arbitrary object such as a tool error result is returned without raising, and the worker marks the task done.
+- What to do: require the exact `HandlerOutcome.DONE` enum member from trusted handler code after it checks the effect result. Invalid values and exceptions fail the attempt. The regression first completed an untyped object and now rejects it. Each external effect must still perform its own fenced idempotent transaction.
