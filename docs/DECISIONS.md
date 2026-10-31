@@ -547,3 +547,11 @@ Status: implemented against in-memory fakes, not evaluated. ADR-032 branch (e), 
 Failure modes, all closed: an invalid request id is rejected before any work and, having no usable correlation id, is not audited; a failed intent or denial write returns `audit_unavailable` and nothing is forwarded; a reused request id with other content returns `request_id_conflict`. A tool exception becomes an `error` result row and a `tool_error` result with no exception text. A failed result-row write is logged and does not hide a completed effect.
 
 Limit: only the outcome of an allowed call is stored, not its data. A repeat of an allowed request therefore returns `duplicate_request` and is never forwarded twice; the caller must read state through `get_task`. Still pending: the PostgreSQL identity store (a `robot_identities` migration), the concrete forwarder that calls the fenced repositories, the transport and rate-limit calibration.
+
+## ADR-039: PostgreSQL identity store
+
+Status: implemented; cloud run 41241463775 passed 56 PostgreSQL tests. ADR-032 branch (e), second part, under the maintainer approval of 2026-10-31 for migrations. Revision 4 was the latest in the repository; no persistent database exists to migrate yet, only isolated cloud test schemas.
+
+Revision 5 adds `robot_identities`: the SHA-256 digest as primary key (checked as 64 lowercase hex digits, so a plain token cannot be stored by mistake), chassis, robot id, a revoked flag with its timestamp, and a unique index allowing one active token per chassis and robot. `PostgresIdentityStore` implements the `IdentityStore` protocol: `lookup` returns revoked records too, so authentication reports `revoked` rather than `unknown_token`; a malformed digest is a miss without a query; `register` validates chassis against the allowlist table and the robot id format; `revoke` is one-way. Rotation is revoke, then register. A database error raises and authentication denies.
+
+The token is generated and provisioned outside the repository (`generate_token`); only its digest reaches this table. There is no provisioning command yet. Still pending: the concrete forwarder, the transport and rate-limit calibration.

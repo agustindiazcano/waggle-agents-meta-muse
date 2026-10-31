@@ -299,7 +299,7 @@ Every claim increments the task token and attempt. Worker transitions check exac
 - Rate limit: counted from the audit table so it holds across replicas.
 - Audit: intent row before forwarding (write fails means call denied). Result row after execution, linked by correlation id.
 - Per-call timeout on the client so a denied request cannot hang it.
-- Persistence (ADR-037, implemented, cloud correctness verified): `waggle.db.mcp_audit` over schema revision 4 writes intent and result rows and counts the rate-limit window under the per-chassis advisory lock. The dispatcher `waggle.mcp_server.boundary` (ADR-038, implemented against fakes, not evaluated) orders the checks. The PostgreSQL identity store, the concrete forwarder and the transport are pending.
+- Persistence (ADR-037, implemented, cloud correctness verified): `waggle.db.mcp_audit` over schema revision 4 writes intent and result rows and counts the rate-limit window under the per-chassis advisory lock. The dispatcher `waggle.mcp_server.boundary` (ADR-038, implemented against fakes, not evaluated) orders the checks. The PostgreSQL identity store `waggle.db.identities` (ADR-039, revision 5) is implemented. The concrete forwarder and the transport are pending.
 - Rate limit serialization: a transaction-scoped advisory lock on a 64-bit key per chassis (for example `hashtextextended`), taken before counting and held until the intent row is inserted. Test: 30 simultaneous calls from one chassis.
 
 Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `reserve_part`, `dispatch_tech`, `open_ticket`, `get_task`, `get_inventory`, `create_purchase_order` (designed, not implemented).

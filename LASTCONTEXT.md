@@ -13,6 +13,8 @@ Updated: 2026-10-31 (audit repository merged; MCP dispatcher in a branch).
 
 - Main is at `9ff7366` after PR 67 (revision 4, ADR-037). Branch `feat/mcp-boundary` adds the dispatcher `Boundary` (ADR-038) with unit tests against fakes.
 
+- Branch `feat/mcp-identity-store` (PR 69) adds schema revision 5 (`robot_identities`) and `PostgresIdentityStore` (ADR-039); cloud run 41241463775 passed all 56 PostgreSQL tests (8 new).
+
 ## Current state
 - Handoff correctness passed its cloud tests; it is not an E2 evaluation. Complete the worker loop integration with trusted adapters and process supervision. Complete trusted mission construction, occupancy ingestion, physical effects and worker integration. The repository cannot infer physical intent when an ordinary task is created. Follow `docs/MOCK_IMPLEMENTATION.md`.
 - Local mock implementation, migrations, fencing, audit and MCP work were approved. Paid calls, secret or cap changes, held-out seeds and global implementation remain unauthorized.
