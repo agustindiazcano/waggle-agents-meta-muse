@@ -18,7 +18,7 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 12 | P2 | Claim Meta Model API credits (deadline Nov 4, 9 PM ET), request Baseten and Modal credits | M | pending |
 | 13 | P3 | Show the "Built with Muse Spark Open" attribution card in the final video | M | pending |
 | 14 | P3 | Fill judging rubric weights in `SUBMISSION.md` | M | pending |
-| 15 | P3 | Remove the exit code 5 allowance in `heavy.yml` once the first heavy test exists | A | pending |
+| 15 | P3 | Remove the exit code 5 allowance in `heavy.yml` once the first heavy test exists | A | done in feat/postgres-coordination; PostgreSQL heavy tests added |
 | 16 | P3 | Run `pre-commit install` in the local clone | M | pending |
 | 17 | P4 | Optional: mutation testing for `waggle.control` only, if time remains | A | backlog |
 | 18 | P4 | Tag demo images with the commit in the deploy script (compose uses `dev` locally) | A | backlog |
@@ -62,3 +62,6 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 56 | P2 | Bind explicit A* graphs to loaded maps with conservative clearance and complete corridor declarations; branch `feat/map-aisle-graph`, PR 54. Tests first failed for the missing module; 17 focused tests pass, full CI has 1582 passed and 4 skipped. Implemented, not evaluated | A | PR 54 open |
 | 57 | P1 | Mapped A* waypoints and complete reservation requests feed S03; branch `feat/s03-planned-routes`, based on PR 54. Admission reconstruction preserves per-resource directions. Original E1 S03, exterior staging, parking and admission-on/off parity remain unchanged. Both the missing-module and mixed-direction failures were shown first; 85 coordination/integration tests pass. Implemented, not evaluated | A | implemented, PR pending |
 | 58 | P1 | Continue the authorized PostgreSQL schema/repository, worker/recovery and handoff implementation in docs/MOCK_IMPLEMENTATION.md. Inspect current migration revision before applying a migration. Keep database and routing responsibilities separate, and test persistent transitions against the pure model in cloud CI | A | next |
+| 59 | P2 | Maintainer explicitly approved psycopg 3.3.6 as the PostgreSQL runtime dependency on 2026-10-31. Added psycopg[binary]==3.3.6 with matching binary adapter and documented its purpose. This does not decide the provider HTTP client in row 9 | M, A | approved and installed |
+| 60 | P1 | Branch feat/postgres-coordination adds explicit schema revision 1, durable corridor transitions and a transactionally fenced event effect. No local database or migration was used. Run the cloud PostgreSQL correctness tests and report the actual result before claiming persistence works | A | implementation ready, cloud validation pending |
+| 61 | P1 | After corridor persistence: implement task state/event repositories, SKIP LOCKED claims, worker recovery and mission handoff with atomic fencing and idempotency. Then wire MCP audit/rate-limit repositories and production tools. All implementation is authorized; paid calls and held-out runs remain separate | A | next |

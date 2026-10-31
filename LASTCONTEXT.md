@@ -1,25 +1,25 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-31 (mapped S03 routes implemented).
+Updated: 2026-10-31 (PostgreSQL corridor foundation implemented; cloud verification pending).
 
 ## Done last
-- Main is at `04fba9d`, including PRs 50 to 53. The principal checkout remains on main with `index (1).html` untracked and untouched.
-- PR 54 (`feat/map-aisle-graph`) binds explicit A* graphs to loaded rectangular maps and checks conservative clearance and complete resource declarations. Tests first failed on the missing module; 17 focused tests passed. Final parent CI: 1582 passed, 4 skipped, 97% coverage; Ruff, strict mypy and all 3 import contracts passed. Pre-push, including gitleaks, passed.
-- `feat/s03-planned-routes` is based on PR 54. Mapped A* now supplies S03 admission's waypoints and complete requests. Admission reconstruction preserves per-resource directions. The missing-module test and a mixed-direction retry regression failed before implementation; all 85 coordination/integration tests now pass, including existing route completion and independent collision checks.
+- Main remains at `04fba9d`. PR 54 (map binding) and PR 55 (mapped S03 routes) are open and green; PR 55 targets PR 54. The principal checkout and untracked `index (1).html` are untouched.
+- Maintainer approval covers the remaining mock implementation, including database migrations, fencing, audit and MCP wiring. The maintainer separately approved `psycopg[binary]==3.3.6`; it is installed and documented. No real provider client, paid call, secret or cap change was made.
+- Branch `feat/postgres-coordination`, based on PR 55, adds separate bounded database connections, explicit revision 1, durable corridor transitions and an idempotent fenced event insert under the same row locks as its token check. It does not dispatch robot tools or implement MCP audit.
+- Tests first failed for the missing modules and workflow, and for the old heavy-workflow zero-selection allowance. The local configuration/unit/workflow selection has 25 passes; strict types and changed-file lint pass. Real database tests are heavy and cloud-only. No database migration was run locally; the CLI correctly failed on missing DATABASE_URL.
 
 ## Current state
-- The maintainer approved the remaining implementation plan with mock on 2026-10-31, including database implementation and migrations, fencing, audit and MCP wiring. See `docs/MOCK_IMPLEMENTATION.md`. Human review and merge remain required.
-- S03 retains its staging, approach and parking coordinates, admission-on/off initial hashes and original E1 scenario. Its graph topology is explicitly declared, not automatically generated from map geometry. Static graph validation does not certify curved tracking or moving-obstacle avoidance. Implemented, not evaluated by E2.
-- E2 has a manual cloud harness but no sweep has run. E3 has 25 declarations with pending maintainer labels; missing labels or target layers must block evaluation. Paid calls and held-out execution remain unauthorized; provider prerequisites PENDING 4, 5, 9 and 12 remain open.
-- Next: persistent PostgreSQL coordination, workers, recovery and handoff, then production MCP and the full mock command flow. No database implementation or migration has been added yet. Keep all remaining scope.
+- Migration checks the expected current revision under a transaction lock, never provisions sample data and never runs automatically. Resource registration does not reset counters. All zone rows are locked in canonical order; this is a coarse reference implementation without a throughput claim. See ADR-033 and docs/MOCK_IMPLEMENTATION.md.
+- Cloud correctness tests still need execution before claiming persistence works. They cover revision and DDL rollback, Hypothesis parity, concurrency, occupied expiry/restart, idempotency, bigint exhaustion and a row-lock race. The manual postgres.yml workflow has no provider keys; the existing heavy.yml can run the same tests with heavy/dev on this branch.
+- Task state/queue, workers, SKIP LOCKED recovery, mission handoff and production MCP remain pending. Those implementations are authorized. Keep mock providers; E3 labels remain pending and must not be scored. No E2 sweep, paid call or held-out run has executed.
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, PLAN.md, docs/MOCK_IMPLEMENTATION.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-028 through ADR-032), docs/THREAT_MODEL.md, docs/EXPERIMENTS.md and docs/GOTCHAS.md. Inspect remote PRs, status, branches and worktrees before acting.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md, PLAN.md, docs/MOCK_IMPLEMENTATION.md, docs/ARCHITECTURE.md, docs/DECISIONS.md (ADR-028 through ADR-033), docs/THREAT_MODEL.md, docs/EXPERIMENTS.md and docs/GOTCHAS.md. Check remote PRs, branches, status and worktrees before acting.
 
-Main was last at 04fba9d. PR 54 contains map binding. Inspect feat/s03-planned-routes and its PR before duplicating mapped S03 admission integration and the per-resource direction regression. The S03 branch depends on PR 54; merge and retarget in dependency order. Keep original E1 S03 unchanged and distinguish integration tests from E2 results.
+Main was last at 04fba9d. PR 54 contains map binding and PR 55 mapped S03 routes. Inspect feat/postgres-coordination and its PR before duplicating revision 1 and the durable corridor repository. This branch is based on PR 55; maintain dependency order and retarget after each merge. Verify cloud PostgreSQL test results before claiming the implementation works. No local database was used.
 
-The maintainer approved the remaining implementation plan with mock, including database implementation and migrations, fencing, audit and MCP wiring. Do not ask again for that scope. Follow docs/MOCK_IMPLEMENTATION.md; next is persistent coordination, workers/recovery and handoff. Inspect migration revision before applying any migration. No paid calls, cap or secret changes, or held-out runs without specific authorization. Keep E3 pending labels unscored and fail closed for missing layers. No scope is cut.
+The remaining mock implementation, database migrations, fencing, audit and MCP wiring are approved. Psycopg 3.3.6 is explicitly approved and installed. Do not ask again for that scope. Next are task queue/state events, workers/recovery and mission handoff, then MCP audit/rate-limit repositories and tools. Read the actual migration revision before any migration. Do not treat the fenced event proof as a robot tool or MCP audit. Do not make paid calls, change secrets or caps, or run held-out seeds without specific authorization. Pending E3 labels and missing layers must block evaluation. No scope is cut.
 
-Use isolated worktrees and task branches, tests first with the failing run shown, Conventional Commits and Co-Authored-By trailers. Before push require uv run ci on HEAD, gitleaks and a reviewed diff. Never commit to main, force push, merge PRs or commit index (1).html. The maintainer reviews and merges.
+Use isolated worktrees, task branches, tests first and Conventional Commits with Co-Authored-By trailers. Before pushing require uv run ci on HEAD, gitleaks and a reviewed diff. Never commit to main, force push, merge PRs or commit index (1).html. The maintainer reviews and merges.
 ```
