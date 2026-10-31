@@ -518,3 +518,12 @@ Use `waggle.logistics` for future pure domain/simulation code, `waggle.db` for p
 The complete local build order in AGENTS.md section 18 remains first. Planning does not pass G-GLOBAL or authorize implementation, paid calls, held-out runs, dependencies or migrations. All nine proposed global scenarios remain pending. Start with a deterministic baseline, then mock model proposals and a bounded validated loop. A no-global-validator comparison is shadow-only, with identical local safety. E-GLOBAL is a proposed experiment and does not renumber E1 through E10. No global benefit or correctness result has been measured.
 
 Consequences: global work has explicit custody, partition and stale-state requirements rather than simply adding more robot agents. A shared-tick demo is insufficient evidence for independent sites; multi-clock lease authority and trusted arrival receipts remain design decisions. The maintainer must review local completion evidence and authorize implementation separately at G-GLOBAL.
+
+
+## ADR-036: Atomic task handoff record
+
+Status: implementation prepared; cloud PostgreSQL verification pending. This does not authorize an external robot effect.
+
+A task definition may name one existing capacity-one handoff zone. The immutable definition signature includes the zone, and revision 3 stores this requirement separately. Existing task definitions retain their original signatures. Ordinary task completion rejects a task with a handoff requirement. The transactional handoff operation locks the task and the corridor state, checks live credentials and current trusted occupancy for the same holder, and atomically commits the task completion and event. Dependencies remain blocked until the predecessor is done. A matching request replay returns historical success; a conflicting request id raises an error. The existing transaction rollback preserves the task if event insertion fails.
+
+The caller must supply authenticated identity, current trusted occupancy and a trusted tick. This code does not authenticate a caller, ingest occupancy, command a robot, establish custody or implement a live worker adapter. The pure admission check alone cannot authorize a later effect. Incorrectly declaring a delivery as an ordinary task would bypass this requirement; mission construction must explicitly bind physical deliveries to handoff zones. Cloud correctness tests cover the intended atomic and failure paths but have not yet run; no E2 evaluation has run.

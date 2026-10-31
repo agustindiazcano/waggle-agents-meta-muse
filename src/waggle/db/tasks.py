@@ -6,6 +6,8 @@ from typing import LiteralString, cast
 
 import psycopg
 
+from waggle.coordination.corridors import ZoneObservation, ZoneToken
+from waggle.coordination.handoff import authorize_handoff
 from waggle.coordination.task_model import (
     TaskCredential,
     TaskDefinition,
@@ -19,6 +21,7 @@ from waggle.coordination.task_model import (
     worker_transition,
 )
 from waggle.db.connection import Database, Row
+from waggle.db.corridors import _lock
 
 _COLUMNS: LiteralString = (
     "task_id,state,attempt,token,worker_id,expires_tick,observed_tick,max_attempts,priority"
@@ -155,6 +158,13 @@ class TaskRepository:
         signature = _signature(
             definition.dependencies, definition.max_attempts, definition.priority
         )
+        if definition.handoff_zone is not None:
+            signature = _signature(
+                definition.dependencies,
+                definition.max_attempts,
+                definition.priority,
+                definition.handoff_zone,
+            )
         with self.database.transaction() as connection:
             _lock_name(connection, definition.task_id, _CREATE_SEED)
             row = connection.execute(
@@ -185,6 +195,11 @@ class TaskRepository:
                 "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (*_values(task), signature),
             )
+            if definition.handoff_zone is not None:
+                connection.execute(
+                    "INSERT INTO task_handoffs (task_id,zone_id) VALUES (%s,%s)",
+                    (task.task_id, definition.handoff_zone),
+                )
             for dependency in definition.dependencies:
                 connection.execute(
                     "INSERT INTO task_dependencies (task_id,depends_on) VALUES (%s,%s)",
@@ -272,6 +287,14 @@ class TaskRepository:
             if cached is not None:
                 return cached
             previous = _task(connection, credential.task_id)
+            if (
+                target == TaskState.DONE
+                and connection.execute(
+                    "SELECT zone_id FROM task_handoffs WHERE task_id=%s", (credential.task_id,)
+                ).fetchone()
+                is not None
+            ):
+                return TaskResult(False, previous)
             task = worker_transition(previous, credential, target, now_tick)
             if task is None:
                 return TaskResult(False, previous)
@@ -286,6 +309,55 @@ class TaskRepository:
     def complete(self, credential: TaskCredential, request_id: str, now_tick: int) -> TaskResult:
         """Complete only the exact live executing attempt, atomically with its event."""
         return self._work(credential, TaskState.DONE, request_id, now_tick)
+
+    def complete_handoff(
+        self,
+        credential: TaskCredential,
+        token: ZoneToken,
+        observation: ZoneObservation,
+        request_id: str,
+        now_tick: int,
+    ) -> TaskResult:
+        """Record a handoff with task and zone credentials in one transaction.
+
+        Identity, current occupancy and tick must come from trusted adapters. A
+        replay is historical and does not reauthorize a physical effect.
+        """
+        identifier(request_id)
+        counter(now_tick)
+        event_id = "request:" + request_id
+        signature = _signature(
+            "handoff",
+            credential.task_id,
+            credential.worker_id,
+            credential.token,
+            token.resource_id,
+            token.token,
+        )
+        with self.database.transaction() as connection:
+            cached = _cached(connection, event_id, signature)
+            if cached is not None:
+                return cached
+            previous = _task(connection, credential.task_id)
+            requirement = connection.execute(
+                "SELECT zone_id FROM task_handoffs WHERE task_id=%s", (credential.task_id,)
+            ).fetchone()
+            if requirement is None or requirement[0] != token.resource_id:
+                return TaskResult(False, previous)
+            state = _lock(connection, credential.worker_id)
+            zone = next(
+                (item for item in state.zones if item.lease.resource_id == token.resource_id), None
+            )
+            if zone is None or not authorize_handoff(
+                previous, credential, zone, token, observation, now_tick
+            ):
+                return TaskResult(False, previous)
+            task = worker_transition(previous, credential, TaskState.DONE, now_tick)
+            if task is None:
+                return TaskResult(False, previous)
+            _store(connection, task)
+            _event(connection, event_id, signature, "handoff", previous.state, task)
+            return TaskResult(True, task)
 
     def fail(self, credential: TaskCredential, request_id: str, now_tick: int) -> TaskResult:
         """Fail a live assigned or executing attempt without releasing physical zones."""

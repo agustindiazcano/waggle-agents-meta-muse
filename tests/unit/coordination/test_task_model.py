@@ -90,3 +90,10 @@ def test_task_record_rejects_inconsistent_ownership_and_backwards_time() -> None
         advance_task(_approved(), TaskState.ABORTED, 1)
     with pytest.raises(ValueError):
         TaskRecord("bad id")
+
+
+def test_handoff_zone_is_part_of_immutable_task_definition() -> None:
+    definition = TaskDefinition("delivery", handoff_zone="dock")
+    assert definition.handoff_zone == "dock"
+    with pytest.raises(ValueError):
+        TaskDefinition("delivery", handoff_zone="bad zone")
