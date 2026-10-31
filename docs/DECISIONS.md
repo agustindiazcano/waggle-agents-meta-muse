@@ -574,7 +574,7 @@ Trust boundary: `advance_tick` and `record` have no MCP tool and no request path
 
 ## ADR-042: Simulator bridge as the trusted writer
 
-Status: implemented; cloud verification pending. Stacked on ADR-041.
+Status: implemented; cloud run 41244266563 passed 68 PostgreSQL tests. Stacked on ADR-041.
 
 `SimTrustedBridge.publish(sim)` is the first writer of the trusted tick and occupancy tables. It advances the shared tick to the simulator tick, then records one observation per zone using the occupancy derivation of the simulator admission adapter (conservative footprints; an unknown pose is published as unknown). A regressing tick raises before any observation. Only the live simulation publishes: a rollout fork must not, because the shared tick cannot move backwards.
 
