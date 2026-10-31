@@ -433,6 +433,12 @@ Validation: `uv run pytest tests/unit/experiments/test_corridor_admission.py -q`
 
 The S03 fixture accepts a strict boolean `admission_enabled`, defaulting to true. Disabling it removes only the admission engine system, retaining the same initial arrays, routes, streams, fast layer and dynamics. A unit test checks equal initial hashes and movement of the previously waiting robot when admission is disabled. The E2 simulator component uses paired development seeds, typed raw results and Wilson intervals, and is manual and cloud-only at its CLI. It does not implement the database no-fencing baseline or the full chaos protocol. Stall counts are explicitly not deadlock counts, and zone occupancy is sampled rather than continuously swept. No E2 sweep was run by this task. Status: implemented, not evaluated.
 
+### ADR-031 addendum: deterministic aisle routing (2026-10-31)
+
+Decision: `waggle.coordination.routing` provides a pure A* planner over a caller-supplied directed aisle graph. Nodes have finite map coordinates in metres. Every edge has a finite positive cost no lower than the Euclidean distance between its endpoints, so the straight-line heuristic is admissible. Stable node and edge ordering gives reproducible equal-cost choices. The result contains the node path, total cost and one atomic `CorridorRequest` for every capacity-one resource on that path. Each resource carries its own direction relative to that resource's fixed orientation.
+
+The corridor model continues to acquire the entire resource set atomically, in canonical resource-id order, and checks exact direction on a retry. Legacy requests with one direction retain their existing behavior. A route that traverses the same resource in conflicting directions is rejected. The planner does not load maps, account for dynamic obstacles, or contact persistence; the S03 adapter is not wired to it. No fast-layer, fencing, MCP, database or migration behavior changes. Unit tests cover shortest paths, deterministic ties, unreachable goals, malformed geometry, route bundle construction and mixed-direction grants. Status: implemented, not evaluated by E2.
+
 ## ADR-032: MCP boundary and guard design
 
 Status: design only, proposed. No code, no migration, no `.env` change. The MCP boundary code, the audit logic and the fencing check are protected (AGENTS.md section 15), so each implementation branch below needs a maintainer go-ahead first.
