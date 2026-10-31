@@ -97,3 +97,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### A route can cross corridors with different fixed orientations
 - Symptom: a valid multi-corridor route is denied because one direction was applied to every capacity-one zone.
 - What to do: use the route planner's `directions_by_resource` in the complete `CorridorRequest`. The uniform `direction` argument is retained for legacy requests only. Every resource still has to be granted atomically before motion.
+
+### Admission reconstruction must retain each resource's direction
+- Symptom: a mixed-direction bundle is granted once but denied at the next tick, even though no token expired and no opponent holds a resource.
+- What to do: reconstruct each zone with `request.direction_for(zone.id)`. Reusing the request's legacy uniform direction loses the bundle's per-resource metadata. The regression checks a valid retry retains both motion commands and tokens and keeps the waiting opponent stopped.
