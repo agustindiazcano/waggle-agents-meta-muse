@@ -172,3 +172,7 @@ Held-out results: `results/<experiment>/heldout/<run_id>.json` with `"seed_set":
 Development results: `results/<experiment>/dev/<run_id>.json` with `"seed_set": "dev"`.
 
 Each file records: commit, date, seed set, configuration, model ids, raw counts, derived metrics, failing seeds, notes. A test checks that every JSON under a `heldout/` folder has seed_set heldout and every one under `dev/` has dev. Agents never write under `heldout/`; the safety guard denies it.
+
+## Proposed E-GLOBAL: inter-warehouse logistics
+
+Status: planned, no harness or result files. See [MULTI_WAREHOUSE_PLAN.md](MULTI_WAREHOUSE_PLAN.md), sections 9 and 14, for G01 to G09, paired deterministic/model configurations, conservation and custody metrics, and unresolved seed/label decisions. E1 to E10 retain their existing definitions. The no-global-validator configuration is shadow-only and cannot dispatch unsafe proposals. Local safety and leases stay identical in all configurations. Implement and review the harness after G-GLOBAL; long runs are cloud-only. Planning does not authorize execution, paid calls or held-out evaluation.
