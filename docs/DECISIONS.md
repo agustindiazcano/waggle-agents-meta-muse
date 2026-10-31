@@ -587,3 +587,11 @@ Status: implemented; cloud run 41245044162 passed 74 PostgreSQL tests. Stacked o
 `run_once` gains an optional `complete` argument that replaces ordinary completion; the default is unchanged, so a handoff task is still denied without it, and a test shows that. `HandoffFinisher.complete` is the production value: a task with no handoff requirement completes normally; a task with one gets the zone token that the worker itself holds in the corridor table and the occupancy evidence from the trusted store, then calls the atomic `complete_handoff`. The worker supplies neither. A worker that does not hold the zone, a second occupant and unknown occupancy all leave the task EXECUTING and the iteration STALE. `TaskRepository.handoff_zone` is the only new read.
 
 Limits: the handler is still a trusted callable that must itself drive the robot into the zone; no physical effect exists beyond the simulator. A replay of completion after the lease was released is refused here, and `run_once` does not call completion again for a replayed claim. The stale iteration leaves the task EXECUTING until its lease expires and bounded recovery requeues it. `serve_worker` accepts the same `complete` argument. Not part of E2.
+
+## ADR-044: End-to-end handoff scenario on the simulator
+
+Status: test only; cloud run 41246267282 passed 76 PostgreSQL tests. Stacked on ADR-043. No new behavior.
+
+One cloud test chains the whole path on S03 seed 7: the simulator moves robot-0, `SimTrustedBridge` publishes the tick and occupancy, `TrustedStateRepository` stores them, a task with a handoff zone is claimed by a worker, and `HandoffFinisher` completes it through the atomic handoff. The handler is a trusted driver that steps the simulator and returns DONE only when the simulator derivation shows robot-0 alone in the zone. A second test shows a handler that claims DONE before the robot arrives leaves the task EXECUTING and the iteration STALE. A database-free test fixes the fact the scenario depends on, that robot-0 is outside the zone at the start and alone in it later.
+
+This shows the components fit together in the simulator. It is not E2: there is one seed, no baseline without the layer, no crashed workers and no throughput measurement.
