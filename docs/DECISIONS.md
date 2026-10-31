@@ -540,7 +540,7 @@ This repository does not authenticate, check the allowlist or schemas, or forwar
 
 ## ADR-039: PostgreSQL identity store
 
-Status: implemented; cloud verification pending. ADR-032 branch (e), second part, under the maintainer approval of 2026-10-31 for migrations. Revision 4 was the latest in the repository; no persistent database exists to migrate yet, only isolated cloud test schemas.
+Status: implemented; cloud run 41241463775 passed 56 PostgreSQL tests. ADR-032 branch (e), second part, under the maintainer approval of 2026-10-31 for migrations. Revision 4 was the latest in the repository; no persistent database exists to migrate yet, only isolated cloud test schemas.
 
 Revision 5 adds `robot_identities`: the SHA-256 digest as primary key (checked as 64 lowercase hex digits, so a plain token cannot be stored by mistake), chassis, robot id, a revoked flag with its timestamp, and a unique index allowing one active token per chassis and robot. `PostgresIdentityStore` implements the `IdentityStore` protocol: `lookup` returns revoked records too, so authentication reports `revoked` rather than `unknown_token`; a malformed digest is a miss without a query; `register` validates chassis against the allowlist table and the robot id format; `revoke` is one-way. Rotation is revoke, then register. A database error raises and authentication denies.
 
