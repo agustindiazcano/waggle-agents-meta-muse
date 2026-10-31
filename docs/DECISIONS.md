@@ -566,7 +566,7 @@ Every other tool raises `ToolUnavailable` and surfaces as `tool_error`: `move_wa
 
 ## ADR-041: Trusted shared tick and zone occupancy
 
-Status: implemented; cloud verification pending. Stacked on ADR-040. Schema revision 6, under the maintainer approval to migrate of 2026-10-31; revision 5 was the latest before it.
+Status: implemented; cloud run 41243437112 passed 66 PostgreSQL tests. Stacked on ADR-040. Schema revision 6, under the maintainer approval to migrate of 2026-10-31; revision 5 was the latest before it.
 
 Revision 6 adds `trusted_tick` (a singleton, only moving forward) and `zone_occupancy` (one row per registered zone: observed tick and occupants, where a null array means unknown and an empty array means clear). `TrustedStateRepository` implements the forwarder `TickSource` and `OccupancySource`. A missing tick raises `UnknownTick`; a zone never recorded reads as unknown at tick 0; a lower tick raises `TickRegression`; an older observation never replaces a newer one; an observation later than the shared tick is rejected; occupants must have the robot id format. `release_zone` through these sources is refused while a zone is recorded occupied or unknown.
 
