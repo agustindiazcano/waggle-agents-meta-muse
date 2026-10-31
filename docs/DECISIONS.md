@@ -439,6 +439,10 @@ Decision: `waggle.coordination.routing` provides a pure A* planner over a caller
 
 The corridor model continues to acquire the entire resource set atomically, in canonical resource-id order, and checks exact direction on a retry. Legacy requests with one direction retain their existing behavior. A route that traverses the same resource in conflicting directions is rejected. The planner does not load maps, account for dynamic obstacles, or contact persistence; the S03 adapter is not wired to it. No fast-layer, fencing, MCP, database or migration behavior changes. Unit tests cover shortest paths, deterministic ties, unreachable goals, malformed geometry, route bundle construction and mixed-direction grants. Status: implemented, not evaluated by E2.
 
+### ADR-031 addendum: graph binding to loaded maps (2026-10-31)
+
+`waggle.coordination.map_graph` validates an explicit graph against a loaded simulator `World` before planning. Nodes need full declared clearance inside the map. Every straight edge must avoid walls and racks expanded by that clearance and name exactly the capacity-one resource its expanded segment touches. Boundary contact counts as intersection. The square expansion conservatively contains a disk; a caller must choose a radius enclosing the chassis at every heading. Unsupported nonrectangular geometry and edges touching multiple resources are rejected rather than repaired. Resource directions remain explicit caller metadata; geometry does not infer authority or orientation. The output is the existing A* plan plus waypoint coordinates excluding the start node. This does not generate graph topology, certify curved tracking or turning feasibility, handle moving obstacles, persist grants or change the fast layer. Status: implemented, not evaluated by E2. Tests first failed on the missing module; all 17 map-binding tests then passed.
+
 ## ADR-032: MCP boundary and guard design
 
 Status: design only, proposed. No code, no migration, no `.env` change. The MCP boundary code, the audit logic and the fencing check are protected (AGENTS.md section 15), so each implementation branch below needs a maintainer go-ahead first.
