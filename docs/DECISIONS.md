@@ -555,3 +555,11 @@ Status: implemented; cloud run 41241463775 passed 56 PostgreSQL tests. ADR-032 b
 Revision 5 adds `robot_identities`: the SHA-256 digest as primary key (checked as 64 lowercase hex digits, so a plain token cannot be stored by mistake), chassis, robot id, a revoked flag with its timestamp, and a unique index allowing one active token per chassis and robot. `PostgresIdentityStore` implements the `IdentityStore` protocol: `lookup` returns revoked records too, so authentication reports `revoked` rather than `unknown_token`; a malformed digest is a miss without a query; `register` validates chassis against the allowlist table and the robot id format; `revoke` is one-way. Rotation is revoke, then register. A database error raises and authentication denies.
 
 The token is generated and provisioned outside the repository (`generate_token`); only its digest reaches this table. There is no provisioning command yet. Still pending: the concrete forwarder, the transport and rate-limit calibration.
+
+## ADR-040: Fenced forwarder for release_zone and get_task
+
+Status: implemented against fakes, not evaluated. ADR-032 branch (e), third part, stacked on ADR-039.
+
+`FencedForwarder` implements the boundary `Forwarder` for the two tools that already have a fenced backend. `release_zone` calls `CorridorRepository.release` with the authenticated robot id as holder, the caller token as the zone credential, and a tick and occupancy evidence taken from injected `TickSource` and `OccupancySource`. A request can supply neither. A failing source raises before any release, so the boundary records an error and nothing changes. A refused release is a normal result (`released` false with the model reason). `get_task` returns the snapshot only when the task worker is the authenticated robot; a missing task and another robot task raise the same `ToolDenied`, so a caller cannot probe which ids exist.
+
+Every other tool raises `ToolUnavailable` and surfaces as `tool_error`: `move_waypoint`, `pick_package`, `deliver_package` need a physical effect and trusted occupancy ingestion, and the maintenance tools need their workflow. No production `TickSource` or `OccupancySource` exists yet; wiring one is pending, and until then the forwarder runs only in tests.
