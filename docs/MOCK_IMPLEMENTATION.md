@@ -9,7 +9,7 @@ Each row is split into reviewable task branches. Tests include successful paths 
 | Order | Work | Acceptance and failure checks | State |
 |---|---|---|---|
 | 1 | Bind explicit aisle graphs to loaded maps, then feed planned waypoints and complete requests into S03 | Deterministic path, blocked edge and unreachable goal rejection, omitted corridor rejection, no movement without admission, original E1 S03 unchanged | Map binding and S03 wiring implemented; review pending |
-| 2 | PostgreSQL schema and repositories, task queue, workers, recovery and mission handoff | Compare persistent and pure transitions; concurrent claim exclusion; stale token denial inside the effect transaction; occupied expiry remains faulted; duplicate handoff is idempotent | Approved, pending |
+| 2 | PostgreSQL schema and repositories, task queue, workers, recovery and mission handoff | Compare persistent and pure transitions; concurrent claim exclusion; stale token denial inside the effect transaction; occupied expiry remains faulted; duplicate handoff is idempotent | Corridor reference verified in PR 56; queue/recovery and worker iteration verified in PR 57 by 26 cloud PostgreSQL tests; physical handoff and daemon next |
 | 3 | Audit and rate-limit repositories, MCP transport, dispatch and tools | Thirty concurrent calls across connections respect the limit; failed intent write denies; result correlation; forbidden identity/tool pairs deny; tool errors remain results | Approved, pending |
 | 4 | Structured mock completions, director, catalog resolution, deterministic assignment, court orchestration and operator inbox | Valid command reaches one robot under fast control; ambiguity, rejected vote, invalid output and timeout escalate; preserve the existing unanimity rule | Pending |
 | 5 | Production untrusted-input entry points and E3 evaluator | Sanitization before classification; no unreviewed label scored; missing target implementations cause an error; ablations use production paths | Pending maintainer labels and integration |
@@ -27,3 +27,7 @@ Each row is split into reviewable task branches. Tests include successful paths 
 - Full E2 and other long runs execute in cloud workflows. Do not invoke E3 before reviewed labels and production entry points exist. Paid calls and held-out runs still require specific execution authorization.
 - Before pushing: green `uv run ci` on HEAD, reviewed diff, gitleaks, clean tree and a non-main branch. The existing pre-push gate remains unchanged.
 - Update LASTCONTEXT.md and PENDING.md as each task finishes. Report unresolved E1 failures and missing evaluation without changing published measurements.
+
+## Future logistics network
+
+The [multi-warehouse plan](MULTI_WAREHOUSE_PLAN.md) is a separate planned extension, not another authorized row in the sequence above. Complete this local sequence first. At G-GLOBAL the maintainer reviews evidence and authorizes any global implementation. Preserve all local scope, mock-first development, provider approval rules and delivery time.

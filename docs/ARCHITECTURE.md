@@ -271,11 +271,25 @@ Control keeps a local lease view (zone, token, expiry_tick) pushed by the coordi
 - Expiry is handled by a sweeper using `FOR UPDATE SKIP LOCKED`. The token never decreases.
 - One-lane aisles and stations are zones with capacity one. Deadlocks are resolved by acquisition order and timeout.
 
+## Persistent corridor storage
+
+Persistent coordination foundation: `waggle.db.connection` opens bounded, separate PostgreSQL transactions. `waggle.db.schema` checks and applies explicit forward migrations, including the original corridor revision 1; migration is never automatic. `waggle.db.corridors` applies the pure model after locking all resource rows in canonical order, serializes same-holder calls with a transaction-scoped advisory lock and prevents resource insertion during transitions with a shared topology lock. Provisioning takes that topology lock exclusively and never resets existing rows. All model transitions, including fault latching on denial, commit atomically. The coarse lock scope is deliberate; performance has not been evaluated.
+
+`record_event` is an initial fencing proof: a complete bundle's exact live tokens are checked inside the transaction that inserts one uniquely identified `fenced_events` row. A stale or partial bundle inserts nothing. Matching repeats return historical success without reapplying the effect; a different payload for the same event id raises `IdempotencyConflict`. It is not a robot tool or MCP audit repository. Those integrations must check their own protected effect inside a locked transaction rather than use a preflight authorization snapshot. Missing configuration, unsupported revisions, database errors and exhausted database integer ranges raise real errors and do not authorize forwarding. Trusted occupancy ingestion and physical handoff remain pending; the separate task queue and recovery implementation is described below.
+
+Cloud correctness verification: [run 41217047545](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41217047545), commit `7fa02c0`, passed all 10 selected heavy tests with PostgreSQL 16. This verifies the tested persistence and concurrency behavior, not the full E2 protocol or production wiring.
+
 ## Task state machine
 
 `PENDING -> SCREENED -> REVIEWED -> APPROVED -> ASSIGNED -> EXECUTING -> DONE`
 Side exits: `ESCALATED` (operator inbox), `REJECTED`, `FAILED`, `ABORTED`.
 Each transition is an event row. Retries carry an attempt number and an idempotency key.
+
+Implemented reference: `waggle.coordination.task_model` is pure and deterministic. `waggle.db.tasks.TaskRepository` stores metadata, immutable dependencies and event snapshots in schema revision 2. Migration from revision 1 preserves corridor counters. Claims and recovery use `FOR UPDATE SKIP LOCKED`; claims select approved tasks only after all existing dependencies are done. Per-worker transaction locks plus a unique active-worker index prevent a worker holding two active assignments. Task definitions cannot change after insertion and can reference only previously inserted tasks, so API-created dependency graphs are acyclic.
+
+Every claim increments the task token and attempt. Worker transitions check exact task id, worker id, token, current tick and live expiry under the same row lock as state/event writes. Successful request ids replay the recorded snapshot; mismatched content raises `TaskConflictError`. Historical replay is not current authorization. Recovery clears expired ownership, retains counters and returns a task to approved until its configured attempt cap, then fails it. Recovery never releases zones or clears occupied faults. Default attempts are 3, bounded 1 to 10; default lease is 400 ticks, an assumption to calibrate. Terminal states cannot be reopened through this API.
+
+`waggle.worker.run_once` is outside the pure coordination package and opens no transaction across a handler call. It skips handlers for replayed claims, requires the exact `HandlerOutcome.DONE` value for completion, and reports stale completion after lease loss. A handler error or invalid result fails a live attempt and logs a fixed code without exception text. The caller supplies trusted time and identities. Authentication, domain payloads, actual robot effects, the worker daemon and atomic physical handoff remain separate integrations. This is implemented, not evaluated by full E2. PostgreSQL correctness verification passed all 26 tests in [cloud run 41225808111](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41225808111), commit `085f8ff`, including process-crash recovery.
 
 ## MCP boundary
 
@@ -363,3 +377,7 @@ Result files: `results/e8/dev/profile_*.json` and `results/e8/dev/before_after_2
 Measured speed, four alternating runs in one session: before 16.7 to 24.6 s (median 18.0 s), after 5.6 to 7.1 s (median 5.7 s). Speedup 3.1x by median and 3.0x by minimum. The same rollout varied between 3.6 s and 8.9 s inside one session, so single figures are not comparable across sessions. K = 5 variants in 5 processes took 14.0 s against 23.9 s serial (1.7x): the CPU has 4 physical cores and each job slowed from about 4.5 s to 13 s when five ran together.
 
 Targets (not claims): 2.0 s per rollout and about 5 s for K = 5. Both are missed. The minimum speedup of 5x is missed, so work stops here for the maintainer's decision (see ADR-025).
+
+## Planned multi-warehouse hierarchy
+
+See [MULTI_WAREHOUSE_PLAN.md](MULTI_WAREHOUSE_PLAN.md) and ADR-035. This is a proposed extension, not a connected service. Each warehouse retains the director, deterministic assignment, court, MCP and local control defined above. A network orchestrator requests transfers through a scoped cell API, without direct actuator authority. A separate simulated truck service owns graph-transit evidence. Cross-cell work uses durable sagas and custody receipts; no transaction spans sites. Local reservations, fencing and safe holds remain authoritative during network loss. Independent real sites still need a specified clock/lease authority; the proposed shared-tick demo does not solve that deployment problem.

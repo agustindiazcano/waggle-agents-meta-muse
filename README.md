@@ -15,7 +15,7 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
 | Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
-| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Map binding validates an explicit graph against rectangular static geometry and declared chassis clearance, then returns waypoints; it does not certify curved tracking. Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests; mapped A* supplies the same fixture waypoints and complete reservation requests, including per-resource direction restoration. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. Database transactions and the full chaos evaluation remain unimplemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
+| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Map binding validates an explicit graph against rectangular static geometry and declared chassis clearance, then returns waypoints; it does not certify curved tracking. Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests; mapped A* supplies the same fixture waypoints and complete reservation requests, including per-resource direction restoration. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. A durable corridor reference and transactionally fenced event effect are implemented and verified by cloud correctness tests. Task queue, bounded recovery and worker iteration are implemented and verified by cloud correctness tests. Physical handoff, daemon/tool wiring and the full chaos evaluation remain pending. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
 | Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
 | Input screening | Sanitizers and an async classifier interface with a fail-closed label policy and an offline mock (implemented, not evaluated). [E3 development declarations](data/e3/README.md) await maintainer labels; production detection and E3 evaluation are not implemented | Planned, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
@@ -25,6 +25,10 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Sensing and prediction | Simulated 2D lidar, closest point of approach predictor that can only restrict (designed, not implemented) | No |
 | Missions and handoff | Task graph, handoff with idempotency key and fencing token (designed, not implemented) | No |
 | Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part (designed, not implemented) | RAG text only |
+
+## Planned multi-warehouse extension
+
+The [multi-warehouse logistics plan](docs/MULTI_WAREHOUSE_PLAN.md) treats each Waggle warehouse as an independent cell. A higher-level coordinator proposes inter-site transfers through cell APIs; local safety, task ownership, inventory custody and MCP authorization remain local. Trucks are proposed as a seeded graph-transit simulation, not autonomous road vehicles. This extension is planned, not implemented or evaluated. Its readiness gate preserves the complete local build order and requires maintainer authorization before implementation.
 
 ## Models used
 
@@ -112,6 +116,47 @@ docker compose up --build   # db, api, worker, mcp_server, web (Phase 0 placehol
 Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`. `uv run experiments-dev` runs E1 on the development seeds (a full run is a cloud job, see `.github/workflows/e1.yml`) and `uv run report` writes `results/e1/dev/report.md` from the result files. `experiments-test` is still a placeholder.
 
 Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
+
+PostgreSQL coordination uses `psycopg[binary]==3.3.6`, approved by the maintainer on 2026-10-31. The binary extra supplies the matching libpq adapter on Windows and Linux; there is no ORM. See the [Psycopg documentation](https://www.psycopg.org/psycopg3/docs/basic/install.html).
+
+### Persistent coordination
+
+`waggle.db.corridors` implements the pure corridor transitions under PostgreSQL locks. Migration revision 1 creates `zones`, `fenced_events` and `waggle_schema`; revision 2 adds `tasks`, `task_dependencies` and `task_events`, without sample rows. Provision resource ids separately through `CorridorRepository.register`; registering an existing resource never resets its token. Implementation is not an E2 result. Coupled physical handoff and production MCP tool wiring remain pending.
+
+With `DATABASE_URL` configured for the intended database, inspect its revision before applying the approved migration:
+
+```
+uv run python -m waggle.db.schema
+uv run python -m waggle.db.schema --expected-revision 0
+```
+
+The first command only inspects. The second requires revision 0 under a transaction lock and atomically installs the current revision 2. An existing revision 1 database upgrades with `--expected-revision 1`, preserving corridor state. Reapplying with `--expected-revision 2` is a no-op. `--target-revision 1` can select the initial revision when creating a new database; downgrades are rejected. Unexpected revisions or conflicting tables roll back the complete migration. Migration never runs automatically during service startup.
+
+Every operation opens a separate connection. Defaults are a 5 s connect timeout, a 5000 ms statement timeout, a 3000 ms lock timeout and the `public` schema; these are explicit `Database` constructor arguments. `DATABASE_URL` is required and has no default. Configuration values and credentials are not logged.
+
+All zone rows are locked in sorted id order for a complete pure-model transition, with per-holder transaction locks and a shared topology lock. This intentionally coarse implementation has no fleet throughput claim. Occupancy and ticks must come from a trusted coordination adapter, not model output. The fencing proof effect inserts an idempotent `fenced_events` row under those same locks; it does not move a robot or establish MCP audit. A matching repeat returns the historical result without inserting again, even after expiry. Reusing an event id with different content raises an error.
+
+Real PostgreSQL correctness tests are marked `heavy` and run only in cloud workflows, including the manual [PostgreSQL workflow](.github/workflows/postgres.yml). They use temporary schemas and no provider keys. The existing heavy workflow can also select them with `marker=heavy`, `seed_set=dev`. They check model parity, concurrency, rollback, restart and a lock-contended stale-token race. [Cloud run 41217047545](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41217047545) on commit `7fa02c0` passed the original 10 PostgreSQL corridor tests. Queue/worker [cloud run 41225808111](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41225808111) on commit `085f8ff` passed all 26 PostgreSQL tests (10 corridor and 16 queue/worker tests), with no failures, errors or skips in the JUnit artifact. The full 500-task chaos protocol, physical handoff and production service wiring remain pending.
+
+### Task queue and workers
+
+`waggle.coordination.task_model` provides pure task transitions. `TaskRepository` persists task metadata and one immutable event snapshot per transition. Callers supply trusted worker identities and current simulation ticks. Review must progress through `PENDING`, `SCREENED`, `REVIEWED` and `APPROVED` before a claim. These APIs do not authenticate an operator or replace the guard and court.
+
+Claims select eligible approved tasks with `FOR UPDATE SKIP LOCKED`, highest priority first and task id as the tie-break. Dependencies must already exist and finish `DONE`; immutable definitions and existing-parent insertion prevent cycles through this API. A unique index and per-worker transaction lock allow one active attempt per worker. Assignment increments both attempt and fencing token. Start, completion and failure check the exact live task/worker/token with the task row locked. State and event writes commit together. Matching successful request ids replay historical results; conflicting content raises an error. Empty or denied claims create no transition and may be retried.
+
+`recover` skips locked rows and requeues expired attempts until their cap, then marks them `FAILED`. It retains counters and never changes zone reservations or occupied faults. `DONE`, `FAILED`, `REJECTED`, `ESCALATED` and `ABORTED` are terminal in this queue; resubmission requires a new reviewed task. Explicit handler failure is terminal, while an abandoned expired attempt is eligible for bounded recovery.
+
+`waggle.worker.run_once` commits claim and start before calling its handler. A handler must return exactly `HandlerOutcome.DONE` for completion; malformed results, explicit failure and exceptions fail closed. Exception text is not logged. Replayed claims never invoke the handler again. A handler that outlives its lease cannot complete after recovery. Production handlers must use fenced, idempotent tool effects; this iteration does not provide exactly-once execution for arbitrary external effects. A worker daemon and physical handoff integration remain separate work.
+
+| Queue parameter | Default | Bound or meaning |
+|---|---|---|
+| `lease_ticks` | 400 | Positive ticks; 10 s at the simulator's 40 Hz, an assumption to calibrate |
+| `max_attempts` | 3 | 1 to 10 total assignments; exhaustion fails the task |
+| `priority` | 0 | 0 to 9, higher first; no fairness guarantee |
+| Recovery `limit` | 100 | 1 to 1000 rows per transaction |
+| Dependencies | empty | At most 32 unique existing task ids |
+
+Task ids, worker ids and external request ids use 1 to 64 ASCII letters, digits, underscores, periods or hyphens. Persisted queue metadata contains no item-resolution or model-output payload; those belong to the reviewed mission integration. The queue and worker iteration are implemented, not evaluated by full E2. New cloud tests cover real process exit, competing workers/sweepers, dependency eligibility, stale completion, rollback and handler isolation.
 
 ## Environment variables
 
