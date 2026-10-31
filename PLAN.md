@@ -227,3 +227,7 @@ Exit: submission confirmed.
 | Scenarios tuned to pass | Dev and held-out seeds, test seeds run once |
 | Demo VM fragility | Compose on one VM, recorded fallback, no managed cloud dependencies |
 | Cost overrun | Per-provider spend cap, cost logged per call |
+
+## Planned extension after the local build order
+
+The [multi-warehouse logistics plan](docs/MULTI_WAREHOUSE_PLAN.md), ADR-035, defines a future network of independent Waggle cells and simulated truck transfers. It preserves every phase and delivery requirement above. Documentation is authorized; implementation is gated on completed local scope, evidence review and explicit maintainer authorization at G-GLOBAL. All global milestones and G01 to G09 remain pending. No new experiment has run.

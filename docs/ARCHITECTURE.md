@@ -377,3 +377,7 @@ Result files: `results/e8/dev/profile_*.json` and `results/e8/dev/before_after_2
 Measured speed, four alternating runs in one session: before 16.7 to 24.6 s (median 18.0 s), after 5.6 to 7.1 s (median 5.7 s). Speedup 3.1x by median and 3.0x by minimum. The same rollout varied between 3.6 s and 8.9 s inside one session, so single figures are not comparable across sessions. K = 5 variants in 5 processes took 14.0 s against 23.9 s serial (1.7x): the CPU has 4 physical cores and each job slowed from about 4.5 s to 13 s when five ran together.
 
 Targets (not claims): 2.0 s per rollout and about 5 s for K = 5. Both are missed. The minimum speedup of 5x is missed, so work stops here for the maintainer's decision (see ADR-025).
+
+## Planned multi-warehouse hierarchy
+
+See [MULTI_WAREHOUSE_PLAN.md](MULTI_WAREHOUSE_PLAN.md) and ADR-035. This is a proposed extension, not a connected service. Each warehouse retains the director, deterministic assignment, court, MCP and local control defined above. A network orchestrator requests transfers through a scoped cell API, without direct actuator authority. A separate simulated truck service owns graph-transit evidence. Cross-cell work uses durable sagas and custody receipts; no transaction spans sites. Local reservations, fencing and safe holds remain authoritative during network loss. Independent real sites still need a specified clock/lease authority; the proposed shared-tick demo does not solve that deployment problem.

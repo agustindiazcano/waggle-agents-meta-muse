@@ -27,3 +27,7 @@ Each row is split into reviewable task branches. Tests include successful paths 
 - Full E2 and other long runs execute in cloud workflows. Do not invoke E3 before reviewed labels and production entry points exist. Paid calls and held-out runs still require specific execution authorization.
 - Before pushing: green `uv run ci` on HEAD, reviewed diff, gitleaks, clean tree and a non-main branch. The existing pre-push gate remains unchanged.
 - Update LASTCONTEXT.md and PENDING.md as each task finishes. Report unresolved E1 failures and missing evaluation without changing published measurements.
+
+## Future logistics network
+
+The [multi-warehouse plan](MULTI_WAREHOUSE_PLAN.md) is a separate planned extension, not another authorized row in the sequence above. Complete this local sequence first. At G-GLOBAL the maintainer reviews evidence and authorizes any global implementation. Preserve all local scope, mock-first development, provider approval rules and delivery time.

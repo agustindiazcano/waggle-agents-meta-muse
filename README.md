@@ -26,6 +26,10 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Missions and handoff | Task graph, handoff with idempotency key and fencing token (designed, not implemented) | No |
 | Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part (designed, not implemented) | RAG text only |
 
+## Planned multi-warehouse extension
+
+The [multi-warehouse logistics plan](docs/MULTI_WAREHOUSE_PLAN.md) treats each Waggle warehouse as an independent cell. A higher-level coordinator proposes inter-site transfers through cell APIs; local safety, task ownership, inventory custody and MCP authorization remain local. Trucks are proposed as a seeded graph-transit simulation, not autonomous road vehicles. This extension is planned, not implemented or evaluated. Its readiness gate preserves the complete local build order and requires maintainer authorization before implementation.
+
 ## Models used
 
 - Meta Model API: Muse Spark (director, fleet planner, diagnosis, court member 1), Muse Voice Transcribe, and Muse Spark with image input (label and obstruction verification).
