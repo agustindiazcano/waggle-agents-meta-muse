@@ -85,3 +85,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### S03 admission needs staging and a clear exit
 - Symptom: the original S03 has both robots already inside the reserved aisle, so admission cannot resolve it; parking on the incoming path can also leave the unchanged fast layer holding the opponent outside.
 - What to do: retain the original S03 for E1 comparisons and use the explicit `build_s03_admission` integration fixture for before-entry admission. Start at rest outside the zone, request the entire route, and park clear of the opposite approach before release. Keep expired occupied zones faulted. The integration test checks both completed routes, footprint occupancy and the independent collision detector. Admission state is in simulator arrays, but the existing sensor and control rig also holds Python state; do not infer full rollout fork support from the admission-only replay test.
+
+### A route can cross corridors with different fixed orientations
+- Symptom: a valid multi-corridor route is denied because one direction was applied to every capacity-one zone.
+- What to do: use the route planner's `directions_by_resource` in the complete `CorridorRequest`. The uniform `direction` argument is retained for legacy requests only. Every resource still has to be granted atomically before motion.
