@@ -14,7 +14,6 @@ from waggle.coordination.corridors import (
     CorridorRequest,
     CorridorState,
     CorridorZone,
-    Direction,
     ZoneObservation,
     ZoneToken,
     release_corridor,
@@ -23,6 +22,7 @@ from waggle.coordination.corridors import (
 from waggle.coordination.leases import LeaseState
 from waggle.experiments.e1_config import BY_NAME
 from waggle.experiments.e1_rig import ControlRig, streams_for
+from waggle.experiments.s03_routes import plan_s03_routes
 from waggle.sim import detector, engine, scenarios, scripted, state, world
 from waggle.sim.params import RobotKind
 from waggle.sim.robots import RobotFleet, footprint_corners
@@ -107,7 +107,7 @@ class CorridorAdmission:
             zones.append(
                 CorridorZone(
                     lease,
-                    request.direction if request else None,
+                    request.direction_for(zone.id) if request else None,
                     bool(sim.arrays["admission_fault"][j]),
                 )
             )
@@ -166,31 +166,31 @@ def build_s03_admission(
     if type(admission_enabled) is not bool:
         raise ValueError("admission_enabled must be a boolean")
     original = scenarios.generate("S03", seed)
+    box = scenarios.load_map(original.map_name)
+    planned = plan_s03_routes(box)
+    requests: list[CorridorRequest] = []
+    for route in planned:
+        request = route.plan.corridor_request
+        if request is None:
+            raise ValueError("S03 route must reserve its capacity-one corridor")
+        requests.append(request)
     variant = replace(
         original,
         robots=(
-            scenarios.RobotSpec(
-                RobotKind.CARRIER, (3.0, 2.0, math.pi / 2), ((3.0, 22.0), (0.9, 23.0))
-            ),
-            scenarios.RobotSpec(
-                RobotKind.CARRIER, (9.0, 22.0, -math.pi), ((3.0, 20.5), (3.0, 2.0), (9.0, 2.0))
-            ),
+            scenarios.RobotSpec(RobotKind.CARRIER, (3.0, 2.0, math.pi / 2), planned[0].waypoints),
+            scenarios.RobotSpec(RobotKind.CARRIER, (9.0, 22.0, -math.pi), planned[1].waypoints),
         ),
         duration_ticks=3200,
     )
     config = BY_NAME["envelope_oracle"]
     sim, det = scenarios.build_engine(variant, streams_for(config, 2))
     fleet = RobotFleet([r.kind for r in variant.robots])
-    box = scenarios.load_map(variant.map_name)
     driver = scripted.WaypointDriver(fleet, [r.route for r in variant.robots], loop=False)
     admission = CorridorAdmission(
         fleet,
         (box.zone("lane_1"),),
-        (
-            CorridorRequest("robot-0", ("lane_1",), Direction.FORWARD),
-            CorridorRequest("robot-1", ("lane_1",), Direction.REVERSE),
-        ),
-        (2, 3),
+        tuple(requests),
+        tuple(len(route.waypoints) for route in planned),
         lease_ticks,
     )
     sim.state.arrays.update(admission.initial_arrays())
