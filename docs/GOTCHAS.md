@@ -82,6 +82,10 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 
 ## Coordination
 
+### A progress timeout does not establish a deadlock
+- Symptom: a robot waiting for a corridor grant has no measured movement and is counted as deadlocked, even though another robot can still finish and release the route.
+- What to do: the E2 simulator component reports `stalled_unfinished_robots` under its explicit displacement and tick window. Keep cycle-proven deadlocks unmeasured until a wait-cycle detector exists. Also distinguish sampled zone occupancy from the independent continuous collision detector. Tests check known occupancy counts, per-run denominators, Wilson intervals and explicit unmeasured scope.
+
 ### Lease expiry is not physical clearance
 - Symptom: a stopped robot loses its lease but still occupies a capacity-one aisle, and a replacement would be admitted into it.
 - What to do: use the corridor model with a current trusted occupancy observation. An expired occupied or unknown zone keeps `FAULT_OCCUPIED`; only a current empty observation permits reassignment. Never use the generic logical lease expiry as an entry permit. Tests cover a robot that never releases, an occupied expired corridor and missing occupancy (ADR-031).
