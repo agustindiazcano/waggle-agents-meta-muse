@@ -178,7 +178,7 @@ Optional forklift parameter `load_raised`: multiplies max speed by 0.6 and the d
 
 ## Route planner
 
-Deterministic, no LLM (designed, not implemented). A* on the aisle graph with a fixed tie-break. One-lane aisles are zones with capacity one, reserved through leases with fencing tokens. A robot that cannot get a lease waits or replans. A deadlock counter is reported in E2.
+Deterministic, no LLM. A* over a caller-supplied aisle graph is implemented, not evaluated. `waggle.coordination.map_graph` binds that graph to a loaded `World`, rejects blocked straight segments and omitted capacity-one resources, and converts planned nodes to waypoints. The map binding supports axis-aligned rectangles only. Its square expansion by a positive clearance conservatively encloses a circular chassis bound; callers must use a clearance covering the chassis at every heading. It does not prove curved tracking or turning feasibility. One edge may touch at most one capacity-one zone; split edges when needed. Resource orientation remains explicit graph metadata. S03 admission wiring and persistent leases remain separate integrations. A wait-cycle deadlock metric remains pending in E2.
 
 Formulas:
 - Stopping distance: `S_stop = v*t_r + v^2/(2a)`.
