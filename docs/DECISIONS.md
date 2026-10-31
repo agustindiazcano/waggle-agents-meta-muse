@@ -590,7 +590,7 @@ Limits: the handler is still a trusted callable that must itself drive the robot
 
 ## ADR-044: End-to-end handoff scenario on the simulator
 
-Status: test only; cloud verification pending. Stacked on ADR-043. No new behavior.
+Status: test only; cloud run 41246267282 passed 76 PostgreSQL tests. Stacked on ADR-043. No new behavior.
 
 One cloud test chains the whole path on S03 seed 7: the simulator moves robot-0, `SimTrustedBridge` publishes the tick and occupancy, `TrustedStateRepository` stores them, a task with a handoff zone is claimed by a worker, and `HandoffFinisher` completes it through the atomic handoff. The handler is a trusted driver that steps the simulator and returns DONE only when the simulator derivation shows robot-0 alone in the zone. A second test shows a handler that claims DONE before the robot arrives leaves the task EXECUTING and the iteration STALE. A database-free test fixes the fact the scenario depends on, that robot-0 is outside the zone at the start and alone in it later.
 
