@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 3
+LATEST_REVISION = 4
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -99,7 +99,33 @@ _HANDOFF_DDL: tuple[LiteralString, ...] = (
     )""",
 )
 
-_MIGRATIONS = {1: _DDL, 2: _TASK_DDL, 3: _HANDOFF_DDL}
+_AUDIT_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE mcp_audit (
+        audit_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        correlation_id text NOT NULL CHECK (correlation_id ~ '^[A-Za-z0-9_.:-]{1,128}$'),
+        phase text NOT NULL CHECK (phase IN ('intent', 'result')),
+        chassis text CHECK (length(chassis) BETWEEN 1 AND 64),
+        robot_id text CHECK (length(robot_id) BETWEEN 1 AND 64),
+        tool text NOT NULL CHECK (length(tool) BETWEEN 1 AND 64),
+        args_hash text NOT NULL CHECK (args_hash ~ '^[0-9a-f]{64}$'),
+        decision text NOT NULL CHECK (decision IN ('allow', 'deny')),
+        reason text CHECK (reason ~ '^[a-z_]{1,40}$'),
+        outcome text CHECK (outcome IN ('ok', 'error')),
+        latency_ms integer CHECK (latency_ms >= 0),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        UNIQUE (correlation_id, phase),
+        CHECK ((chassis IS NULL) = (robot_id IS NULL)),
+        CHECK (decision = 'deny' OR chassis IS NOT NULL),
+        CHECK ((phase = 'intent' AND outcome IS NULL AND latency_ms IS NULL
+                AND (decision = 'deny') = (reason IS NOT NULL))
+            OR (phase = 'result' AND decision = 'allow' AND reason IS NULL
+                AND outcome IS NOT NULL AND latency_ms IS NOT NULL))
+    )""",
+    """CREATE INDEX mcp_audit_rate ON mcp_audit (chassis, created_at)
+        WHERE phase = 'intent' AND decision = 'allow'""",
+)
+
+_MIGRATIONS = {1: _DDL, 2: _TASK_DDL, 3: _HANDOFF_DDL, 4: _AUDIT_DDL}
 
 
 class SchemaVersionError(RuntimeError):
