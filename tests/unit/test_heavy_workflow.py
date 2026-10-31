@@ -24,9 +24,9 @@ def test_marker_comes_from_env_and_is_validated() -> None:
     assert "run: uv run pytest -m ${{ inputs" not in WORKFLOW  # no direct expression in shell
 
 
-def test_exit_code_5_allowance_is_explicit() -> None:
-    assert "-eq 5" in WORKFLOW
-    assert "remove" in WORKFLOW.lower()  # comment pointing at the PENDING item
+def test_no_selected_tests_fail_instead_of_looking_like_a_pass() -> None:
+    assert "-eq 5" not in WORKFLOW
+    assert "set +e" not in WORKFLOW
 
 
 def test_results_are_uploaded_as_artifact() -> None:

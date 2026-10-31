@@ -15,7 +15,7 @@ Core principle: LLMs propose, deterministic code disposes. Hard safety never dep
 | Layer | Mechanism | Depends on an LLM |
 |---|---|---|
 | Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
-| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Map binding validates an explicit graph against rectangular static geometry and declared chassis clearance, then returns waypoints; it does not certify curved tracking. Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests; mapped A* supplies the same fixture waypoints and complete reservation requests, including per-resource direction restoration. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. Database transactions and the full chaos evaluation remain unimplemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
+| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Map binding validates an explicit graph against rectangular static geometry and declared chassis clearance, then returns waypoints; it does not certify curved tracking. Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests; mapped A* supplies the same fixture waypoints and complete reservation requests, including per-resource direction restoration. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. A durable corridor reference and transactionally fenced event effect are implemented and verified by cloud correctness tests. Task queues, worker recovery, production tool wiring and the full chaos evaluation remain unimplemented. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
 | Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
 | Input screening | Sanitizers and an async classifier interface with a fail-closed label policy and an offline mock (implemented, not evaluated). [E3 development declarations](data/e3/README.md) await maintainer labels; production detection and E3 evaluation are not implemented | Planned, first screen only |
 | Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
@@ -112,6 +112,27 @@ docker compose up --build   # db, api, worker, mcp_server, web (Phase 0 placehol
 Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`. `uv run experiments-dev` runs E1 on the development seeds (a full run is a cloud job, see `.github/workflows/e1.yml`) and `uv run report` writes `results/e1/dev/report.md` from the result files. `experiments-test` is still a placeholder.
 
 Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
+
+PostgreSQL coordination uses `psycopg[binary]==3.3.6`, approved by the maintainer on 2026-10-31. The binary extra supplies the matching libpq adapter on Windows and Linux; there is no ORM. See the [Psycopg documentation](https://www.psycopg.org/psycopg3/docs/basic/install.html).
+
+### Persistent coordination
+
+`waggle.db.corridors` implements the pure corridor transitions under PostgreSQL locks. Migration revision 1 creates `zones`, `fenced_events` and `waggle_schema`, without sample rows. Provision resource ids separately through `CorridorRepository.register`; registering an existing resource never resets its token. Implementation is not an E2 result and is not yet wired to robot tools, a task queue or the production MCP server.
+
+With `DATABASE_URL` configured for the intended database, inspect its revision before applying the approved migration:
+
+```
+uv run python -m waggle.db.schema
+uv run python -m waggle.db.schema --expected-revision 0
+```
+
+The first command only inspects. The second requires revision 0 under a transaction lock and atomically installs revision 1. An unexpected revision or existing conflicting table fails and rolls back. Reapplying with `--expected-revision 1` is a no-op; there are no downgrade or destructive migration commands. Neither command runs automatically during service startup.
+
+Every operation opens a separate connection. Defaults are a 5 s connect timeout, a 5000 ms statement timeout, a 3000 ms lock timeout and the `public` schema; these are explicit `Database` constructor arguments. `DATABASE_URL` is required and has no default. Configuration values and credentials are not logged.
+
+All zone rows are locked in sorted id order for a complete pure-model transition, with per-holder transaction locks and a shared topology lock. This intentionally coarse implementation has no fleet throughput claim. Occupancy and ticks must come from a trusted coordination adapter, not model output. The fencing proof effect inserts an idempotent `fenced_events` row under those same locks; it does not move a robot or establish MCP audit. A matching repeat returns the historical result without inserting again, even after expiry. Reusing an event id with different content raises an error.
+
+Real PostgreSQL correctness tests are marked `heavy` and run only in cloud workflows, including the manual [PostgreSQL workflow](.github/workflows/postgres.yml). They use temporary schemas and no provider keys. The existing heavy workflow can also select them with `marker=heavy`, `seed_set=dev`. They check model parity, concurrency, rollback, restart and a lock-contended stale-token race. [Cloud run 41217047545](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41217047545) on commit `7fa02c0` passed all 10 selected PostgreSQL tests. The full 500-task chaos protocol and worker recovery remain pending.
 
 ## Environment variables
 
