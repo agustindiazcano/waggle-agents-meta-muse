@@ -55,4 +55,5 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 49 | P3 | Remove the worktree `../waggle-feat-leases` (PR 37 merged) | M | pending |
 | 50 | P1 | Merge PR 43 (branch (a) of ADR-032: PR 41 landed in the ADR branch after PR 40 merged, so this PR carries it to main). Protected path: `src/waggle/mcp_server` | M | done, PR 43 merged |
 | 51 | P2 | ADR-032 branch (b): token hashing and identity lookup against an interface, no database | A | done, PR 45 merged |
-| 52 | P2 | ADR-032 next: guard classifier interface in `waggle.governance` (fail closed, mock classifier, no paid call), then E3 case corpus with target layers declared first | A | next |
+| 52 | P2 | Guard classifier interface in `waggle.governance`: protocol, strict JSON, sanitizers first, existing label policy, timeout and failure rejection, offline mock. Branch `feat/guard-classifier-interface`, 38 classifier cases and 79 governance tests passed. Production detection and E3 are not evaluated | A | implemented, review pending |
+| 53 | P2 | E3 corpus for T1 to T6, T11 and T18: declare target layers before any run, include benign near-lookalikes, leave labels pending maintainer review. Integrate the production detector after the corpus is reviewed | A, M | next |
