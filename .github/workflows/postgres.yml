@@ -1,0 +1,44 @@
+name: Waggle Hive PostgreSQL coordination integration
+
+# Manual cloud-only correctness tests, without provider keys or an E2 sweep.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: waggle
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: waggle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U waggle -d waggle"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://waggle:ci-only-password@localhost:5432/waggle
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - name: Test persistent coordination
+        run: uv run pytest tests/integration/db -m heavy -q --junitxml=postgres-test-report.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postgres-correctness-${{ github.sha }}
+          path: postgres-test-report.xml
+          if-no-files-found: error
