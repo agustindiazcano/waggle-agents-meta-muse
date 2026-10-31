@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 4
+LATEST_REVISION = 5
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -125,7 +125,27 @@ _AUDIT_DDL: tuple[LiteralString, ...] = (
         WHERE phase = 'intent' AND decision = 'allow'""",
 )
 
-_MIGRATIONS = {1: _DDL, 2: _TASK_DDL, 3: _HANDOFF_DDL, 4: _AUDIT_DDL}
+_IDENTITY_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE robot_identities (
+        token_hash text PRIMARY KEY CHECK (token_hash ~ '^[0-9a-f]{64}$'),
+        chassis text NOT NULL CHECK (length(chassis) BETWEEN 1 AND 64),
+        robot_id text NOT NULL CHECK (robot_id ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        revoked boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        revoked_at timestamptz,
+        CHECK (revoked = (revoked_at IS NOT NULL))
+    )""",
+    """CREATE UNIQUE INDEX robot_identities_active ON robot_identities (chassis, robot_id)
+        WHERE NOT revoked""",
+)
+
+_MIGRATIONS = {
+    1: _DDL,
+    2: _TASK_DDL,
+    3: _HANDOFF_DDL,
+    4: _AUDIT_DDL,
+    5: _IDENTITY_DDL,
+}
 
 
 class SchemaVersionError(RuntimeError):
