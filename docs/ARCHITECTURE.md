@@ -101,7 +101,7 @@ Designed, not implemented (ADR-018).
 
 ## Missions and handoff
 
-Designed, not implemented (ADR-019).
+A task can declare a required handoff zone at creation. Its ordinary completion path denies; `TaskRepository.complete_handoff` locks the task and zone rows and records task completion and its handoff event in one transaction. It requires live task and zone credentials for the same holder and a current trusted occupancy observation containing only that holder. Matching request replays are historical. The caller must supply authenticated identity, trusted occupancy and a trusted tick; no robot effect or occupancy ingestion is implemented. The implementation is not evaluated and cloud PostgreSQL correctness tests remain pending.
 
 - A mission is a small task graph with dependency edges. A dependent task is eligible only when its predecessors are done.
 - A handoff happens at a rendezvous zone with capacity one, held by a lease with a fencing token. The handoff event carries an idempotency key, so the dependent task becomes eligible exactly once.

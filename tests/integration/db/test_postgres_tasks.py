@@ -55,7 +55,7 @@ def test_revision_two_upgrade_preserves_zone_tokens_and_rejects_downgrade() -> N
             (ZoneObservation("lane", 0, ()),),
         )
         before = corridors.snapshot()
-        assert migrate(db, expected_revision=1) == 2
+        assert migrate(db, expected_revision=1, target_revision=2) == 2
         assert corridors.snapshot() == before
         with pytest.raises(SchemaVersionError):
             migrate(db, expected_revision=2, target_revision=1)

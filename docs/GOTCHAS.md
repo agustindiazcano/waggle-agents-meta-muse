@@ -105,3 +105,8 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### Returning from a handler is not a completion receipt
 - Symptom: an arbitrary object such as a tool error result is returned without raising, and the worker marks the task done.
 - What to do: require the exact `HandlerOutcome.DONE` enum member from trusted handler code after it checks the effect result. Invalid values and exceptions fail the attempt. The regression first completed an untyped object and now rejects it. Each external effect must still perform its own fenced idempotent transaction.
+
+
+### Logical completion is not physical handoff evidence
+- Symptom: a dependent task starts when its predecessor is done even though no physical delivery was established.
+- What to do: declare the handoff zone in the task definition and use the atomic handoff operation with current trusted occupancy and live task and zone credentials. Ordinary completion denies such tasks. The declaration must come from trusted mission construction; the repository cannot infer physical intent from an ordinary task. Cloud PostgreSQL verification is pending.

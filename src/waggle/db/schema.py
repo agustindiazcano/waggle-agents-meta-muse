@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 2
+LATEST_REVISION = 3
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -92,7 +92,14 @@ _TASK_DDL: tuple[LiteralString, ...] = (
     )""",
 )
 
-_MIGRATIONS = {1: _DDL, 2: _TASK_DDL}
+_HANDOFF_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE task_handoffs (
+        task_id text PRIMARY KEY REFERENCES tasks(task_id),
+        zone_id text NOT NULL REFERENCES zones(zone_id)
+    )""",
+)
+
+_MIGRATIONS = {1: _DDL, 2: _TASK_DDL, 3: _HANDOFF_DDL}
 
 
 class SchemaVersionError(RuntimeError):

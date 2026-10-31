@@ -46,11 +46,14 @@ class TaskDefinition:
     dependencies: tuple[str, ...] = ()
     max_attempts: int = 3
     priority: int = 0
+    handoff_zone: str | None = None
 
     def __post_init__(self) -> None:
         identifier(self.task_id)
         counter(self.max_attempts, 1, 10)
         counter(self.priority, 0, 9)
+        if self.handoff_zone is not None:
+            identifier(self.handoff_zone)
         if (
             len(self.dependencies) > 32
             or len(set(self.dependencies)) != len(self.dependencies)
