@@ -1,6 +1,6 @@
 # Waggle Hive: Last context
 
-Updated: 2026-10-31 (handoff and worker loop merged; E3 labels in PR 66).
+Updated: 2026-10-31 (audit repository merged; MCP dispatcher in a branch).
 
 ## Done last
 - Main is at `77f2ce0` after PR 65 merged, on top of PR 64 (handoff, revision 3) and PostgreSQL coordination, task recovery and the multi-warehouse planning document. `index (1).html` remains untracked and untouched.
@@ -11,11 +11,13 @@ Updated: 2026-10-31 (handoff and worker loop merged; E3 labels in PR 66).
 
 - Branch `feat/mcp-audit-ratelimit` (PR 67) adds schema revision 4 (`mcp_audit`) and `McpAuditRepository` (ADR-037). `uv run ci` passes; cloud run 41239557152 passed all 48 PostgreSQL tests (12 new).
 
+- Main is at `9ff7366` after PR 67 (revision 4, ADR-037). Branch `feat/mcp-boundary` adds the dispatcher `Boundary` (ADR-038) with unit tests against fakes.
+
 ## Current state
 - Handoff correctness passed its cloud tests; it is not an E2 evaluation. Complete the worker loop integration with trusted adapters and process supervision. Complete trusted mission construction, occupancy ingestion, physical effects and worker integration. The repository cannot infer physical intent when an ordinary task is created. Follow `docs/MOCK_IMPLEMENTATION.md`.
 - Local mock implementation, migrations, fencing, audit and MCP work were approved. Paid calls, secret or cap changes, held-out seeds and global implementation remain unauthorized.
 
 ## Prompt for the next session
 ```
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md and relevant design documents. Inspect remote PRs, status, branches and worktrees. PR 67 (revision 4, ADR-037) passed its cloud run; next is the MCP server wiring (ADR-032 branch e). Main was at 77f2ce0 with PRs 64 and 65 merged. The handoff cloud PostgreSQL run 41235442937 passed all 36 tests; complete trusted mission construction, occupancy ingestion, physical effects and worker integration. The worker daemon adds the polling loop and service adapter but still needs process integration and cloud verification. Ordinary completion denies declared handoff tasks; unmarked tasks remain ordinary. Branch test/e3-approved-main (PR 66) contains the maintainer-approved corpus labels. Preserve T11 structural scoring semantics. Do not run E2/E3, held-out seeds, paid calls or global implementation without authorization. Use tests first, task branches, reviewed diffs, required pre-push checks and human PR review.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md, PENDING.md and relevant design documents. Inspect remote PRs, status, branches and worktrees. PR 67 is merged; branch feat/mcp-boundary has the dispatcher (ADR-038); next are the identity store, forwarder and transport. Main was at 77f2ce0 with PRs 64 and 65 merged. The handoff cloud PostgreSQL run 41235442937 passed all 36 tests; complete trusted mission construction, occupancy ingestion, physical effects and worker integration. The worker daemon adds the polling loop and service adapter but still needs process integration and cloud verification. Ordinary completion denies declared handoff tasks; unmarked tasks remain ordinary. Branch test/e3-approved-main (PR 66) contains the maintainer-approved corpus labels. Preserve T11 structural scoring semantics. Do not run E2/E3, held-out seeds, paid calls or global implementation without authorization. Use tests first, task branches, reviewed diffs, required pre-push checks and human PR review.
 ```
