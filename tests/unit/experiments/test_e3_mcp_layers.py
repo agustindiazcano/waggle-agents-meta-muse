@@ -31,6 +31,7 @@ def test_the_runnable_layers_are_the_ones_with_a_runner() -> None:
             "message_schema",
             "untrusted_data_boundary",
             "plan_schema",
+            "plan_validator",
         }
     )
     assert expected == RUNNABLE_LAYERS
