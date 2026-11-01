@@ -27,6 +27,8 @@ def test_the_runnable_layers_are_the_ones_with_a_runner() -> None:
             "mcp_identity",
             "mcp_schema_bounds",
             "catalog_check",
+            "read_back_item_resolution",
+            "message_schema",
             "untrusted_data_boundary",
         }
     )
