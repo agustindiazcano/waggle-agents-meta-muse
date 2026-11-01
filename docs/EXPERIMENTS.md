@@ -79,6 +79,8 @@ Occupancy is sampled after each dynamics tick using the existing conservative cl
 
 Not measured here: cycle-proven deadlocks, S13 to S18 density, double assignments, stale database writes, worker recovery, database delays, expiry sweeps, handoff chaos and full control-rig snapshot replay. The full E2 protocol above remains required. No paid call, database operation, migration or held-out run is included.
 
+The design of the full chaos harness (faults, oracle, baseline, build order) is proposed in [`docs/E2_CHAOS_DESIGN.md`](E2_CHAOS_DESIGN.md).
+
 | Environment variable | Description | Default |
 |---|---|---|
 | `GITHUB_ACTIONS` | Runner-provided flag; the sweep CLI requires the value `true` | Unset locally; `true` in GitHub Actions |
