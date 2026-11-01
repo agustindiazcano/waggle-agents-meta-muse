@@ -729,3 +729,13 @@ Decision: `waggle.validation.plan.parse_plan(raw, mission_id, context)` is pure 
 Assumptions to calibrate: the escalation reasons (`no_feasible_plan`, `unsafe_state`, `needs_operator`), the 2000 character rationale cap and the 20 zones per node. The rule that an item action needs an item and the others reject one is mine, not in the table.
 
 Gaps, stated plainly: this is the schema only. There is no belief state, rollout, counterexample loop, planner prompt or fleet validator, so `plan_validator` (E3-T18-01 and 04) still has no runner and a full E3 run still raises `MissingLayer` for it. The schema does not check geometry: a plan that names a blocked zone as a corridor is schema-valid and must be caught by the validator. `BASE_PLAN` and `CONTEXT` in the runner are fixtures that need maintainer review. One case for this layer, no benign case.
+
+## ADR-060: Geofence check of a plan and the E3 runner for the plan validator layer
+
+Status: implemented with unit tests, including two sensitivity tests; E3 has not been run as an experiment and no result file exists. Stacked on PR 94 (ADR-059).
+
+Decision: `waggle.validation.geofence.check_geofence(plan, hazard)` returns a `GEOFENCE_INTRUSION` counterexample, with node label and zone, for every node whose target zone or required corridor zone is in the hazard set. The hazard set is trusted state (telemetry thresholds, static geofences) and never comes from text. `waggle.experiments.e3_plan_validator` builds the plan each case causes, parses it with the production schema and checks it: E3-T18-01 (route the forklift through Z1) must be rejected, and E3-T18-04 (a detour that avoids Z1) must be accepted. `plan_validator` joins `RUNNABLE_LAYERS`. This is the minimal validator recommended to the maintainer; the full rollout validator of ADR-023 is not replaced.
+
+Provenance: `PLANS` in the runner is a fixture I wrote from the case text, like the other runner fixtures. It needs maintainer review. The detour in E3-T18-04 uses `avoid_zone_ids` and no corridor.
+
+Gaps, stated plainly: the check sees only the zones a plan names. A path through open transit zones that crosses the hazard is not seen, and no rollout runs, so the part of E3-T18-01 that asks to omit the thermal alarm from the rollout is not exercised. Marking `plan_validator` runnable therefore means the geofence part only; a result for it must say so. Other counterexample types (collision, separation, deadlock, lease conflict, progress) do not exist.
