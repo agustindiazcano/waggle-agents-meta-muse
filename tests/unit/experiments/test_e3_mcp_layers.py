@@ -20,8 +20,9 @@ def test_every_case_of_the_two_layers_has_exactly_one_attempt() -> None:
     assert len(LAYER_IDS) == 7
 
 
-def test_the_runnable_layers_are_structure_plus_the_two_mcp_layers() -> None:
-    assert frozenset({"output_schema", "mcp_identity", "mcp_schema_bounds"}) == RUNNABLE_LAYERS
+def test_the_runnable_layers_are_structure_the_mcp_layers_and_the_catalog() -> None:
+    expected = frozenset({"output_schema", "mcp_identity", "mcp_schema_bounds", "catalog_check"})
+    assert expected == RUNNABLE_LAYERS
 
 
 def test_the_production_boundary_blocks_every_injection_and_serves_every_benign_call() -> None:
