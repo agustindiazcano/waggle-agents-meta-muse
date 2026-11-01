@@ -22,6 +22,7 @@ CONTRACT_IDS = [
     "sim-control-no-llm-side",
     "mcp-server-no-governance",
     "control-no-ground-truth",
+    "validation-no-llm-side",
 ]
 
 

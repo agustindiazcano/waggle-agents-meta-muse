@@ -41,3 +41,13 @@ forbidden_modules =
     fixture_pkg.sim.rollout
     fixture_pkg.sim.scenarios
     fixture_pkg.sim.scripted
+
+[importlinter:contract:validation-no-llm-side]
+name = fixture: validation must not import llm, governance or mcp_server
+type = forbidden
+source_modules =
+    fixture_pkg.validation
+forbidden_modules =
+    fixture_pkg.llm
+    fixture_pkg.governance
+    fixture_pkg.mcp_server
