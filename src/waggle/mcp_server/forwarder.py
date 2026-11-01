@@ -13,9 +13,12 @@ from waggle.coordination.corridors import CorridorResult, ZoneObservation, ZoneT
 from waggle.coordination.task_model import TaskRecord
 from waggle.db.corridors import IdempotencyConflict
 from waggle.db.inventory import PartStock, ReservationResult, UnknownPart
+from waggle.db.motion import EnqueueResult, MotionRefused, NewOrder
 from waggle.db.procurement import OrderResult
 from waggle.db.tickets import TicketResult, UnknownMachine, UnknownTicket, UnknownZone
 from waggle.mcp_server.identity import Identity
+
+_MOTION_TOOLS = frozenset({"move_waypoint", "pick_package", "deliver_package"})
 
 
 class ToolDenied(Exception):
@@ -80,6 +83,14 @@ class ProcurementPort(Protocol):
         ...
 
 
+class MotionPort(Protocol):
+    """The queue operation of ``MotionOrderRepository``."""
+
+    def enqueue(self, robot_id: str, order: NewOrder, now_tick: int) -> EnqueueResult:
+        """Queue one order for the simulator bridge, or raise MotionRefused."""
+        ...
+
+
 class TickSource(Protocol):
     """A trusted shared tick. It must not be derived from a request."""
 
@@ -108,6 +119,7 @@ class FencedForwarder:
         inventory: InventoryPort | None = None,
         tickets: TicketPort | None = None,
         procurement: ProcurementPort | None = None,
+        motion: MotionPort | None = None,
     ) -> None:
         self._corridors = corridors
         self._tasks = tasks
@@ -116,6 +128,7 @@ class FencedForwarder:
         self._inventory = inventory
         self._tickets = tickets
         self._procurement = procurement
+        self._motion = motion
 
     def forward(
         self, identity: Identity, tool: str, args: Mapping[str, object], timeout_s: float
@@ -129,6 +142,8 @@ class FencedForwarder:
             return self._get_inventory(self._inventory, args)
         if tool == "reserve_part" and self._inventory is not None:
             return self._reserve_part(self._inventory, identity, args)
+        if tool in _MOTION_TOOLS and self._motion is not None:
+            return self._queue_motion(self._motion, identity, tool, args)
         if tool == "open_ticket" and self._tickets is not None:
             return self._open_ticket(self._tickets, identity, args)
         if tool == "dispatch_tech" and self._tickets is not None:
@@ -136,6 +151,31 @@ class FencedForwarder:
         if tool == "create_purchase_order" and self._procurement is not None:
             return self._purchase_order(self._procurement, identity, args)
         raise ToolUnavailable(tool)
+
+    def _queue_motion(
+        self, motion: MotionPort, identity: Identity, tool: str, args: Mapping[str, object]
+    ) -> Mapping[str, object]:
+        """Queue an order. The server moves nothing: the simulator bridge executes it."""
+        task_id = str(args["task_id"])
+        if tool == "move_waypoint":
+            order = NewOrder(
+                tool,
+                task_id,
+                x=float(str(args["x"])),
+                y=float(str(args["y"])),
+                speed=float(str(args["speed"])),
+            )
+        elif tool == "pick_package":
+            order = NewOrder(tool, task_id, package_id=str(args["package_id"]))
+        else:
+            order = NewOrder(
+                tool, task_id, package_id=str(args["package_id"]), zone_id=str(args["zone_id"])
+            )
+        try:
+            result = motion.enqueue(identity.robot_id, order, self._ticks.now_tick())
+        except MotionRefused:
+            raise ToolDenied("order not available") from None
+        return {"queued": result.queued, "reason": result.reason, "order_id": result.order_id}
 
     @staticmethod
     def _open_ticket(

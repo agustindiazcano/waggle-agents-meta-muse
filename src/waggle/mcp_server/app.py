@@ -17,6 +17,7 @@ from waggle.db.corridors import CorridorRepository
 from waggle.db.identities import PostgresIdentityStore
 from waggle.db.inventory import InventoryRepository
 from waggle.db.mcp_audit import McpAuditRepository, RateLimit
+from waggle.db.motion import MotionOrderRepository
 from waggle.db.occupancy import TrustedStateRepository
 from waggle.db.procurement import ProcurementRepository
 from waggle.db.schema import LATEST_REVISION, current_revision
@@ -109,6 +110,7 @@ def build_forwarder(database: Database) -> FencedForwarder:
         inventory=InventoryRepository(database),
         tickets=TicketRepository(database),
         procurement=ProcurementRepository(database),
+        motion=MotionOrderRepository(database),
     )
 
 
