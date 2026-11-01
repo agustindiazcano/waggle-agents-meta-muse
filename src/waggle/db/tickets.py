@@ -82,6 +82,8 @@ class TicketRepository:
         _id(machine_id, "machine id")
         _summary(summary)
         _id(opener, "opener")
+        # The id comes from the key, so a repeat can collide on the id or on the key column.
+        # A bare ON CONFLICT covers both, including a concurrent in-flight insert.
         ticket_id = ticket_id_for(key)
         with self._database.transaction() as connection:
             if (
@@ -94,7 +96,7 @@ class TicketRepository:
             inserted = connection.execute(
                 "INSERT INTO maintenance_tickets "
                 "(ticket_id, idempotency_key, machine_id, summary, opened_by) "
-                "VALUES (%s, %s, %s, %s, %s) ON CONFLICT (ticket_id) DO NOTHING "
+                "VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING "
                 "RETURNING ticket_id",
                 (ticket_id, key, machine_id, summary, opener),
             ).fetchone()
