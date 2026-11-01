@@ -646,6 +646,14 @@ Decision: `move_waypoint`, `pick_package` and `deliver_package` do not move anyt
 
 Gaps, stated plainly: nothing consumes the queue yet, so a queued order does not move a robot; the simulator-side consumer is the next branch. Package ids are bounded identifiers and are not checked against any registry, because none exists. The lease check uses the holder and expiry; the fencing token is not an argument of these tools. Chassis speed bounds are enforced earlier, by the schema layer.
 
+## ADR-051: The simulator executes queued motion orders
+
+Status: implemented with unit tests on the real simulator and a fake queue; the PostgreSQL pairing is checked only by the cloud workflow. Stacked on ADR-050.
+
+Decision: `waggle.experiments.sim_motion.MotionExecutor` is a simulator system placed before the one-shot waypoint driver. Each tick it closes finished orders and starts pending ones. A `move_waypoint` order replaces the robot's route with one waypoint and resolves `done` when the driver reports arrival, `failed` when the deadline passes (the route is cleared so the robot stops). An order for a robot the simulation does not have, or for a robot that already has an active order, resolves `failed`. The simulator has no package model, so `pick_package` and `deliver_package` resolve `failed` immediately: a physical effect is never reported that was not simulated. The executor runs only in the live simulation, never in a rollout fork, and is deterministic for the same orders.
+
+Gaps, stated plainly: the ordered `speed` is not used, because the waypoint driver always drives at the class cap (the chassis bound was already checked upstream); the fast layer still governs actual motion, so arrival can be late or never; the executor is not yet part of any experiment scenario, and no process runs the server and the simulator together; package orders need a package model before they can succeed.
+
 ## ADR-052: Guard adapter and the first E3 evaluator pieces
 
 Status: implemented with unit tests over scripted providers; no real model call, no result file, E3 has not run. Based on `main`, independent of the open MCP stack.
