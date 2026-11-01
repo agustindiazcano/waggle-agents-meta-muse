@@ -51,14 +51,17 @@ def test_same_key_with_other_values_conflicts(database: Database) -> None:
 
 def test_concurrent_calls_with_one_key_open_one_ticket(database: Database) -> None:
     repo = _tickets(database)
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        results = list(
-            pool.map(lambda _i: repo.open_ticket("evt-1", "M-1", "noise", "tech-0"), range(8))
-        )
-    assert sum(r.created for r in results) == 1
+    rounds = 10
+    for n in range(rounds):
+        key = f"evt-{n}"
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            results = list(
+                pool.map(lambda _i, k=key: repo.open_ticket(k, "M-1", "noise", "tech-0"), range(8))
+            )
+        assert sum(r.created for r in results) == 1
     with database.transaction() as connection:
         row = connection.execute("SELECT count(*) FROM maintenance_tickets").fetchone()
-    assert row is not None and row[0] == 1
+    assert row is not None and row[0] == rounds
 
 
 def test_dispatch_requires_a_known_ticket_and_zone(database: Database) -> None:
