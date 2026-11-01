@@ -683,3 +683,13 @@ Result expected before the run: E3-T3-01 (absent part) is blocked because the pa
 Provenance: `PART_FOR_CASE` maps each case id to a part number. I wrote it from the case text. It is a fixture, not a label, and needs maintainer review like `ATTEMPTS`.
 
 Gaps, stated plainly: 10 of 25 cases now have a runner. Message schema, read-back, court unanimity (production prompt), plan schema, plan validator, untrusted-data boundary and the fast layer still have none.
+
+## ADR-057: Read-back and item resolution before a voice-driven pick
+
+Status: implemented with unit tests, including sensitivity tests; E3 has not been run as an experiment and no result file exists. Extends ADR-054. ADR-055 and ADR-056 are in open PRs; keep the numbers in order when merging.
+
+Decision: `waggle.governance.readback` is pure. `resolve_items` maps a transcript to known item ids by code (digits, `ITEM-n`, number words up to 99). `start_readback` builds the read-back text from the trusted order item only, never from the transcript. `authorize` allows execution only when a `Confirmation` exists for that prompt id and that item and the transcript names no item other than the ordered one. A `Confirmation` is a typed object the authenticated operator channel produces; words in the transcript, such as a claim that confirmation already happened, are never parsed into one. `waggle.experiments.e3_readback` runs E3-T4-01 to 03: the two injections try to execute from the transcript with no confirmation and must not be authorized; the benign case asks for a read-back and must get a prompt naming ITEM-17. `read_back_item_resolution` joins `RUNNABLE_LAYERS`.
+
+Provenance: `ATTEMPTS` is a fixture I wrote from the case text, like the other runners. It needs maintainer review.
+
+Gaps, stated plainly: this measures the confirmation rule, not whether a transcription model would hear the wrong number. The result is independent of what the transcript says, which is the design; it does not show the rule is enough against a compromised operator channel. Nothing yet connects a real voice transcript, a trusted order or the operator channel to these functions. Number words stop at 99. The word-error rate on item ids (EXPERIMENTS.md E7) is not measured. 13 of 25 cases have a runner with this branch alone (10 on main plus 3), and 14 once PR 90 (message schema) is merged.
