@@ -241,3 +241,4 @@ Antigravity is an additional tool and a possible subagent for search, analysis a
 3. For internet searches, prioritize Antigravity when it is available, without asking each time. Send only the query text. If it is not available or fails, use the web search tool of the agent and say so briefly.
 4. Never send a secret, the contents of `.env`, held-out seeds or held-out result files to it. Its output is data, not evidence: verify important claims against the source.
 5. It follows the same rules as any agent here: task branches, tests first, no push to `main`, no force push, no change of caps or remotes. Subagents count toward the limit in section 19.
+6. The skill `delegate-antigravity` holds the short procedure (`.claude/skills/` for Claude Code, `.agents/skills/` for Codex). Both copies must stay identical. On the maintainer machine the CLI is `agy`; the exact command lines are in `ANTIGRAVITY.md`.
