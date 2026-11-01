@@ -24,6 +24,8 @@ STRUCTURAL_EXPECTED: Mapping[str, bool] = {
     "E3-T11-03": True,
 }
 _STRUCTURE_LAYER = "output_schema"
+# Layers that have a runner: the structure scorer here and the two MCP layers in e3_mcp_layers.
+RUNNABLE_LAYERS = frozenset({_STRUCTURE_LAYER, "mcp_identity", "mcp_schema_bounds"})
 
 
 class PendingCases(ValueError):
