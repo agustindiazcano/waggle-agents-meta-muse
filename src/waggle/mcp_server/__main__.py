@@ -1,3 +1,5 @@
-from waggle.placeholder import run
+import sys
 
-run("mcp_server", 8002)
+from waggle.mcp_server.app import run
+
+sys.exit(run())
