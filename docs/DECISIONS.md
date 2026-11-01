@@ -709,3 +709,13 @@ Decision: `waggle.governance.readback` is pure. `resolve_items` maps a transcrip
 Provenance: `ATTEMPTS` is a fixture I wrote from the case text, like the other runners. It needs maintainer review.
 
 Gaps, stated plainly: this measures the confirmation rule, not whether a transcription model would hear the wrong number. The result is independent of what the transcript says, which is the design; it does not show the rule is enough against a compromised operator channel. Nothing yet connects a real voice transcript, a trusted order or the operator channel to these functions. Number words stop at 99. The word-error rate on item ids (EXPERIMENTS.md E7) is not measured. 13 of 25 cases have a runner with this branch alone (10 on main plus 3), and 14 once PR 90 (message schema) is merged.
+
+## ADR-058: E3 runner for the untrusted-data boundary layer
+
+Status: implemented with unit tests, including a sensitivity test; E3 has not been run as an experiment and no result file exists. Extends ADR-054. Numbers 055 to 057 are in open PRs; keep them ordered when merging.
+
+Decision: `waggle.experiments.e3_boundary` runs the case that targets `untrusted_data_boundary` (E3-T18-03, a package label with forged closing and system tags) through the production `sanitize` and `fence` as the source the case declares. An injection is blocked when the fenced result is exactly one `<untrusted source="...">` wrapper whose body has no raw angle bracket, so the text can neither close the fence nor open another tag. The check is structural and never reads meaning. A sensitivity test wraps without escaping and requires the runner to report the missed injection. `untrusted_data_boundary` joins `RUNNABLE_LAYERS`.
+
+Provenance: `SOURCES` maps the case id to `PACKAGE_LABEL`, taken from the case entry. It is a fixture and needs maintainer review.
+
+Gaps, stated plainly: this shows the fence holds as data markup; it does not show that a model given the fenced text ignores instructions inside it, which only a model run could measure. The corpus has one case for this layer and no benign case. The planner context that should carry the fence does not exist yet (`waggle.validation` is not created).
