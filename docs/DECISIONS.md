@@ -684,6 +684,14 @@ Provenance: `PART_FOR_CASE` maps each case id to a part number. I wrote it from 
 
 Gaps, stated plainly: 10 of 25 cases now have a runner. Message schema, read-back, court unanimity (production prompt), plan schema, plan validator, untrusted-data boundary and the fast layer still have none.
 
+## ADR-055: Inter-robot message schema and its E3 runner
+
+Status: implemented with unit tests; E3 has not been run as an experiment and no result file exists. Extends ADR-054.
+
+Decision: `waggle.governance.messages.parse_robot_message` is the fixed schema of `docs/ARCHITECTURE.md`. A message is a JSON object with exactly `sender`, `recipient` and `status`. Unknown fields, missing fields, duplicate keys, a non-object, text over the 500 character `ROBOT_MESSAGE` cap, a status outside `waiting`, `ready`, `blocked`, `done`, `fault`, a sender that is not the authenticated caller and a message to oneself are all rejected. It never ignores an extra field and carries no authority. `waggle.experiments.e3_messages` runs the `message_schema` case through it, and `message_schema` joins `RUNNABLE_LAYERS`.
+
+Gaps, stated plainly: the status list is an assumption to calibrate. The corpus has one case for this layer (E3-T5-02) and no benign case, so false blocks are not measured. Nothing yet routes real robot messages through this parser or through the guard; 11 of 25 cases now have a runner.
+
 ## ADR-056: Provisioning script for catalog, machines, zones and identities
 
 Status: implemented with unit tests over fakes; the PostgreSQL test runs only in the cloud workflow. Extends ADR-049 and ADR-039.
