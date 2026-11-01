@@ -37,6 +37,7 @@ RUNNABLE_LAYERS = frozenset(
         "untrusted_data_boundary",
         "plan_schema",
         "plan_validator",
+        "fast_layer",
     }
 )
 
