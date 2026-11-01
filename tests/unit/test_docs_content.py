@@ -55,8 +55,17 @@ def test_lastcontext_has_done_state_and_prompt() -> None:
 
 def test_pending_is_a_prioritized_task_list() -> None:
     text = _read("PENDING.md")
-    assert "| # | Priority | Task | Owner | Status |" in text
+    assert "| # | Priority | Task | Owner | Status | Code % |" in text
     assert re.search(r"^\| 1 \| P[1-4] \|", text, flags=re.MULTILINE)
+
+
+def test_every_pending_row_has_a_code_percent_and_the_total_is_stated() -> None:
+    text = _read("PENDING.md")
+    rows = re.findall(r"^\| \d+ \| P[1-4] \|.*$", text, flags=re.MULTILINE)
+    assert rows
+    assert all(re.search(r"\| (\d{1,3}%|-) \|$", row) for row in rows)
+    assert re.search(r"Code progress of the project \(estimate by eye, code only\): \d{1,3}%", text)
+    assert re.search(r"Code progress of the project \(estimate by eye, code only\): \d{1,3}%", _read("LASTCONTEXT.md"))
 
 
 def test_compose_images_are_tagged_dev_never_latest() -> None:

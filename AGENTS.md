@@ -199,6 +199,7 @@ When refusing an action, state the correct alternative in the same reply.
 - If the task affects a metric, the experiment script still runs.
 - If a decision constrains later work, it is recorded in `docs/DECISIONS.md`.
 - A trap others will hit goes in `docs/GOTCHAS.md` with symptom and what to do. Prefer a test or check that prevents it.
+- Code progress estimated by eye and recorded (section 17).
 - `LASTCONTEXT.md` and `PENDING.md` updated.
 
 ## 17. Context files
@@ -208,6 +209,7 @@ When refusing an action, state the correct alternative in the same reply.
 - `PENDING.md`: the list of pending tasks, numbered, each with a priority (P1 blocking, P2 next, P3 later, P4 backlog), an owner and a status, including decisions waiting on the maintainer. It may be edited, never emptied or deleted.
 - `docs/DECISIONS.md`: architecture decision records. Records are superseded or deprecated, never deleted.
 - `docs/GOTCHAS.md`: known traps.
+- Code progress: when a task ends and when the maintainer asks to change session, estimate by eye, as a percent, how much of each task's code is written and how much of the whole project's code is written. Count code only: working code with its tests counts; docs, experiment runs, held-out results and delivery do not. Write the task percent in the `Code %` column of `PENDING.md` (`-` for a row without code) and the project total, with the date, at the top of `PENDING.md` and in `LASTCONTEXT.md`. It is a judgment: say so, change it only with a reason, and never use it as a result or in the README.
 
 ## 18. Build order and gates
 
