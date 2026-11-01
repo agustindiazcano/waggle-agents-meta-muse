@@ -614,6 +614,38 @@ Source: the specification pages for revisions 2025-11-25 and 2026-07-28, read on
 
 Gaps, stated plainly: the field definitions of `Implementation` and `ClientCapabilities` were not read, so only their types are checked; whether `server/discover` itself requires all three `_meta` keys is not stated in the text read, so it requires the two the general rule marks required; a modern request that omits the version key cannot be told apart from a legacy one and gets the not-initialized error rather than -32602; `ttlMs` and `cacheScope` are omitted; the 2026 revision removes `ping`, which is still answered. No real client has been run against this, so interoperability is untested and the server is not claimed to be conformant.
 
+## ADR-047: MCP server entry point reads every setting from the environment
+
+Status: implemented with unit tests and injected fakes; not run against a real client or a real database in this branch. Stacked on ADR-046.
+
+Decision: `waggle.mcp_server.app` builds the boundary over the PostgreSQL repositories (identity store, audit and rate limit, corridors, tasks, trusted tick and occupancy) and `python -m waggle.mcp_server` serves newline-delimited JSON-RPC on stdio. The five settings below are required and have no default, because a default for a rate limit or a map extent would be an unreviewed safety value. A missing or invalid value, a schema revision other than the latest, or an unreadable revision ends the process with exit code 2 before any line is read. Errors name the variable and never its value; an unreadable revision reports only the exception class, because driver text can carry the connection address. The token is one chassis token per process (ADR-045). The trusted tick and occupancy come from `TrustedStateRepository`; in a running system only the simulator bridge writes them (ADR-042), so a deployment without that writer answers release calls as unknown evidence and denies.
+
+Gaps: the rate limit and timeout values are not calibrated; the map extent is typed in by hand and not read from a loaded map; `docker-compose.yml` still expects an HTTP health endpoint on port 8002 that a stdio server does not provide; the eight other tools still raise `ToolUnavailable`.
+
+## ADR-048: Spare parts catalog and idempotent reservations
+
+Status: implemented with unit tests and fakes; PostgreSQL behavior is checked only by the cloud workflow, not run locally. Stacked on ADR-047.
+
+Decision: schema revision 7 adds `spare_parts` (part number, `on_hand`, `reserved`, with `reserved <= on_hand` enforced by a check) and `part_reservations` (unique idempotency key, part, quantity, holder). The table is the catalog: a part number outside it is denied by code, so text from a manual or a model cannot create a part (T3). `InventoryRepository.reserve` locks the part row first and then looks up the key, so concurrent calls with one key reserve once and stock cannot oversell. A repeat with the same values is a replay; the same key with other values raises `IdempotencyConflict` and the tool denies (T16 for orders, same mechanism). A shortage is a result (`reserved: false`), not an error. `get_inventory` reports only available units. The holder is the authenticated robot id. Catalog rows load through `add_part` from separate scripts, never inside the migration.
+
+Gaps: no catalog load script exists yet; reservations are never released or consumed; `dispatch_tech`, `open_ticket` and `create_purchase_order` still raise `ToolUnavailable`; the starting allowlist lets only the maintenance chassis reserve.
+
+## ADR-049: Machine catalog, idempotent tickets, dispatch and purchase orders
+
+Status: implemented with unit tests and fakes; PostgreSQL behavior is checked only by the cloud workflow. Stacked on ADR-048.
+
+Decision: schema revision 8 adds `machines`, `maintenance_tickets` and `purchase_orders`. The ticket id is derived from the failure event key (`tkt-` plus 16 hex digits of its SHA-256), so one event opens at most one ticket (T9); a repeat returns `created: false`, and the same key with another machine, summary or opener is denied. `dispatch_tech` needs an existing open ticket and a registered zone, records the dispatcher and is idempotent for the same zone; a second, different zone is denied. `create_purchase_order` locks the part row, requires a catalog part, places the order only when no unit is available (ADR-020), and is idempotent per key (T16); with stock available it returns `ordered: false`. The opener, dispatcher and requester are the authenticated robot id. The summary is untrusted text: stored bounded and printable only, never returned.
+
+Gaps: dispatch records a request and does not move a technician or take a zone lease; a technician must still acquire the zone through the corridor path. There is no ticket close or reopen. The machine catalog has no load script. The summary is not passed through the guard yet.
+
+## ADR-050: Motion tools queue orders for the simulator bridge
+
+Status: implemented with unit tests and fakes; PostgreSQL behavior is checked only by the cloud workflow. Maintainer chose this design on 2026-11-01. Stacked on ADR-049.
+
+Decision: `move_waypoint`, `pick_package` and `deliver_package` do not move anything in the MCP server. After the boundary checks (identity, allowlist, schema and chassis bounds, rate limit, audit intent), the forwarder queues a row in `motion_orders` (schema revision 9) and returns `queued` with the order id. The simulator bridge, which owns ground truth, is the consumer: `pending()` lists orders and `resolve()` records `done` or `failed`. One transaction checks that the task exists, belongs to the caller (`worker_id` is the authenticated robot) and is live (`ASSIGNED` or `EXECUTING`, expiry above the trusted tick); a delivery also checks that the caller holds a live lease on the zone. A robot has at most one pending order (partial unique index): the same call again replays the pending order, a different one returns `busy` as a result. Refusals are denials that do not say which check failed; the reason is kept for audit and tests only.
+
+Gaps, stated plainly: nothing consumes the queue yet, so a queued order does not move a robot; the simulator-side consumer is the next branch. Package ids are bounded identifiers and are not checked against any registry, because none exists. The lease check uses the holder and expiry; the fencing token is not an argument of these tools. Chassis speed bounds are enforced earlier, by the schema layer.
+
 ## ADR-052: Guard adapter and the first E3 evaluator pieces
 
 Status: implemented with unit tests over scripted providers; no real model call, no result file, E3 has not run. Based on `main`, independent of the open MCP stack.

@@ -173,6 +173,10 @@ Names only live in `.env.example`. Values go in `.env`, which git ignores.
 | `VERTEX_PROJECT_ID`, `VERTEX_LOCATION`, `VERTEX_MODEL_ID`, `GOOGLE_APPLICATION_CREDENTIALS` | Vertex AI backup, service account file | none |
 | `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD`, `VERTEX_SPEND_CAP_USD` | Hard cap per provider in USD. A missing or invalid value blocks calls | none |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL` | Database | none |
+| `WAGGLE_MCP_TOKEN` | MCP server: chassis token, at least 32 characters | none, required |
+| `WAGGLE_MCP_EXTENT` | MCP server: map rectangle `x_min,y_min,x_max,y_max` in meters | none, required |
+| `WAGGLE_MCP_RATE_MAX_CALLS`, `WAGGLE_MCP_RATE_WINDOW_S` | MCP server: allowed intents per chassis in the window | none, required |
+| `WAGGLE_MCP_TIMEOUT_S` | MCP server: per-call timeout, above 0 and at most 60 | none, required |
 | `MESHY_API_KEY`, `LANGFUSE_*` | 3D assets and optional tracing | none |
 | `WAGGLE_IMAGE_TAG` | Tag of the service images in compose | dev |
 
