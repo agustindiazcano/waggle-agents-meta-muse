@@ -113,7 +113,7 @@ uv run ci                   # ruff, mypy --strict, pytest with coverage, import-
 docker compose up --build   # db, api, worker, mcp_server, web (Phase 0 placeholders)
 ```
 
-Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`. `uv run experiments-dev` runs E1 on the development seeds (a full run is a cloud job, see `.github/workflows/e1.yml`) and `uv run report` writes `results/e1/dev/report.md` from the result files. `experiments-test` is still a placeholder.
+Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`, `uv run provision SPEC TOKENS_OUT`. `uv run provision` loads catalog, machines, zones and robot identities from a JSON spec such as `data/provision/example.json` into the database named by `DATABASE_URL`; tokens go to a new file and are never printed. `uv run experiments-dev` runs E1 on the development seeds (a full run is a cloud job, see `.github/workflows/e1.yml`) and `uv run report` writes `results/e1/dev/report.md` from the result files. `experiments-test` is still a placeholder.
 
 Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
 
