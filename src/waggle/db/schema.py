@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 8
+LATEST_REVISION = 9
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -195,6 +195,35 @@ _MAINTENANCE_DDL: tuple[LiteralString, ...] = (
     )""",
 )
 
+_MOTION_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE motion_orders (
+        order_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        robot_id text NOT NULL CHECK (length(robot_id) BETWEEN 1 AND 64),
+        task_id text NOT NULL REFERENCES tasks(task_id),
+        tool text NOT NULL CHECK (tool IN ('move_waypoint', 'pick_package', 'deliver_package')),
+        x double precision CHECK (x IS NULL OR (x > '-Infinity' AND x < 'Infinity')),
+        y double precision CHECK (y IS NULL OR (y > '-Infinity' AND y < 'Infinity')),
+        speed double precision CHECK (speed IS NULL OR (speed > 0 AND speed < 'Infinity')),
+        package_id text CHECK (package_id ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        zone_id text REFERENCES zones(zone_id),
+        signature text NOT NULL CHECK (signature ~ '^[0-9a-f]{64}$'),
+        status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done', 'failed')),
+        created_tick bigint NOT NULL CHECK (created_tick >= 0),
+        resolved_tick bigint CHECK (resolved_tick >= 0),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        resolved_at timestamptz,
+        CHECK ((tool = 'move_waypoint' AND x IS NOT NULL AND y IS NOT NULL
+                AND speed IS NOT NULL AND package_id IS NULL AND zone_id IS NULL)
+            OR (tool = 'pick_package' AND package_id IS NOT NULL AND zone_id IS NULL
+                AND x IS NULL AND y IS NULL AND speed IS NULL)
+            OR (tool = 'deliver_package' AND package_id IS NOT NULL AND zone_id IS NOT NULL
+                AND x IS NULL AND y IS NULL AND speed IS NULL)),
+        CHECK ((status = 'pending') = (resolved_tick IS NULL))
+    )""",
+    """CREATE UNIQUE INDEX motion_orders_one_pending ON motion_orders (robot_id)
+        WHERE status = 'pending'""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -204,6 +233,7 @@ _MIGRATIONS = {
     6: _TRUSTED_DDL,
     7: _INVENTORY_DDL,
     8: _MAINTENANCE_DDL,
+    9: _MOTION_DDL,
 }
 
 

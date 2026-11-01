@@ -15,10 +15,14 @@ from uuid import uuid4
 from waggle.db.connection import Database
 from waggle.db.corridors import CorridorRepository
 from waggle.db.identities import PostgresIdentityStore
+from waggle.db.inventory import InventoryRepository
 from waggle.db.mcp_audit import McpAuditRepository, RateLimit
+from waggle.db.motion import MotionOrderRepository
 from waggle.db.occupancy import TrustedStateRepository
+from waggle.db.procurement import ProcurementRepository
 from waggle.db.schema import LATEST_REVISION, current_revision
 from waggle.db.tasks import TaskRepository
+from waggle.db.tickets import TicketRepository
 from waggle.mcp_server.boundary import Boundary
 from waggle.mcp_server.bounds import MapExtent
 from waggle.mcp_server.forwarder import FencedForwarder
@@ -95,17 +99,28 @@ def parse_settings(environ: Mapping[str, str]) -> Settings:
     return Settings(token, _extent(environ), limit, _timeout(environ))
 
 
+def build_forwarder(database: Database) -> FencedForwarder:
+    """The forwarder over every repository that has a trusted backend. Opens no connection."""
+    trusted = TrustedStateRepository(database)
+    return FencedForwarder(
+        CorridorRepository(database),
+        TaskRepository(database),
+        trusted,
+        trusted,
+        inventory=InventoryRepository(database),
+        tickets=TicketRepository(database),
+        procurement=ProcurementRepository(database),
+        motion=MotionOrderRepository(database),
+    )
+
+
 def build_server(environ: Mapping[str, str], database: Database, session: str) -> LineServer:
     """Wire the boundary over the database repositories. Opens no connection."""
     settings = parse_settings(environ)
-    trusted = TrustedStateRepository(database)
-    forwarder = FencedForwarder(
-        CorridorRepository(database), TaskRepository(database), trusted, trusted
-    )
     boundary = Boundary(
         PostgresIdentityStore(database),
         McpAuditRepository(database),
-        forwarder,
+        build_forwarder(database),
         settings.extent,
         settings.limit,
         settings.timeout_s,

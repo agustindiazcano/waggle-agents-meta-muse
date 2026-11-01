@@ -2,6 +2,7 @@
 
 import io
 import json
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -11,11 +12,13 @@ from waggle.db.schema import LATEST_REVISION
 from waggle.mcp_server.app import (
     ConfigError,
     Settings,
+    build_forwarder,
     build_server,
     main,
     parse_settings,
 )
 from waggle.mcp_server.bounds import MapExtent
+from waggle.mcp_server.identity import Identity
 
 TOKEN = "d" * 43
 ENV = {
@@ -128,3 +131,23 @@ def test_main_serves_lines_when_the_revision_matches() -> None:
     assert code == 0
     assert json.loads(out.getvalue())["result"] == {}
     assert err.getvalue() == ""
+
+
+@pytest.mark.parametrize(
+    ("tool", "args"),
+    [
+        ("get_inventory", {"part_number": "P-1"}),
+        ("reserve_part", {"part_number": "P-1", "quantity": 1, "idempotency_key": "k"}),
+        ("open_ticket", {"machine_id": "M-1", "idempotency_key": "k", "summary": "s"}),
+        ("dispatch_tech", {"ticket_id": "tkt-0123456789abcdef", "zone_id": "z"}),
+        ("create_purchase_order", {"part_number": "P-1", "quantity": 1, "idempotency_key": "k"}),
+    ],
+)
+def test_maintenance_tools_are_wired_to_the_database(tool: str, args: dict[str, object]) -> None:
+    """A wired tool reaches the database and fails to connect; an unwired one is unavailable."""
+    database = MagicMock(spec=Database)
+    database.transaction.side_effect = ConnectionError("no database in unit tests")
+    forwarder = build_forwarder(database)
+    with pytest.raises(ConnectionError):
+        forwarder.forward(Identity("maintenance", "maint-0"), tool, args, 5.0)
+    database.transaction.assert_called()
