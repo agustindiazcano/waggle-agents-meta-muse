@@ -29,6 +29,6 @@ No evaluation runner is added by this corpus. The eventual run uses the producti
 Integration gaps made explicit by the declarations:
 
 - `model_output` cases enter response validation directly. Do not sanitize malformed JSON before checking it.
-- `incident_text` is a threat-model source, but is not an `UntrustedSource` member yet. It needs an explicit sanitizer/guard integration before evaluation, with tests. Do not silently treat an incident report as trusted context.
+- `incident_text` is now an `UntrustedSource` member with its own length cap (ADR-052), so incident reports are sanitized and fenced before any model. The planner integration that consumes them is still missing.
 - Message schema, item read-back, catalog compatibility, production court prompts, planner schema and planner validation still need their production integration. The pure court decision rule is not a substitute for testing the production prompt.
 - A catalog existence check alone may accept E3-T3-02's incompatible but existing part. Measure and report that gap; do not claim existence establishes compatibility.

@@ -66,7 +66,8 @@ def _unique_fields(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return fields
 
 
-def _parse(raw: str) -> tuple[GuardLabel, str]:
+def parse_guard_response(raw: str) -> tuple[GuardLabel, str]:
+    """Validate a raw classifier response strictly, or raise ValueError."""
     if not isinstance(raw, str) or len(raw) > _MAX_RESPONSE_CHARS:
         raise ValueError("invalid classifier response")
     payload: object = json.loads(raw, object_pairs_hook=_unique_fields)
@@ -116,7 +117,7 @@ async def classify_input(
         _LOGGER.warning("classifier_error")
         return _reject("classifier_error")
     try:
-        label, reason = _parse(raw)
+        label, reason = parse_guard_response(raw)
     except (ValueError, RecursionError):
         return _reject("classifier_parse_error")
     outcome = screen(label)

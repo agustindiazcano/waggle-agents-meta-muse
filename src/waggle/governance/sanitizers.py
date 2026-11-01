@@ -21,6 +21,7 @@ class UntrustedSource(StrEnum):
     SOP_TEXT = "sop_text"
     MANUAL_TEXT = "manual_text"
     ROBOT_MESSAGE = "robot_message"
+    INCIDENT_TEXT = "incident_text"
 
 
 # Caps in characters are assumptions to calibrate on real inputs.
@@ -30,6 +31,7 @@ MAX_CHARS: Final[dict[UntrustedSource, int]] = {
     UntrustedSource.SOP_TEXT: 4000,
     UntrustedSource.MANUAL_TEXT: 4000,
     UntrustedSource.ROBOT_MESSAGE: 500,
+    UntrustedSource.INCIDENT_TEXT: 2000,
 }
 
 SanitizeCode = Literal["bad_type", "empty", "too_long"]
