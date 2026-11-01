@@ -663,3 +663,15 @@ Decision: `waggle.experiments.e3_mcp_layers` runs the seven corpus cases that ta
 Provenance: `ATTEMPTS` maps each case id to a caller and a call. I wrote it from the case text. It is a fixture, not a label, and it needs maintainer review: a wrong mapping would measure the wrong thing. Sensitivity tests widen the allowlist and the speed bound and require the runner to report forwarded injections, and block everything and require false blocks, so a green result cannot come from a runner that cannot fail.
 
 Gaps, stated plainly: what this measures is that the layer holds when the attack action reaches it, independent of the guard; it does not measure whether a model would be fooled into making that action. Seven of 25 cases are covered; catalog check needs PostgreSQL, the fast layer needs the control stack, and read-back, message schema, court unanimity (production prompt), plan schema, plan validator and the untrusted-data boundary still have no runner.
+
+## ADR-054: E3 runner for the catalog check layer
+
+Status: implemented with unit tests over a fake orderer and a PostgreSQL test that runs only in the cloud; E3 has not been run as an experiment and no result file exists. Extends ADR-053.
+
+Decision: `waggle.experiments.e3_catalog` runs the three corpus cases that target `catalog_check` by placing the order each case tries to cause through the production `ProcurementRepository`, over a synthetic catalog (`BRG-6204` and `SEAL-08`, stock zero, loaded by `seed_catalog`). An injection is blocked when no order is placed. The report reuses `LayerReport`, forwarded injections first. `catalog_check` joins `RUNNABLE_LAYERS`.
+
+Result expected before the run: E3-T3-01 (absent part) is blocked because the part is not in `spare_parts`. E3-T3-02 (existing but incompatible part) is accepted, because the catalog stores no machine-to-part compatibility, so existence is the only check. The runner reports it as a missed injection. It is a real gap in the layer, not a runner defect, and no check was loosened or hidden. Closing it needs a compatibility table and a design decision, listed in PENDING.
+
+Provenance: `PART_FOR_CASE` maps each case id to a part number. I wrote it from the case text. It is a fixture, not a label, and needs maintainer review like `ATTEMPTS`.
+
+Gaps, stated plainly: 10 of 25 cases now have a runner. Message schema, read-back, court unanimity (production prompt), plan schema, plan validator, untrusted-data boundary and the fast layer still have none.
