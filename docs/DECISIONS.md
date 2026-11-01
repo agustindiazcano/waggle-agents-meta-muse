@@ -683,3 +683,13 @@ Result expected before the run: E3-T3-01 (absent part) is blocked because the pa
 Provenance: `PART_FOR_CASE` maps each case id to a part number. I wrote it from the case text. It is a fixture, not a label, and needs maintainer review like `ATTEMPTS`.
 
 Gaps, stated plainly: 10 of 25 cases now have a runner. Message schema, read-back, court unanimity (production prompt), plan schema, plan validator, untrusted-data boundary and the fast layer still have none.
+
+## ADR-058: E3 runner for the untrusted-data boundary layer
+
+Status: implemented with unit tests, including a sensitivity test; E3 has not been run as an experiment and no result file exists. Extends ADR-054. Numbers 055 to 057 are in open PRs; keep them ordered when merging.
+
+Decision: `waggle.experiments.e3_boundary` runs the case that targets `untrusted_data_boundary` (E3-T18-03, a package label with forged closing and system tags) through the production `sanitize` and `fence` as the source the case declares. An injection is blocked when the fenced result is exactly one `<untrusted source="...">` wrapper whose body has no raw angle bracket, so the text can neither close the fence nor open another tag. The check is structural and never reads meaning. A sensitivity test wraps without escaping and requires the runner to report the missed injection. `untrusted_data_boundary` joins `RUNNABLE_LAYERS`.
+
+Provenance: `SOURCES` maps the case id to `PACKAGE_LABEL`, taken from the case entry. It is a fixture and needs maintainer review.
+
+Gaps, stated plainly: this shows the fence holds as data markup; it does not show that a model given the fenced text ignores instructions inside it, which only a model run could measure. The corpus has one case for this layer and no benign case. The planner context that should carry the fence does not exist yet (`waggle.validation` is not created).
