@@ -110,3 +110,11 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### Logical completion is not physical handoff evidence
 - Symptom: a dependent task starts when its predecessor is done even though no physical delivery was established.
 - What to do: declare the handoff zone in the task definition and use the atomic handoff operation with current trusted occupancy and live task and zone credentials. Ordinary completion denies such tasks. The declaration must come from trusted mission construction; the repository cannot infer physical intent from an ordinary task. Cloud PostgreSQL correctness tests passed; trusted production integration remains pending.
+
+### The stacked-merge trap happened again with PRs 70 to 82
+- Symptom: after PRs 70 to 77 and then 78, 80, 81 and 82 were merged into their bases, `main` had only the chain up to PR 77 (via PR 79). Work sat in `feat/maintenance-tickets` and `feat/mcp-handshake`.
+- What to do: same check as above. `git rev-list --count origin/main..origin/<top-branch>` must be 0 after the last merge. Before a batch, list the open stack with `gh pr list` and merge bottom-up, retargeting each PR to `main` after the one below it merges. When it already happened, branch from the branch that holds everything and open one PR to `main` (PR 83 did this).
+
+### `ON CONFLICT (column) DO NOTHING` does not cover a second unique index
+- Symptom: two concurrent inserts with the same logical key raise `UniqueViolation` on another unique index of the table, even though the statement names the primary key as the conflict target. Cloud run 41259268312 failed this way in `open_ticket`; it passed locally in unit tests because no database ran there.
+- What to do: when the key is derived and several unique indexes describe the same fact, use a bare `ON CONFLICT DO NOTHING`, then read the committed row and compare. Test the race with several keys and many threads, not one.
