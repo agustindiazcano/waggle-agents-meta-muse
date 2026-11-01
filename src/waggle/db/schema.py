@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 7
+LATEST_REVISION = 8
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -169,6 +169,32 @@ _INVENTORY_DDL: tuple[LiteralString, ...] = (
     )""",
 )
 
+_MAINTENANCE_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE machines (
+        machine_id text PRIMARY KEY CHECK (machine_id ~ '^[A-Za-z0-9_.-]{1,64}$')
+    )""",
+    """CREATE TABLE maintenance_tickets (
+        ticket_id text PRIMARY KEY CHECK (ticket_id ~ '^tkt-[0-9a-f]{16}$'),
+        idempotency_key text NOT NULL UNIQUE CHECK (idempotency_key ~ '^[A-Za-z0-9_.:-]{1,128}$'),
+        machine_id text NOT NULL REFERENCES machines(machine_id),
+        summary text NOT NULL CHECK (length(summary) BETWEEN 1 AND 500),
+        opened_by text NOT NULL CHECK (length(opened_by) BETWEEN 1 AND 64),
+        status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'dispatched')),
+        zone_id text REFERENCES zones(zone_id),
+        dispatched_by text CHECK (length(dispatched_by) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        CHECK ((status = 'open' AND zone_id IS NULL AND dispatched_by IS NULL)
+            OR (status = 'dispatched' AND zone_id IS NOT NULL AND dispatched_by IS NOT NULL))
+    )""",
+    """CREATE TABLE purchase_orders (
+        idempotency_key text PRIMARY KEY CHECK (idempotency_key ~ '^[A-Za-z0-9_.:-]{1,128}$'),
+        part_number text NOT NULL REFERENCES spare_parts(part_number),
+        quantity integer NOT NULL CHECK (quantity > 0),
+        requester text NOT NULL CHECK (length(requester) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -177,6 +203,7 @@ _MIGRATIONS = {
     5: _IDENTITY_DDL,
     6: _TRUSTED_DDL,
     7: _INVENTORY_DDL,
+    8: _MAINTENANCE_DDL,
 }
 
 
