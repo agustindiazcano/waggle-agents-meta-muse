@@ -18,6 +18,7 @@ ci = "waggle.tasks:ci"
 experiments-dev = "waggle.experiments.e1_run:main"
 experiments-test = "waggle.tasks:experiments_test"
 report = "waggle.experiments.e1_report:main"
+provision = "waggle.provisioning:run"
 
 [dependency-groups]
 dev = [

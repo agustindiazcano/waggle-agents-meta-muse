@@ -22,7 +22,16 @@ def test_every_case_of_the_two_layers_has_exactly_one_attempt() -> None:
 
 def test_the_runnable_layers_are_the_ones_with_a_runner() -> None:
     expected = frozenset(
-        {"output_schema", "mcp_identity", "mcp_schema_bounds", "catalog_check", "plan_schema"}
+        {
+            "output_schema",
+            "mcp_identity",
+            "mcp_schema_bounds",
+            "catalog_check",
+            "read_back_item_resolution",
+            "message_schema",
+            "untrusted_data_boundary",
+            "plan_schema",
+        }
     )
     assert expected == RUNNABLE_LAYERS
 

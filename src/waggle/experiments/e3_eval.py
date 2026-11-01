@@ -32,6 +32,9 @@ RUNNABLE_LAYERS = frozenset(
         "mcp_identity",
         "mcp_schema_bounds",
         "catalog_check",
+        "read_back_item_resolution",
+        "message_schema",
+        "untrusted_data_boundary",
         "plan_schema",
     }
 )

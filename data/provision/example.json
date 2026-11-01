@@ -1,0 +1,13 @@
+{
+  "parts": [
+    {"part_number": "BRG-6204", "on_hand": 10},
+    {"part_number": "SEAL-08", "on_hand": 4}
+  ],
+  "machines": ["C1", "C2", "CONV-1"],
+  "zones": ["Z1", "Z2"],
+  "identities": [
+    {"chassis": "carrier", "robot_id": "C1"},
+    {"chassis": "carrier", "robot_id": "C2"},
+    {"chassis": "maintenance", "robot_id": "MAINT-1"}
+  ]
+}
