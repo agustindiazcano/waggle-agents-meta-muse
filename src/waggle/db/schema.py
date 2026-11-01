@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 5
+LATEST_REVISION = 6
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -139,12 +139,27 @@ _IDENTITY_DDL: tuple[LiteralString, ...] = (
         WHERE NOT revoked""",
 )
 
+_TRUSTED_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE trusted_tick (
+        singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
+        tick bigint NOT NULL CHECK (tick >= 0),
+        updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+    """CREATE TABLE zone_occupancy (
+        zone_id text PRIMARY KEY REFERENCES zones(zone_id),
+        observed_tick bigint NOT NULL CHECK (observed_tick >= 0),
+        occupants text[],
+        recorded_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
     3: _HANDOFF_DDL,
     4: _AUDIT_DDL,
     5: _IDENTITY_DDL,
+    6: _TRUSTED_DDL,
 }
 
 

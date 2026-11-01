@@ -6,8 +6,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
-from waggle.coordination.task_model import TaskRecord
-from waggle.db.tasks import TaskRepository
+from waggle.coordination.task_model import TaskCredential, TaskRecord
+from waggle.db.tasks import TaskRepository, TaskResult
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +49,14 @@ def run_once(
     handler: Callable[[TaskRecord], HandlerOutcome],
     *,
     lease_ticks: int = 400,
+    complete: Callable[[TaskCredential, str, int], TaskResult] | None = None,
 ) -> WorkerResult:
     """Claim, start and handle one task; errors fail closed and stale attempts cannot finish.
 
     The caller supplies trusted current ticks. A duplicate successful claim is
     returned as replayed without invoking the handler, including after a crash.
-    Expired abandoned attempts are left for the separate bounded recovery sweep.
+    Expired abandoned attempts are left for the separate bounded recovery sweep. ``complete``
+    replaces ordinary completion, which a task with a handoff requirement always denies.
     """
     claimed = repository.claim(worker_id, request_id, now_tick(), lease_ticks=lease_ticks)
     if not claimed.accepted or claimed.task is None:
@@ -80,6 +82,7 @@ def run_once(
         failed = repository.fail(credential, _request_id("fail", request_id), now_tick())
         status = WorkerStatus.FAILED if failed.accepted else WorkerStatus.STALE
         return WorkerResult(status, task.task_id)
-    completed = repository.complete(credential, _request_id("complete", request_id), now_tick())
+    finish = complete if complete is not None else repository.complete
+    completed = finish(credential, _request_id("complete", request_id), now_tick())
     status = WorkerStatus.DONE if completed.accepted else WorkerStatus.STALE
     return WorkerResult(status, task.task_id)

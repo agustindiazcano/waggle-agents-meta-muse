@@ -555,3 +555,61 @@ Status: implemented; cloud run 41241463775 passed 56 PostgreSQL tests. ADR-032 b
 Revision 5 adds `robot_identities`: the SHA-256 digest as primary key (checked as 64 lowercase hex digits, so a plain token cannot be stored by mistake), chassis, robot id, a revoked flag with its timestamp, and a unique index allowing one active token per chassis and robot. `PostgresIdentityStore` implements the `IdentityStore` protocol: `lookup` returns revoked records too, so authentication reports `revoked` rather than `unknown_token`; a malformed digest is a miss without a query; `register` validates chassis against the allowlist table and the robot id format; `revoke` is one-way. Rotation is revoke, then register. A database error raises and authentication denies.
 
 The token is generated and provisioned outside the repository (`generate_token`); only its digest reaches this table. There is no provisioning command yet. Still pending: the concrete forwarder, the transport and rate-limit calibration.
+
+## ADR-040: Fenced forwarder for release_zone and get_task
+
+Status: implemented against fakes, not evaluated. ADR-032 branch (e), third part, stacked on ADR-039.
+
+`FencedForwarder` implements the boundary `Forwarder` for the two tools that already have a fenced backend. `release_zone` calls `CorridorRepository.release` with the authenticated robot id as holder, the caller token as the zone credential, and a tick and occupancy evidence taken from injected `TickSource` and `OccupancySource`. A request can supply neither. A failing source raises before any release, so the boundary records an error and nothing changes. A refused release is a normal result (`released` false with the model reason). `get_task` returns the snapshot only when the task worker is the authenticated robot; a missing task and another robot task raise the same `ToolDenied`, so a caller cannot probe which ids exist.
+
+Every other tool raises `ToolUnavailable` and surfaces as `tool_error`: `move_waypoint`, `pick_package`, `deliver_package` need a physical effect and trusted occupancy ingestion, and the maintenance tools need their workflow. No production `TickSource` or `OccupancySource` exists yet; wiring one is pending, and until then the forwarder runs only in tests.
+
+## ADR-041: Trusted shared tick and zone occupancy
+
+Status: implemented; cloud run 41243437112 passed 66 PostgreSQL tests. Stacked on ADR-040. Schema revision 6, under the maintainer approval to migrate of 2026-10-31; revision 5 was the latest before it.
+
+Revision 6 adds `trusted_tick` (a singleton, only moving forward) and `zone_occupancy` (one row per registered zone: observed tick and occupants, where a null array means unknown and an empty array means clear). `TrustedStateRepository` implements the forwarder `TickSource` and `OccupancySource`. A missing tick raises `UnknownTick`; a zone never recorded reads as unknown at tick 0; a lower tick raises `TickRegression`; an older observation never replaces a newer one; an observation later than the shared tick is rejected; occupants must have the robot id format. `release_zone` through these sources is refused while a zone is recorded occupied or unknown.
+
+Trust boundary: `advance_tick` and `record` have no MCP tool and no request path. They are for a trusted writer holding database credentials, such as the simulator bridge. That writer, and what feeds it real odometry, does not exist yet, so nothing writes these tables in a running system. The release and handoff checks are only as trustworthy as that writer.
+
+## ADR-042: Simulator bridge as the trusted writer
+
+Status: implemented; cloud run 41244266563 passed 68 PostgreSQL tests. Stacked on ADR-041.
+
+`SimTrustedBridge.publish(sim)` is the first writer of the trusted tick and occupancy tables. It advances the shared tick to the simulator tick, then records one observation per zone using the occupancy derivation of the simulator admission adapter (conservative footprints; an unknown pose is published as unknown). A regressing tick raises before any observation. Only the live simulation publishes: a rollout fork must not, because the shared tick cannot move backwards.
+
+This closes the loop for simulator runs: the bridge writes, `TrustedStateRepository` stores, and `FencedForwarder` reads for `release_zone`. For real hardware the writer would be an odometry service, which does not exist. The bridge makes one transaction per zone and per tick, which is correct but not measured for speed. It is implemented, not evaluated, and is not part of E2.
+
+## ADR-043: Handoff completion through the worker
+
+Status: implemented; cloud run 41245044162 passed 74 PostgreSQL tests. Stacked on ADR-042.
+
+`run_once` gains an optional `complete` argument that replaces ordinary completion; the default is unchanged, so a handoff task is still denied without it, and a test shows that. `HandoffFinisher.complete` is the production value: a task with no handoff requirement completes normally; a task with one gets the zone token that the worker itself holds in the corridor table and the occupancy evidence from the trusted store, then calls the atomic `complete_handoff`. The worker supplies neither. A worker that does not hold the zone, a second occupant and unknown occupancy all leave the task EXECUTING and the iteration STALE. `TaskRepository.handoff_zone` is the only new read.
+
+Limits: the handler is still a trusted callable that must itself drive the robot into the zone; no physical effect exists beyond the simulator. A replay of completion after the lease was released is refused here, and `run_once` does not call completion again for a replayed claim. The stale iteration leaves the task EXECUTING until its lease expires and bounded recovery requeues it. `serve_worker` accepts the same `complete` argument. Not part of E2.
+
+## ADR-044: End-to-end handoff scenario on the simulator
+
+Status: test only; cloud run 41246267282 passed 76 PostgreSQL tests. Stacked on ADR-043. No new behavior.
+
+One cloud test chains the whole path on S03 seed 7: the simulator moves robot-0, `SimTrustedBridge` publishes the tick and occupancy, `TrustedStateRepository` stores them, a task with a handoff zone is claimed by a worker, and `HandoffFinisher` completes it through the atomic handoff. The handler is a trusted driver that steps the simulator and returns DONE only when the simulator derivation shows robot-0 alone in the zone. A second test shows a handler that claims DONE before the robot arrives leaves the task EXECUTING and the iteration STALE. A database-free test fixes the fact the scenario depends on, that robot-0 is outside the zone at the start and alone in it later.
+
+This shows the components fit together in the simulator. It is not E2: there is one seed, no baseline without the layer, no crashed workers and no throughput measurement.
+
+## ADR-045: Line transport for the MCP boundary
+
+Status: implemented against a fake dispatcher, not evaluated. Stacked on ADR-044.
+
+`LineServer` turns one JSON-RPC line into at most one reply line and never raises; `serve_stdio` loops over a stream. It implements the parts checked against the current MCP specification on 2026-10-31: newline framing with nothing but protocol messages on stdout, `tools/list` with a name, description and input schema per tool in sorted order, `tools/call` returning `content`, `structuredContent` and `isError`, a tool failure as an `isError` result with only the reason code, and `-32602` for an unknown tool. The boundary still audits an unknown tool name first, so probing is recorded.
+
+Not implemented, and the reason it must not be called a conformant MCP server: the handshake. The fetched specification describes a newer revision without negotiation (every request carries its version in `_meta`, plus a required `server/discover`) next to the legacy `initialize` flow, and the pages that define `initialize`, `server/discover` and the `_meta` key rules were not read. A client that expects either handshake will not work until that is added from the current text. The input schemas are advisory; the boundary enforces the real per-chassis bounds.
+
+Decisions: one token per process, bound at construction, so one chassis per server process; correlation ids are the JSON-RPC id prefixed with a per-process session name, so a repeat inside one session is a replay and a new session cannot collide, but a retry after reconnecting is a new request; a line over 64 KiB is rejected before parsing; non-finite numbers are a parse error. The process entry point is not wired: it needs the database, the token source, the map extent, the rate limit values and the trusted sources, and `waggle.mcp_server.__main__` is still the placeholder.
+
+## ADR-046: MCP handshake for both protocol revisions
+
+Status: implemented against a fake dispatcher, not evaluated against a real client. Stacked on ADR-045 and supersedes its missing-handshake limitation.
+
+Source: the specification pages for revisions 2025-11-25 and 2026-07-28, read on 2026-10-31. Legacy flow: `initialize` (params `protocolVersion`, `capabilities`, `clientInfo`, all required here) answers with the server version `2025-11-25`, `capabilities` with `tools`, and `serverInfo`; the specification requires a supported requested version to be echoed and otherwise the server to answer with a version it supports, which is what this does. Other requests before `initialize` are refused with -32600 (the specification only says clients should not send them, so this is a fail-closed choice, not a stated rule); `notifications/initialized` is accepted and ignored, and initialization is marked complete at the `initialize` reply. `ping` is optional in that revision and answered with an empty result at any time. Modern flow: a request is modern when `_meta` carries `io.modelcontextprotocol/protocolVersion`; it then needs `io.modelcontextprotocol/clientCapabilities` as an object or gets -32602, and an unsupported version gets -32022 with `data.supported` and `data.requested`. `server/discover` answers `supportedVersions`, `capabilities` and `serverInfo` in `_meta`. Every modern result carries `resultType` complete. No state is kept for modern requests.
+
+Gaps, stated plainly: the field definitions of `Implementation` and `ClientCapabilities` were not read, so only their types are checked; whether `server/discover` itself requires all three `_meta` keys is not stated in the text read, so it requires the two the general rule marks required; a modern request that omits the version key cannot be told apart from a legacy one and gets the not-initialized error rather than -32602; `ttlMs` and `cacheScope` are omitted; the 2026 revision removes `ping`, which is still answered. No real client has been run against this, so interoperability is untested and the server is not claimed to be conformant.
