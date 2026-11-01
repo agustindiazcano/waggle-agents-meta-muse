@@ -25,6 +25,7 @@ Rules live in `AGENTS.md` section 20 and `ANTIGRAVITY.md`. Read `ANTIGRAVITY.md`
 
    - `--mode plan` for read-only work. Never `--dangerously-skip-permissions`.
    - The interactive session (`agy`, `agy -i '<prompt>'`) starts in accept-edits mode. That is a tool default, not a permission. Use it only when a terminal session can be driven, and review every proposed edit.
+   - Headless runs cannot approve permissions. For research add to the request: "Use only your web search tool: do not run shell commands, do not fetch URLs, do not modify any file." A request that makes it run a command comes back with `no output produced`. Use `--output-format json` or `stream-json` to see which tool was denied. Never fix it with `--dangerously-skip-permissions`.
    - A trivial task took about 80 seconds on this machine. Use 180s, or 300s for web research. Also set the timeout of the calling tool. Run long requests in the background and wait for the notice.
 4. Interpret the result:
    - Timeout: no answer yet, not proof of failure. Retry once with a narrower request and a longer limit.
