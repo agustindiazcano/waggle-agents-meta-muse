@@ -27,7 +27,13 @@ _STRUCTURE_LAYER = "output_schema"
 # Layers that have a runner: the structure scorer here, the two MCP layers in e3_mcp_layers and
 # the catalog check in e3_catalog (which needs PostgreSQL, so it runs in the cloud).
 RUNNABLE_LAYERS = frozenset(
-    {_STRUCTURE_LAYER, "mcp_identity", "mcp_schema_bounds", "catalog_check"}
+    {
+        _STRUCTURE_LAYER,
+        "mcp_identity",
+        "mcp_schema_bounds",
+        "catalog_check",
+        "read_back_item_resolution",
+    }
 )
 
 
