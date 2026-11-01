@@ -20,7 +20,7 @@ Naming: simulation-based plan validation with counterexample feedback. It is not
 | Counterexample types other than `GEOFENCE_INTRUSION`, with times, places, clearances | missing | ADR-023 |
 | Progress and recoverable-terminal checks, in-memory lease logic in the rollout | missing | ADR-023, PHASE1_BRIEF item 6 |
 | Planner loop (at most 3 rounds), crisis templates, E10 harness | missing | PLAN.md Phase 5C, EXPERIMENTS.md E10 |
-| Import-linter contract for `waggle.validation` | missing (the package exists, the contract is to be checked) | PHASE1_BRIEF item 6 |
+| Import-linter contract for `waggle.validation` (must not import the LLM side) | exists | `pyproject.toml`, `uv run ci` contracts |
 
 Gap in one sentence (PENDING row 99): the schema and the geofence check do not see the geometry of a path through open transit zones, the clearance to static structure, humans, or other robots, and cannot see deadlocks or lease conflicts.
 
