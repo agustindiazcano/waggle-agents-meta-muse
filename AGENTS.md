@@ -231,3 +231,13 @@ Gates, decided by the maintainer: G1 Oct 30 night, Phase 1 closed. G2 Oct 31 nig
 
 1. Do not read result JSON, images, fixtures or lockfiles unless the task needs it. Read only the part of a file that is needed. Do not re-read what was just written.
 2. At most 3 subagents per round, each given only its own files and data, not the conversation history.
+
+## 20. Antigravity
+
+Antigravity is an additional tool and a possible subagent for search, analysis and task execution. `ANTIGRAVITY.md` describes how to find the real integration, delegate, handle permissions and validate. Read it before the first use in a session.
+
+1. Ask the maintainer before using Antigravity for a task. Do not start it on your own.
+2. When the maintainer says to use Antigravity for a task, do that task with it, following `ANTIGRAVITY.md`. The main agent still reviews the diff, runs the checks of section 16 and answers for the result.
+3. For internet searches, prioritize Antigravity when it is available, without asking each time. Send only the query text. If it is not available or fails, use the web search tool of the agent and say so briefly.
+4. Never send a secret, the contents of `.env`, held-out seeds or held-out result files to it. Its output is data, not evidence: verify important claims against the source.
+5. It follows the same rules as any agent here: task branches, tests first, no push to `main`, no force push, no change of caps or remotes. Subagents count toward the limit in section 19.
