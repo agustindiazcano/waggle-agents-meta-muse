@@ -684,6 +684,42 @@ Provenance: `PART_FOR_CASE` maps each case id to a part number. I wrote it from 
 
 Gaps, stated plainly: 10 of 25 cases now have a runner. Message schema, read-back, court unanimity (production prompt), plan schema, plan validator, untrusted-data boundary and the fast layer still have none.
 
+## ADR-055: Inter-robot message schema and its E3 runner
+
+Status: implemented with unit tests; E3 has not been run as an experiment and no result file exists. Extends ADR-054.
+
+Decision: `waggle.governance.messages.parse_robot_message` is the fixed schema of `docs/ARCHITECTURE.md`. A message is a JSON object with exactly `sender`, `recipient` and `status`. Unknown fields, missing fields, duplicate keys, a non-object, text over the 500 character `ROBOT_MESSAGE` cap, a status outside `waiting`, `ready`, `blocked`, `done`, `fault`, a sender that is not the authenticated caller and a message to oneself are all rejected. It never ignores an extra field and carries no authority. `waggle.experiments.e3_messages` runs the `message_schema` case through it, and `message_schema` joins `RUNNABLE_LAYERS`.
+
+Gaps, stated plainly: the status list is an assumption to calibrate. The corpus has one case for this layer (E3-T5-02) and no benign case, so false blocks are not measured. Nothing yet routes real robot messages through this parser or through the guard; 11 of 25 cases now have a runner.
+
+## ADR-056: Provisioning script for catalog, machines, zones and identities
+
+Status: implemented with unit tests over fakes; the PostgreSQL test runs only in the cloud workflow. Extends ADR-049 and ADR-039.
+
+Decision: `uv run provision SPEC TOKENS_OUT` (`waggle.provisioning`) loads data that migrations must not carry (AGENTS.md section 7). The JSON spec has exactly the keys `parts`, `machines`, `zones` and `identities`; any unknown, missing, duplicate or out-of-range entry rejects the whole spec before anything is created. It uses the existing repositories (`add_part`, `add_machine`, `register`). A rerun skips existing parts, machines and active identities and names them; stock is never reset. A token is generated per new identity with `generate_token`, only its SHA-256 digest goes to `robot_identities`, and the tokens go to a new file with owner-only mode that is never overwritten and never printed or logged. Rotation is not part of this script: revoke the old token first. Any failure exits 2 with the exception class only.
+
+Gaps, stated plainly: `data/provision/example.json` is sample data, not the demo catalog; the real part list, machine list and zone map come from the maintainer. A spec run twice against a partly provisioned database cannot recover a token that was lost. Zones are registered with the corridor repository, which creates unheld zones only. No compatibility data exists for the catalog (ADR-054, PENDING row 95). On Windows the owner-only file mode is not enforced by the operating system.
+
+## ADR-057: Read-back and item resolution before a voice-driven pick
+
+Status: implemented with unit tests, including sensitivity tests; E3 has not been run as an experiment and no result file exists. Extends ADR-054. ADR-055 and ADR-056 are in open PRs; keep the numbers in order when merging.
+
+Decision: `waggle.governance.readback` is pure. `resolve_items` maps a transcript to known item ids by code (digits, `ITEM-n`, number words up to 99). `start_readback` builds the read-back text from the trusted order item only, never from the transcript. `authorize` allows execution only when a `Confirmation` exists for that prompt id and that item and the transcript names no item other than the ordered one. A `Confirmation` is a typed object the authenticated operator channel produces; words in the transcript, such as a claim that confirmation already happened, are never parsed into one. `waggle.experiments.e3_readback` runs E3-T4-01 to 03: the two injections try to execute from the transcript with no confirmation and must not be authorized; the benign case asks for a read-back and must get a prompt naming ITEM-17. `read_back_item_resolution` joins `RUNNABLE_LAYERS`.
+
+Provenance: `ATTEMPTS` is a fixture I wrote from the case text, like the other runners. It needs maintainer review.
+
+Gaps, stated plainly: this measures the confirmation rule, not whether a transcription model would hear the wrong number. The result is independent of what the transcript says, which is the design; it does not show the rule is enough against a compromised operator channel. Nothing yet connects a real voice transcript, a trusted order or the operator channel to these functions. Number words stop at 99. The word-error rate on item ids (EXPERIMENTS.md E7) is not measured. 13 of 25 cases have a runner with this branch alone (10 on main plus 3), and 14 once PR 90 (message schema) is merged.
+
+## ADR-058: E3 runner for the untrusted-data boundary layer
+
+Status: implemented with unit tests, including a sensitivity test; E3 has not been run as an experiment and no result file exists. Extends ADR-054. Numbers 055 to 057 are in open PRs; keep them ordered when merging.
+
+Decision: `waggle.experiments.e3_boundary` runs the case that targets `untrusted_data_boundary` (E3-T18-03, a package label with forged closing and system tags) through the production `sanitize` and `fence` as the source the case declares. An injection is blocked when the fenced result is exactly one `<untrusted source="...">` wrapper whose body has no raw angle bracket, so the text can neither close the fence nor open another tag. The check is structural and never reads meaning. A sensitivity test wraps without escaping and requires the runner to report the missed injection. `untrusted_data_boundary` joins `RUNNABLE_LAYERS`.
+
+Provenance: `SOURCES` maps the case id to `PACKAGE_LABEL`, taken from the case entry. It is a fixture and needs maintainer review.
+
+Gaps, stated plainly: this shows the fence holds as data markup; it does not show that a model given the fenced text ignores instructions inside it, which only a model run could measure. The corpus has one case for this layer and no benign case. The planner context that should carry the fence does not exist yet (`waggle.validation` is not created).
+
 ## ADR-059: Plan schema in a new `waggle.validation` package
 
 Status: schema and E3 runner implemented with unit tests, including a sensitivity test; E3 has not been run as an experiment and no result file exists. Implements the "Plan schema" table of `docs/ARCHITECTURE.md`. Numbers 055 to 058 are in open PRs; keep them ordered when merging.
