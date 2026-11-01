@@ -11,6 +11,8 @@ from typing import Protocol
 
 from waggle.coordination.corridors import CorridorResult, ZoneObservation, ZoneToken
 from waggle.coordination.task_model import TaskRecord
+from waggle.db.corridors import IdempotencyConflict
+from waggle.db.inventory import PartStock, ReservationResult, UnknownPart
 from waggle.mcp_server.identity import Identity
 
 
@@ -44,6 +46,18 @@ class TaskPort(Protocol):
         ...
 
 
+class InventoryPort(Protocol):
+    """The catalog and reservation operations of ``InventoryRepository``."""
+
+    def get(self, part_number: str) -> PartStock | None:
+        """Counts for a catalog part, or None outside the catalog."""
+        ...
+
+    def reserve(self, key: str, part_number: str, quantity: int, holder: str) -> ReservationResult:
+        """Reserve stock once per key."""
+        ...
+
+
 class TickSource(Protocol):
     """A trusted shared tick. It must not be derived from a request."""
 
@@ -69,11 +83,13 @@ class FencedForwarder:
         tasks: TaskPort,
         ticks: TickSource,
         occupancy: OccupancySource,
+        inventory: InventoryPort | None = None,
     ) -> None:
         self._corridors = corridors
         self._tasks = tasks
         self._ticks = ticks
         self._occupancy = occupancy
+        self._inventory = inventory
 
     def forward(
         self, identity: Identity, tool: str, args: Mapping[str, object], timeout_s: float
@@ -83,7 +99,36 @@ class FencedForwarder:
             return self._release_zone(identity, args)
         if tool == "get_task":
             return self._get_task(identity, args)
+        if tool == "get_inventory" and self._inventory is not None:
+            return self._get_inventory(self._inventory, args)
+        if tool == "reserve_part" and self._inventory is not None:
+            return self._reserve_part(self._inventory, identity, args)
         raise ToolUnavailable(tool)
+
+    @staticmethod
+    def _get_inventory(
+        inventory: InventoryPort, args: Mapping[str, object]
+    ) -> Mapping[str, object]:
+        part_number = str(args["part_number"])
+        stock = inventory.get(part_number)
+        if stock is None:
+            raise ToolDenied("part not available")
+        return {"part_number": part_number, "available": stock.available}
+
+    @staticmethod
+    def _reserve_part(
+        inventory: InventoryPort, identity: Identity, args: Mapping[str, object]
+    ) -> Mapping[str, object]:
+        try:
+            result = inventory.reserve(
+                str(args["idempotency_key"]),
+                str(args["part_number"]),
+                int(str(args["quantity"])),
+                identity.robot_id,
+            )
+        except (UnknownPart, IdempotencyConflict):
+            raise ToolDenied("reservation not available") from None
+        return {"reserved": result.granted, "reason": result.reason}
 
     def _release_zone(self, identity: Identity, args: Mapping[str, object]) -> Mapping[str, object]:
         zone_id, token = str(args["zone_id"]), int(str(args["token"]))
