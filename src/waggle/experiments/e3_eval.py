@@ -35,6 +35,7 @@ RUNNABLE_LAYERS = frozenset(
         "read_back_item_resolution",
         "message_schema",
         "untrusted_data_boundary",
+        "plan_schema",
     }
 )
 

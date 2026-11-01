@@ -191,7 +191,7 @@ Inspired by speed and separation monitoring. No compliance with any standard is 
 
 ## Crisis replanning
 
-Designed, not implemented (ADR-023, ADR-024, ADR-025). Package `waggle.validation`, created in Phase 5C. It may import `waggle.sim` and `waggle.control`, never `waggle.llm`, `waggle.governance` or `waggle.mcp_server`. `waggle.sim` and `waggle.control` never import it. Runtime dependencies there: numpy and the standard library.
+Designed (ADR-023, ADR-024, ADR-025). Only the plan schema is implemented (`waggle.validation.plan`, ADR-059); the belief state, rollout, validator and planner are not. Package `waggle.validation`, created in Phase 5C. It may import `waggle.sim` and `waggle.control`, never `waggle.llm`, `waggle.governance` or `waggle.mcp_server`. `waggle.sim` and `waggle.control` never import it. Runtime dependencies there: numpy and the standard library.
 
 - Planner: Muse Spark with a structured world summary, retrieved SOP excerpts (fenced as untrusted data), an optional obstacle class from vision, and the operator request or a text incident report. It proposes a plan in the schema below.
 - Belief state: the static map, the entities tracked from lidar at t = 0, and K seeded human variants (default K = 5) including humans inside initially occluded regions. A variant that puts a human inside the minimum stopping distance of a robot at t = 0 is rejected at sampling.
