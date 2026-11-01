@@ -33,6 +33,7 @@ RUNNABLE_LAYERS = frozenset(
         "mcp_schema_bounds",
         "catalog_check",
         "plan_schema",
+        "plan_validator",
     }
 )
 
