@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 6
+LATEST_REVISION = 9
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -153,6 +153,77 @@ _TRUSTED_DDL: tuple[LiteralString, ...] = (
     )""",
 )
 
+_INVENTORY_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE spare_parts (
+        part_number text PRIMARY KEY CHECK (part_number ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        on_hand integer NOT NULL CHECK (on_hand >= 0),
+        reserved integer NOT NULL DEFAULT 0 CHECK (reserved >= 0),
+        CHECK (reserved <= on_hand)
+    )""",
+    """CREATE TABLE part_reservations (
+        idempotency_key text PRIMARY KEY CHECK (idempotency_key ~ '^[A-Za-z0-9_.:-]{1,128}$'),
+        part_number text NOT NULL REFERENCES spare_parts(part_number),
+        quantity integer NOT NULL CHECK (quantity > 0),
+        holder text NOT NULL CHECK (length(holder) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+)
+
+_MAINTENANCE_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE machines (
+        machine_id text PRIMARY KEY CHECK (machine_id ~ '^[A-Za-z0-9_.-]{1,64}$')
+    )""",
+    """CREATE TABLE maintenance_tickets (
+        ticket_id text PRIMARY KEY CHECK (ticket_id ~ '^tkt-[0-9a-f]{16}$'),
+        idempotency_key text NOT NULL UNIQUE CHECK (idempotency_key ~ '^[A-Za-z0-9_.:-]{1,128}$'),
+        machine_id text NOT NULL REFERENCES machines(machine_id),
+        summary text NOT NULL CHECK (length(summary) BETWEEN 1 AND 500),
+        opened_by text NOT NULL CHECK (length(opened_by) BETWEEN 1 AND 64),
+        status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'dispatched')),
+        zone_id text REFERENCES zones(zone_id),
+        dispatched_by text CHECK (length(dispatched_by) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        CHECK ((status = 'open' AND zone_id IS NULL AND dispatched_by IS NULL)
+            OR (status = 'dispatched' AND zone_id IS NOT NULL AND dispatched_by IS NOT NULL))
+    )""",
+    """CREATE TABLE purchase_orders (
+        idempotency_key text PRIMARY KEY CHECK (idempotency_key ~ '^[A-Za-z0-9_.:-]{1,128}$'),
+        part_number text NOT NULL REFERENCES spare_parts(part_number),
+        quantity integer NOT NULL CHECK (quantity > 0),
+        requester text NOT NULL CHECK (length(requester) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+)
+
+_MOTION_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE motion_orders (
+        order_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        robot_id text NOT NULL CHECK (length(robot_id) BETWEEN 1 AND 64),
+        task_id text NOT NULL REFERENCES tasks(task_id),
+        tool text NOT NULL CHECK (tool IN ('move_waypoint', 'pick_package', 'deliver_package')),
+        x double precision CHECK (x IS NULL OR (x > '-Infinity' AND x < 'Infinity')),
+        y double precision CHECK (y IS NULL OR (y > '-Infinity' AND y < 'Infinity')),
+        speed double precision CHECK (speed IS NULL OR (speed > 0 AND speed < 'Infinity')),
+        package_id text CHECK (package_id ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        zone_id text REFERENCES zones(zone_id),
+        signature text NOT NULL CHECK (signature ~ '^[0-9a-f]{64}$'),
+        status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done', 'failed')),
+        created_tick bigint NOT NULL CHECK (created_tick >= 0),
+        resolved_tick bigint CHECK (resolved_tick >= 0),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        resolved_at timestamptz,
+        CHECK ((tool = 'move_waypoint' AND x IS NOT NULL AND y IS NOT NULL
+                AND speed IS NOT NULL AND package_id IS NULL AND zone_id IS NULL)
+            OR (tool = 'pick_package' AND package_id IS NOT NULL AND zone_id IS NULL
+                AND x IS NULL AND y IS NULL AND speed IS NULL)
+            OR (tool = 'deliver_package' AND package_id IS NOT NULL AND zone_id IS NOT NULL
+                AND x IS NULL AND y IS NULL AND speed IS NULL)),
+        CHECK ((status = 'pending') = (resolved_tick IS NULL))
+    )""",
+    """CREATE UNIQUE INDEX motion_orders_one_pending ON motion_orders (robot_id)
+        WHERE status = 'pending'""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -160,6 +231,9 @@ _MIGRATIONS = {
     4: _AUDIT_DDL,
     5: _IDENTITY_DDL,
     6: _TRUSTED_DDL,
+    7: _INVENTORY_DDL,
+    8: _MAINTENANCE_DDL,
+    9: _MOTION_DDL,
 }
 
 
