@@ -18,12 +18,14 @@ MOVE = NewOrder("move_waypoint", "job", x=1.0, y=2.0, speed=1.0)
 PICK = NewOrder("pick_package", "job", package_id="pk-1")
 
 
-def _task(database: Database, task_id: str = "job", worker: str = "robot") -> None:
+def _task(
+    database: Database, task_id: str = "job", worker: str = "robot", lease_ticks: int = 10
+) -> None:
     repo = TaskRepository(database)
     repo.create(TaskDefinition(task_id))
     for state in (TaskState.SCREENED, TaskState.REVIEWED, TaskState.APPROVED):
         repo.advance(task_id, state, f"{task_id}-{state.value}", 0)
-    assert repo.claim(worker, f"claim-{task_id}", 0, lease_ticks=10).task is not None
+    assert repo.claim(worker, f"claim-{task_id}", 0, lease_ticks=lease_ticks).task is not None
 
 
 def _refused(repo: MotionOrderRepository, robot: str, order: NewOrder, tick: int = 1) -> str:
@@ -111,7 +113,7 @@ def test_delivery_needs_a_live_lease_on_the_zone(database: Database) -> None:
 
 
 def test_delivery_into_a_held_zone_queues_and_an_expired_lease_does_not(database: Database) -> None:
-    _task(database)
+    _task(database, lease_ticks=10_000)
     _hold(database, "dock")
     repo = MotionOrderRepository(database)
     deliver = NewOrder("deliver_package", "job", package_id="pk-1", zone_id="dock")
