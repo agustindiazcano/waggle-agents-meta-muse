@@ -817,3 +817,21 @@ What they do not do. They do not control a robot, write to the simulator, change
 Security. The API has no authentication and none is designed. It binds to `127.0.0.1` by default (`WAGGLE_API_HOST`), the compose file publishes the port on `127.0.0.1` only, and it must not be exposed on a network as it is. A web page on any origin can still open a socket to localhost and read frames; the frames hold simulator data and nothing else. Exposing it beyond localhost needs a separate decision with authentication and an origin check, and that is not made here.
 
 Provenance and gaps, stated plainly: the generator writes `source = "replay"` in every frame, which is a label of this tool and not a statement about how a given file will be used. It records scenarios without control, so a replay of a controlled run needs a different generator. A write that fails midway can leave a partial file because the recorder opens in exclusive mode before writing; `replay-verify` refuses such a file. The generator is exercised on S01 only in the tests.
+
+## ADR-070: HTTP providers on the standard library, with fail-closed rules
+
+Status: implemented with unit tests against a local fake server; no real provider was called and no key was used. The runtime dependency choice of PENDING row 9 is still open and this decision does not settle it.
+
+Decision: `waggle.llm.http_provider.HttpProvider` speaks OpenAI-style chat completions over `http.client`, with a timeout on every call, one fresh connection per attempt and no redirect following. It adds no runtime dependency. If the maintainer later approves an SDK, the class can be replaced behind the same `Provider` interface.
+
+Fail-closed rules:
+
+- Provider mode comes from `WAGGLE_LLM_PROVIDER` (`mock` or `http`). Unset or any other value raises `ConfigError`.
+- A missing or invalid `*_SPEND_CAP_USD`, key, token or URL raises before any call. URLs must be `https`; plain `http` is accepted only for loopback when the caller of the loader sets the switch in code, never from the environment.
+- Prices live in `src/waggle/llm/prices.toml`, all shipped `verified = false`. An unverified or incomplete price makes `estimate_cost` and `complete` raise `ConfigError`, so the client makes no call.
+- Cost is computed from the response `usage` and the verified price. A response without valid `usage` is rejected.
+- 429, 5xx and transport errors are retried up to an attempt cap with exponential backoff; `Retry-After` in seconds is honored up to a cap. Other 4xx, 3xx, wrong content type, oversized body, malformed JSON, duplicate keys and non-finite numbers end in `ProviderError` with no retry.
+- Exception and log text carries the provider name and a status or reason only. It never carries a header, a URL or a response body. Tests search for the key text in exceptions, tracebacks, logs and reprs.
+- `vertex` and voice are not implemented (`docs/PROVIDER_INTEGRATION.md` gives the reasons). A route to them fails closed.
+
+Gaps, stated plainly: the Meta usage fields, the Baseten auth header and the Modal endpoint shape are unconfirmed (see the table in `docs/PROVIDER_INTEGRATION.md`). The cloud smoke tests are written and have not been run. The retry logic lives in the provider because `LlmClient` does not retry; the client's own retry policy is unchanged.
