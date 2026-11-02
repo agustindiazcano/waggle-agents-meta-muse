@@ -51,3 +51,20 @@ forbidden_modules =
     fixture_pkg.llm
     fixture_pkg.governance
     fixture_pkg.mcp_server
+
+[importlinter:contract:e2-baseline-isolated]
+name = fixture: production code must not import the E2 no-fencing baseline
+type = forbidden
+source_modules =
+    fixture_pkg.worker
+    fixture_pkg.db
+    fixture_pkg.mcp_server
+    fixture_pkg.governance
+    fixture_pkg.llm
+    fixture_pkg.maintenance
+    fixture_pkg.coordination
+    fixture_pkg.sim
+    fixture_pkg.control
+    fixture_pkg.validation
+forbidden_modules =
+    fixture_pkg.experiments.e2_baseline
