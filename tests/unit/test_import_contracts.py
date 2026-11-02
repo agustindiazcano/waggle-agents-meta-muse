@@ -23,6 +23,7 @@ CONTRACT_IDS = [
     "mcp-server-no-governance",
     "control-no-ground-truth",
     "validation-no-llm-side",
+    "core-no-web",
 ]
 
 
