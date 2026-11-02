@@ -1,0 +1,19 @@
+# USD per million tokens for each HTTP route. Maintainer fills these.
+# Every entry is unverified until the maintainer reads the number in the provider console,
+# writes it here and sets verified = true. While verified is false (or a number is missing)
+# the provider refuses real calls. A mock provider needs none of this.
+#
+# Example once known:
+#   [meta]
+#   verified = true
+#   input_per_mtok = 0.0
+#   output_per_mtok = 0.0
+
+[meta]
+verified = false
+
+[baseten]
+verified = false
+
+[modal]
+verified = false
