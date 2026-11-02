@@ -29,6 +29,8 @@ def test_malformed_ids_never_connect(bad: str) -> None:
     with pytest.raises(ValueError):
         repo.add_machine(bad)
     with pytest.raises(ValueError):
+        repo.has_machine(bad)
+    with pytest.raises(ValueError):
         repo.open_ticket(_bad_key(bad), "M-1", "summary", "tech-0")
     with pytest.raises(ValueError):
         repo.open_ticket("evt-1", bad, "summary", "tech-0")
