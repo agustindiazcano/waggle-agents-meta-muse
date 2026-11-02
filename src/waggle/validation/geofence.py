@@ -6,18 +6,10 @@ trusted state (telemetry thresholds, static geofences), never from text. It does
 geometry of a path through open transit zones, which only the rollout validator (ADR-023) can.
 """
 
-from dataclasses import dataclass
-
+from waggle.validation.counterexample import Counterexample
 from waggle.validation.plan import Plan
 
-
-@dataclass(frozen=True)
-class Counterexample:
-    """Why a plan fails: ``code`` is a counterexample name of the replanning design."""
-
-    code: str
-    node: str
-    zone: str
+__all__ = ["Counterexample", "check_geofence"]
 
 
 def check_geofence(plan: Plan, hazard: frozenset[str]) -> tuple[Counterexample, ...]:
