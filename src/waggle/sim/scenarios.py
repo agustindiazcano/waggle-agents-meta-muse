@@ -16,7 +16,18 @@ from typing import Any
 
 import numpy as np
 
-from waggle.sim import detector, engine, humans, params, robots, scripted, streams, world
+from waggle.sim import (
+    detector,
+    engine,
+    humans,
+    packages,
+    params,
+    robots,
+    scripted,
+    streams,
+    world,
+)
+from waggle.sim.packages import PackageSpec
 from waggle.sim.params import DT, HUMAN_RADIUS, HUMAN_WALK_SPEED, RobotKind, RobotParams
 
 Point = tuple[float, float]
@@ -146,9 +157,19 @@ class Scenario:
     unavoidable_at_spawn: bool
     events: tuple[tuple[int, str], ...] = ()
     compound: Mapping[str, Any] | None = None
+    packages: tuple[PackageSpec, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
-        """A JSON-serializable form."""
+        """A JSON-serializable form. ``packages`` appears only when the scenario declares some."""
+        data = self._base_dict()
+        if self.packages:
+            data["packages"] = [
+                {"package_id": p.package_id, "zone_id": p.zone_id, "x": p.x, "y": p.y}
+                for p in self.packages
+            ]
+        return data
+
+    def _base_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "family": self.family,
@@ -211,6 +232,13 @@ class Scenario:
             )
             for h in data["humans"]
         )
+        specs = tuple(
+            packages.PackageSpec(
+                str(p["package_id"]), str(p["zone_id"]), float(p["x"]), float(p["y"])
+            )
+            for p in data.get("packages", [])
+        )
+        packages.validate_specs(load_map(data["map_name"]), specs)
         return cls(
             id=data["id"],
             family=data["family"],
@@ -226,6 +254,7 @@ class Scenario:
             unavoidable_at_spawn=bool(data["unavoidable_at_spawn"]),
             events=tuple((int(e[0]), str(e[1])) for e in data["events"]),
             compound=data["compound"],
+            packages=specs,
         )
 
 
@@ -435,6 +464,21 @@ class RunRecord:
     hashes: tuple[str, ...]
 
 
+def with_packages(scenario: Scenario, count: int) -> Scenario:
+    """A copy of ``scenario`` with ``count`` packages placed from its seed. Raises PackageError."""
+    specs = packages.place_packages(load_map(scenario.map_name), count, scenario.seed)
+    return dataclasses.replace(scenario, packages=specs)
+
+
+def package_model(scenario: Scenario) -> packages.PackageModel:
+    """The package model of a scenario, with one capacity per robot from its class."""
+    return packages.PackageModel(
+        load_map(scenario.map_name),
+        scenario.packages,
+        [params.PACKAGE_CAPACITY[r.kind] for r in scenario.robots],
+    )
+
+
 def build_engine(
     scenario: Scenario, extra_streams: Mapping[str, int] | None = None
 ) -> tuple[engine.Engine, detector.Detector]:
@@ -461,13 +505,13 @@ def build_engine(
         near_miss_margin=scenario.near_miss_margin,
     )
     arrays.update(det.initial_arrays(poses, starts))
+    systems = [driver.system(), fleet.system(), crowd.system(), det.system()]
+    if scenario.packages:
+        model = package_model(scenario)
+        arrays.update(model.initial_arrays())
+        systems.append(model.system())
     stream_counts = {"humans": len(scenario.humans), **(extra_streams or {})}
-    sim = engine.Engine(
-        scenario.seed,
-        arrays,
-        [driver.system(), fleet.system(), crowd.system(), det.system()],
-        stream_counts,
-    )
+    sim = engine.Engine(scenario.seed, arrays, systems, stream_counts)
     return sim, det
 
 

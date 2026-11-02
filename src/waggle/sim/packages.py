@@ -21,7 +21,7 @@ from typing import cast
 import numpy as np
 from numpy.typing import NDArray
 
-from waggle.sim import params, state, world
+from waggle.sim import params, state, streams, world
 from waggle.sim.engine import System
 
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,64}")
@@ -71,7 +71,8 @@ def _fail(reason: str) -> PackageOutcome:
 _DONE = PackageOutcome(True, "done")
 
 
-def _inside(x: float, y: float, polygon: world.Polygon) -> bool:
+def point_in_polygon(x: float, y: float, polygon: world.Polygon) -> bool:
+    """Ray casting test: True when ``(x, y)`` is inside ``polygon``."""
     inside = False
     pts = polygon.points
     for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1], strict=True):
@@ -84,7 +85,9 @@ def _finite(*values: float) -> bool:
     return all(math.isfinite(v) for v in values)
 
 
-def _validate_specs(box: world.World, specs: Sequence[PackageSpec]) -> None:
+def validate_specs(box: world.World, specs: Sequence[PackageSpec]) -> None:
+    """Raise PackageError unless ids are unique and valid and each package is inside a station
+    or depot zone of ``box``."""
     seen: set[str] = set()
     for spec in specs:
         if not isinstance(spec.package_id, str) or _ID.fullmatch(spec.package_id) is None:
@@ -98,8 +101,45 @@ def _validate_specs(box: world.World, specs: Sequence[PackageSpec]) -> None:
             raise PackageError(f"unknown zone {spec.zone_id!r}") from err
         if zone.kind not in _DROP_KINDS:
             raise PackageError(f"package zone {spec.zone_id!r} must be a station or depot")
-        if not _finite(spec.x, spec.y) or not _inside(spec.x, spec.y, zone.polygon):
+        if not _finite(spec.x, spec.y) or not point_in_polygon(spec.x, spec.y, zone.polygon):
             raise PackageError(f"package {spec.package_id!r} is not inside zone {spec.zone_id!r}")
+
+
+MAX_PLACED = 1000
+_PLACEMENT_TRIES = 1000
+
+
+def place_packages(box: world.World, count: int, seed: int) -> tuple[PackageSpec, ...]:
+    """``count`` packages placed in the station and depot zones, a pure function of the seed.
+
+    Uses its own stream (subsystem ``scenario``), never an engine stream, so a run's random
+    state does not change. Raises PackageError for a bad count or seed or a map with no
+    station or depot.
+    """
+    if type(count) is not int or not 0 <= count <= MAX_PLACED:
+        raise PackageError(f"count must be an integer from 0 to {MAX_PLACED}")
+    if type(seed) is not int or seed < 0:
+        raise PackageError("seed must be a non-negative integer")
+    zones = [z for z in box.zones if z.kind in _DROP_KINDS]
+    if count == 0:
+        return ()
+    if not zones:
+        raise PackageError("the map has no station or depot zone")
+    rng = streams.make_streams(seed, "scenario", 1)[0]
+    placed: list[PackageSpec] = []
+    for n in range(count):
+        zone = zones[int(rng.integers(0, len(zones)))]
+        xs = [p[0] for p in zone.polygon.points]
+        ys = [p[1] for p in zone.polygon.points]
+        for _ in range(_PLACEMENT_TRIES):
+            x = float(rng.uniform(min(xs), max(xs)))
+            y = float(rng.uniform(min(ys), max(ys)))
+            if point_in_polygon(x, y, zone.polygon):
+                placed.append(PackageSpec(f"pk-{n + 1:03d}", zone.id, x, y))
+                break
+        else:
+            raise PackageError(f"could not place a package in zone {zone.id!r}")
+    return tuple(placed)
 
 
 def _validate_capacities(capacities: Sequence[int]) -> tuple[int, ...]:
@@ -123,7 +163,7 @@ class PackageModel:
         specs: Sequence[PackageSpec],
         capacities: Sequence[int],
     ) -> None:
-        _validate_specs(box, specs)
+        validate_specs(box, specs)
         self._world = box
         self._specs = tuple(specs)
         self._capacity = _validate_capacities(capacities)
@@ -270,7 +310,8 @@ class PackageModel:
         if not _finite(px, py) or math.hypot(px - x, py - y) > params.PACKAGE_PICK_RADIUS:
             return _fail("too far")
         if not any(
-            _inside(x, y, z.polygon) and _inside(px, py, z.polygon) for z in self._world.zones
+            point_in_polygon(x, y, z.polygon) and point_in_polygon(px, py, z.polygon)
+            for z in self._world.zones
         ):
             return _fail("not in the package zone")
         held = int(np.count_nonzero((status == int(Status.HELD)) & (holder == robot)))
@@ -295,7 +336,7 @@ class PackageModel:
             zone = self._world.zone(zone_id)
         except (KeyError, TypeError):
             return _fail("unknown zone")
-        if zone.kind not in _DROP_KINDS or not _inside(x, y, zone.polygon):
+        if zone.kind not in _DROP_KINDS or not point_in_polygon(x, y, zone.polygon):
             return _fail("not inside a delivery zone")
         status[i] = int(Status.DELIVERED)
         holder[i] = NO_HOLDER
@@ -310,7 +351,9 @@ class PackageModel:
         status, holder, pos, _ = self._arrays(sim)
         if status[i] != int(Status.HELD) or holder[i] != robot:
             return _fail("package not held by this robot")
-        if any(z.kind in _DROP_KINDS and _inside(x, y, z.polygon) for z in self._world.zones):
+        if any(
+            z.kind in _DROP_KINDS and point_in_polygon(x, y, z.polygon) for z in self._world.zones
+        ):
             return _fail("inside a delivery zone, deliver instead")
         status[i] = int(Status.LOST)
         holder[i] = NO_HOLDER
