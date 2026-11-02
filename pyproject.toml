@@ -6,8 +6,10 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "fastapi==0.162.0",
     "numpy==2.5.4",
     "psycopg[binary]==3.3.6",
+    "uvicorn[standard]==0.54.0",
 ]
 
 [project.scripts]
@@ -30,6 +32,7 @@ dev = [
     "hypothesis",
     "import-linter",
     "pre-commit",
+    "httpx>=0.28.1",
 ]
 
 [build-system]
@@ -71,6 +74,7 @@ show_missing = true
 
 [tool.importlinter]
 root_package = "waggle"
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 id = "sim-control-no-llm-side"
@@ -122,3 +126,12 @@ forbidden_modules = [
     "waggle.sim.scripted",
     "waggle.sim.frame",
 ]
+
+# waggle.api is the only package that may use the web libraries (ADR-029). The core must not
+# import it or any web library, directly or through a chain.
+[[tool.importlinter.contracts]]
+id = "core-no-web"
+name = "sim, control and validation must not import waggle.api or a web library"
+type = "forbidden"
+source_modules = ["waggle.sim", "waggle.control", "waggle.validation"]
+forbidden_modules = ["waggle.api", "fastapi", "starlette", "uvicorn"]

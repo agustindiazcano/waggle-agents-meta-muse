@@ -1,5 +1,6 @@
 [importlinter]
 root_package = fixture_pkg
+include_external_packages = True
 
 [importlinter:contract:sim-control-no-llm-side]
 name = fixture: sim and control must not import llm, governance, maintenance or mcp_server
@@ -52,3 +53,16 @@ forbidden_modules =
     fixture_pkg.llm
     fixture_pkg.governance
     fixture_pkg.mcp_server
+
+[importlinter:contract:core-no-web]
+name = fixture: sim, control and validation must not import api or a web library
+type = forbidden
+source_modules =
+    fixture_pkg.sim
+    fixture_pkg.control
+    fixture_pkg.validation
+forbidden_modules =
+    fixture_pkg.api
+    fastapi
+    starlette
+    uvicorn
