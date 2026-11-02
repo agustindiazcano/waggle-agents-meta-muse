@@ -749,3 +749,13 @@ Decision: `waggle.experiments.e3_fast_layer` runs E3-T2-02 (an untrusted SOP ask
 Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote from the case setup and need maintainer review. A first version put the reading 8 m ahead; the geofence edge was then 5 m away and a carrier at 2 m/s can stop in that distance, so the cap did not drop. The test caught it and the reading moved to 4 m. No limit was changed.
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
+
+## ADR-063: tools/list is filtered by the authenticated chassis
+
+Status: implemented with unit tests against fakes; not run against a real client. Touches the MCP boundary (AGENTS.md section 15); the maintainer approved it by adopting decision D3 of the MCP client test design (ADR-062).
+
+Decision: `tools/list` returns the definitions of the tools the authenticated chassis may call, in sorted order, with the same input schemas as before. Both the listing and the call path read `waggle.mcp_server.allowlist.allowed_tools(chassis)`, so there is one source of truth. `Boundary.allowed_tools(token)` authenticates the token and returns that set; any authentication failure (bad, unknown or revoked token, identity store error) returns the empty set, so an unknown chassis fails closed with an empty list and not an error. The chassis is derived from the token held by the process (ADR-045) and the request params are never read, so a client cannot ask for another chassis's list. The handshake rules of ADR-046 are unchanged: a legacy client still gets -32600 before `initialize`, and a modern request is served without prior state.
+
+Not changed: `tools/call`. A tool that is not allowed is denied with the same `tool_not_allowed` result as before, audited as before, and an unlisted tool stays denied when the client names it. The listing writes no audit row and is not rate limited, as before. Why: a client or model that sees only the tools it may use is less tempted to probe, and the listing now matches what the boundary will accept.
+
+Gaps: a transport built over a dispatcher that lacks `allowed_tools` is a type error, so test doubles needed the method. The listing is not itself a security control; the allowlist check at call time remains the control.
