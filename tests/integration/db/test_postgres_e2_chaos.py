@@ -1,12 +1,15 @@
 """Cloud-only: a small chaos run with real worker processes, planned kills and both arms."""
 
+import json
 import os
+from pathlib import Path
 
 import pytest
 
 from waggle.db.connection import Database
 from waggle.experiments.e2_chaos import ChaosConfig, run_once
 from waggle.experiments.e2_faults import FaultParams
+from waggle.experiments.e2_sweep import main
 
 pytestmark = pytest.mark.heavy
 
@@ -54,3 +57,23 @@ def test_the_baseline_arm_runs_to_a_judged_record() -> None:
     record = run_once(_root(), ChaosConfig(arm="baseline", seed=1, params=SMALL))
     assert record["undecided"] is False, record["undecided_reason"]
     assert _report(record)["tasks_total"] == SMALL.tasks
+
+
+def test_the_sweep_writes_one_result_file_per_arm(tmp_path: Path) -> None:
+    environ = {
+        **os.environ,
+        "E2_POSTGRES_IMAGE": "pgvector/pgvector:pg16",
+        "GITHUB_SHA": os.environ.get("GITHUB_SHA", "local"),
+    }
+    argv = ["--seeds", "1", "--tasks", "8", "--workers", "2", "--horizon", "8000"]
+    assert main([*argv, "--out", str(tmp_path)], environ) == 0
+    files = sorted(tmp_path.glob("chaos_*.json"))
+    assert [file.name.split("_")[1] for file in files] == ["baseline", "fenced"]
+    for file in files:
+        data = json.loads(file.read_text(encoding="utf-8"))
+        assert data["llm_calls"] == 0
+        assert data["seed_set"] == "development"
+        assert data["summary"]["runs"] == 1
+    fenced = json.loads(files[1].read_text(encoding="utf-8"))
+    assert fenced["summary"]["undecided_runs"] == 0
+    assert fenced["summary"]["stale_writes_accepted"]["events"] == 0
