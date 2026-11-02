@@ -2,6 +2,7 @@ import pytest
 from llm_smoke_support import MODEL_ENV_BY_ROUTE, smoke_provider
 
 from waggle.llm.errors import ConfigError, InvalidCapError
+from waggle.llm.http_provider import HttpProvider
 
 FULL = {
     "WAGGLE_LLM_PROVIDER": "http",
@@ -26,10 +27,16 @@ def test_empty_environment_is_refused(route: str) -> None:
         smoke_provider(route, {})
 
 
-@pytest.mark.parametrize("route", sorted(MODEL_ENV_BY_ROUTE))
+@pytest.mark.parametrize("route", ["baseten", "modal"])
 def test_shipped_unverified_prices_are_refused(route: str) -> None:
     with pytest.raises(ConfigError, match="not verified"):
         smoke_provider(route, FULL)
+
+
+def test_shipped_verified_meta_price_builds() -> None:
+    provider, model_id = smoke_provider("meta", FULL)
+    assert isinstance(provider, HttpProvider)
+    assert model_id == "a"
 
 
 @pytest.mark.parametrize("route", sorted(MODEL_ENV_BY_ROUTE))
