@@ -5,6 +5,7 @@ with a reason, and the state is left as it was.
 """
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -145,8 +146,14 @@ def control_step(
     op: OcclusionParams = DEFAULT_OCCLUSION_PARAMS,
     cpap: CpaParams = DEFAULT_CPA_PARAMS,
     rp: ReflexParams = DEFAULT_REFLEX_PARAMS,
+    advisor_limits: Sequence[Limit] = (),
 ) -> tuple[ControlState, ControlOutput]:
-    """Limit one motion command. Missing or stale input gives a stop with its reason."""
+    """Limit one motion command. Missing or stale input gives a stop with its reason.
+
+    ``advisor_limits`` are extra speed caps from recorded advisor cautions (ADR-063). Each one is
+    relabeled ``Reason.ADVISOR`` and enters the same minimum as every other limit, so it can only
+    lower the speed. An invalid cap (not finite or negative) becomes a zero cap in the arbiter.
+    """
     reason = perception.check_inputs(inputs.scan, inputs.odometry, inputs.tick, pp)
     if reason is not None:
         return state, _stop(inputs, reason, rp)
@@ -181,6 +188,7 @@ def control_step(
             extra.extend(_basic_reflex(inputs, rp))
             fences = (*inputs.geofences, *reflex.telemetry_geofences(inputs.telemetry, rp))
             extra.append(reflex.geofence_limit(inputs.request, inputs.params, odom, fences, cp, rp))
+        extra.extend(Limit(limit.speed_cap, Reason.ADVISOR) for limit in advisor_limits)
         output = limit_command(
             inputs.request, inputs.params, human, structure, odom.speed, cp, inputs.mode, extra
         )

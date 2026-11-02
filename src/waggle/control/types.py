@@ -20,6 +20,7 @@ class Reason(StrEnum):
     SCAN_INVALID = "scan_invalid"
     INPUT_MISSING = "input_missing"
     ESTOP = "estop"
+    ADVISOR = "advisor"
 
 
 @dataclass(frozen=True)
