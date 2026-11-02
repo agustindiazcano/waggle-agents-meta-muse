@@ -35,6 +35,8 @@ BAD_CALLS: list[Callable[[FakeDatabase], Any]] = [
     lambda db: _lease(db).close(TICKET, "", 0, ()),
     lambda db: _lease(db).close(TICKET, "maint-0", -3, ()),
     lambda db: _lease(db).reopen_expired(-1, ()),
+    lambda db: _lease(db).zone_of("bad id"),
+    lambda db: _lease(db).zone_of(""),
     lambda db: _settlement(db).consume("bad key!"),
     lambda db: _settlement(db).release(""),
 ]

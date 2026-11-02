@@ -45,6 +45,18 @@ class PostgresIdentityStore:
             cast(str, row[0]), cast(str, row[1]), cast(str, row[2]), cast(bool, row[3])
         )
 
+    def is_technician(self, robot_id: str) -> bool:
+        """Whether ``robot_id`` has an active ``tech_repair`` identity. A bad id is False."""
+        if not isinstance(robot_id, str) or _ROBOT_ID.fullmatch(robot_id) is None:
+            return False
+        with self._database.transaction() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM robot_identities "
+                "WHERE chassis='tech_repair' AND robot_id=%s AND NOT revoked",
+                (robot_id,),
+            ).fetchone()
+        return row is not None
+
     def register(self, token_hash: str, chassis: str, robot_id: str) -> None:
         """Store a new active identity. The token itself is generated and kept outside.
 

@@ -69,3 +69,16 @@ def test_table_rejects_a_non_digest_value(database: Database) -> None:
             "INSERT INTO robot_identities (token_hash, chassis, robot_id) "
             "VALUES ('plain-token', 'carrier', 'carrier-0')"
         )
+
+
+def test_only_an_active_tech_repair_identity_is_a_technician(database: Database) -> None:
+    store = PostgresIdentityStore(database)
+    active, revoked = hash_token("t" * 43), hash_token("u" * 43)
+    store.register(active, "tech_repair", "tech-0")
+    store.register(revoked, "tech_repair", "tech-1")
+    store.register(hash_token("v" * 43), "carrier", "carrier-0")
+    store.revoke(revoked)
+    assert store.is_technician("tech-0")
+    assert not store.is_technician("tech-1")
+    assert not store.is_technician("carrier-0")
+    assert not store.is_technician("nobody")
