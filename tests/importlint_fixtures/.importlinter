@@ -53,3 +53,11 @@ forbidden_modules =
     fixture_pkg.llm
     fixture_pkg.governance
     fixture_pkg.mcp_server
+
+[importlinter:contract:predictor-no-sim]
+name = fixture: the predictor must not import the simulator
+type = forbidden
+source_modules =
+    fixture_pkg.maintenance.predictor
+forbidden_modules =
+    fixture_pkg.sim

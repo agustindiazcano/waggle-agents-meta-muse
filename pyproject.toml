@@ -97,6 +97,13 @@ type = "forbidden"
 source_modules = ["waggle.validation"]
 forbidden_modules = ["waggle.llm", "waggle.governance", "waggle.mcp_server"]
 
+[[tool.importlinter.contracts]]
+id = "predictor-no-sim"
+name = "waggle.maintenance.predictor must not import the simulator (AGENTS.md 9.8)"
+type = "forbidden"
+source_modules = ["waggle.maintenance.predictor"]
+forbidden_modules = ["waggle.sim"]
+
 # Control reads only waggle.sim.observations. waggle.sim.__init__ and observations import
 # nothing from the project: import-linter also flags indirect chains, so any import there
 # of a ground-truth module would make every control import of observations a violation.
