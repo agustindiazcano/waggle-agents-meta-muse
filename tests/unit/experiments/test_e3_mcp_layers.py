@@ -33,6 +33,7 @@ def test_the_runnable_layers_are_the_ones_with_a_runner() -> None:
             "plan_schema",
             "plan_validator",
             "fast_layer",
+            "court_unanimity",
         }
     )
     assert expected == RUNNABLE_LAYERS

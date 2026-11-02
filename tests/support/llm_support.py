@@ -1,12 +1,12 @@
 """Shared builders for llm tests: a client wired with mock providers."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from waggle.llm.budget import PROVIDERS, BudgetGuard
 from waggle.llm.call_log import InMemoryCallLog
 from waggle.llm.client import LlmClient
 from waggle.llm.models import LlmRequest
-from waggle.llm.providers import MockProvider
+from waggle.llm.providers import MockProvider, Provider
 from waggle.llm.routing import load_routes
 from waggle.llm.task_caps import TaskCaps
 
@@ -28,20 +28,35 @@ def build(
     failing: tuple[str, ...] = (),
     fallbacks: bool = False,
     task_caps: TaskCaps | None = None,
+    providers: Mapping[str, Provider] | None = None,
+    retries: int = 0,
+    backoff_s: float = 0.0,
+    timeout_s: float | None = None,
+    sleep: Callable[[float], None] | None = None,
 ) -> tuple[LlmClient, dict[str, MockProvider], InMemoryCallLog]:
-    """Return a client, its mock providers and the in-memory call log."""
+    """Return a client, its mock providers and the in-memory call log.
+
+    ``providers`` replaces the mock of the named providers; the others stay mocks.
+    """
     log = InMemoryCallLog()
-    providers = {p: MockProvider(p, cost_usd=cost, fail=p in failing) for p in PROVIDERS}
+    mocks = {p: MockProvider(p, cost_usd=cost, fail=p in failing) for p in PROVIDERS}
+    for name, provider in (providers or {}).items():
+        mocks[name] = provider  # type: ignore[assignment]  # a scripted stand-in for the mock
+    extra = {} if sleep is None else {"sleep": sleep}
     client = LlmClient(
-        providers=providers,
+        providers=mocks,
         table=load_routes(),
         guard=BudgetGuard(caps, log),
         log=log,
         environ=MODEL_ENV,
         fallbacks_enabled=fallbacks,
         task_caps=task_caps,
+        max_retries=retries,
+        backoff_s=backoff_s,
+        timeout_s=timeout_s,
+        **extra,
     )
-    return client, providers, log
+    return client, mocks, log
 
 
 def req(role: str, rid: str = "r1", task_id: str | None = None) -> LlmRequest:
