@@ -117,7 +117,7 @@ def test_a_reservation_stores_its_ticket(database: Database) -> None:
 
 def test_one_key_cannot_be_reused_on_another_ticket(database: Database) -> None:
     repo = _repo(database)
-    other = seed_ticket(database, key="tkt-evt-2", create_machine=False)
+    other = seed_ticket(database, key="tkt-evt-2", fits=(), create_machine=False)
     repo.reserve("k-1", "P-100", 2, "maint-0", TICKET)
     with pytest.raises(IdempotencyConflict):
         repo.reserve("k-1", "P-100", 2, "maint-0", other)

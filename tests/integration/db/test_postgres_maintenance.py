@@ -151,7 +151,7 @@ def test_an_order_stores_its_ticket_and_one_key_cannot_move_to_another_ticket(
     database: Database,
 ) -> None:
     repo = _procurement(database, 0)
-    other = seed_ticket(database, key="tkt-evt-2", create_machine=False)
+    other = seed_ticket(database, key="tkt-evt-2", fits=(), create_machine=False)
     repo.order("evt-1", "P-100", 1, "maint-0", TICKET)
     with database.transaction() as connection:
         row = connection.execute("SELECT ticket_id FROM purchase_orders").fetchone()
