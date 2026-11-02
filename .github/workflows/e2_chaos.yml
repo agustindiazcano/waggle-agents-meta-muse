@@ -1,0 +1,59 @@
+name: Waggle Hive E2 chaos development runs
+
+# Manual cloud-only. Real worker processes, planned kills and a PostgreSQL service, development
+# seeds only. No provider keys and no held-out inputs. The maintainer starts it.
+on:
+  workflow_dispatch:
+    inputs:
+      arm:
+        description: "Configuration to run"
+        type: choice
+        options:
+          - both
+          - fenced
+          - baseline
+        default: both
+      seeds:
+        description: "Number of development seeds, 1 to 30"
+        default: "30"
+
+permissions:
+  contents: read
+
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: waggle
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: waggle
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U waggle -d waggle"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://waggle:ci-only-password@localhost:5432/waggle
+      E2_POSTGRES_IMAGE: pgvector/pgvector:pg16
+      ARM: ${{ inputs.arm }}
+      SEEDS: ${{ inputs.seeds }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - name: Run the development seeds
+        run: uv run python -m waggle.experiments.e2_sweep --seed-set development --arm "$ARM" --seeds "$SEEDS"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2-chaos-dev-${{ github.sha }}
+          path: results/e2/dev/chaos_*.json
+          if-no-files-found: error
