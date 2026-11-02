@@ -7,7 +7,17 @@ adding an entity at the end never changes the streams of the others.
 
 import numpy as np
 
-SUBSYSTEMS = ("robots", "humans", "lidar", "beacons", "scenario")
+SUBSYSTEMS = (
+    "robots",
+    "humans",
+    "lidar",
+    "beacons",
+    "scenario",
+    "degradation",
+    "wear",
+    "telemetry",
+    "sensorbias",
+)
 """Fixed order: a subsystem's position is part of its spawn key, so never reorder this."""
 
 

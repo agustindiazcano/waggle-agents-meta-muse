@@ -26,6 +26,8 @@ GROUND_TRUTH = [
     "rollout",
     "scenarios",
     "scripted",
+    "machines",
+    "telemetry",
 ]
 
 
