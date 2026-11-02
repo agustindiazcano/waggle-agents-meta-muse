@@ -749,3 +749,16 @@ Decision: `waggle.experiments.e3_fast_layer` runs E3-T2-02 (an untrusted SOP ask
 Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote from the case setup and need maintainer review. A first version put the reading 8 m ahead; the geofence edge was then 5 m away and a carrier at 2 m/s can stop in that distance, so the cap did not drop. The test caught it and the reading moved to 4 m. No limit was changed.
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
+
+## ADR-062: The maintainer adopted the recommended option of the design decision tables
+
+Date: 2026-11-02. Said by the maintainer: "para las decisiones hace lo recomendado".
+
+Decision: for every decision table at the end of the design documents `docs/PACKAGE_MODEL_DESIGN.md`, `docs/CATALOG_COMPATIBILITY_DESIGN.md`, `docs/COURT_DESIGN.md`, `docs/ROLLOUT_VALIDATOR_DESIGN.md`, `docs/ADVISORS_DESIGN.md`, `docs/PREDICTIVE_MAINTENANCE_DESIGN.md`, `docs/MULTIMODAL_AND_VIEWER_DESIGN.md` and `docs/MCP_CLIENT_TEST_DESIGN.md`, the option in the Recommendation column is adopted. The tables are the record of what was recommended; this entry does not restate them, so it cannot misquote one.
+
+What this approves, which AGENTS.md section 15 reserves for the maintainer, each to be built with a test first and a check of the current schema revision before any migration: the catalog compatibility table and the technician lease with ticket close and reservation settlement (schema revisions proposed as 10 and 11, widening a CHECK constraint counts as approved); a required `ticket_id` on `reserve_part` and `create_purchase_order`; the package id registry table and its check in the forwarder, with the foreign key later; filtering `tools/list` by chassis; `Reason.ADVISOR` and an advisor limit list in `control_step`, which can only reduce motion; round records of the court stored in the database. The first Python SDK client is the first real MCP client to run, and Streamable HTTP is not built now.
+
+What this does not cover: paid calls, provider caps and balances (PENDING rows 4 and 5), the HTTP client dependency (row 9), held-out seeds and their definition for the chaos harness, global implementation, the real data only the maintainer has (parts, machines, zones, compatibility rows, manuals, recordings, labels of the E4 review set and the E5 cases, cost weights), the Muse Model License wording, and any claim that the MCP server is conformant. Where a table asks the maintainer for a value, the value is still needed.
+
+Consequence: PENDING rows 103 and 106 are answered. The work they blocked is built next as stacked branches, each reviewed as a diff. A decision that turns out wrong is superseded by a new entry, never edited here.
+
