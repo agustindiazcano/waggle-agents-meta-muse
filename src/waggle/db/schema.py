@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 9
+LATEST_REVISION = 10
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -224,6 +224,19 @@ _MOTION_DDL: tuple[LiteralString, ...] = (
         WHERE status = 'pending'""",
 )
 
+_COMPATIBILITY_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE part_compatibility (
+        machine_id text NOT NULL REFERENCES machines(machine_id),
+        part_number text NOT NULL REFERENCES spare_parts(part_number),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+        PRIMARY KEY (machine_id, part_number)
+    )""",
+    """ALTER TABLE part_reservations ADD COLUMN ticket_id text
+        REFERENCES maintenance_tickets(ticket_id)""",
+    """ALTER TABLE purchase_orders ADD COLUMN ticket_id text
+        REFERENCES maintenance_tickets(ticket_id)""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -234,6 +247,7 @@ _MIGRATIONS = {
     7: _INVENTORY_DDL,
     8: _MAINTENANCE_DDL,
     9: _MOTION_DDL,
+    10: _COMPATIBILITY_DDL,
 }
 
 

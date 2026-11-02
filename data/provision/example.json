@@ -9,5 +9,9 @@
     {"chassis": "carrier", "robot_id": "C1"},
     {"chassis": "carrier", "robot_id": "C2"},
     {"chassis": "maintenance", "robot_id": "MAINT-1"}
+  ],
+  "compatibility": [
+    {"machine_id": "C1", "part_number": "BRG-6204"},
+    {"machine_id": "CONV-1", "part_number": "SEAL-08"}
   ]
 }

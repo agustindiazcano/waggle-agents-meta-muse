@@ -29,6 +29,8 @@ def test_malformed_ids_never_connect(bad: str) -> None:
     with pytest.raises(ValueError):
         repo.add_machine(bad)
     with pytest.raises(ValueError):
+        repo.has_machine(bad)
+    with pytest.raises(ValueError):
         repo.open_ticket(_bad_key(bad), "M-1", "summary", "tech-0")
     with pytest.raises(ValueError):
         repo.open_ticket("evt-1", bad, "summary", "tech-0")
@@ -52,9 +54,9 @@ def test_malformed_order_ids_never_connect(bad: str) -> None:
     database = MagicMock(spec=Database)
     repo = ProcurementRepository(database)
     with pytest.raises(ValueError):
-        repo.order(_bad_key(bad), "P-100", 1, "maint-0")
+        repo.order(_bad_key(bad), "P-100", 1, "maint-0", "tkt-1")
     with pytest.raises(ValueError):
-        repo.order("evt-1", bad, 1, "maint-0")
+        repo.order("evt-1", bad, 1, "maint-0", "tkt-1")
     database.transaction.assert_not_called()
 
 
@@ -62,5 +64,5 @@ def test_malformed_order_ids_never_connect(bad: str) -> None:
 def test_invalid_order_quantity_never_connects(quantity: object) -> None:
     database = MagicMock(spec=Database)
     with pytest.raises(ValueError):
-        ProcurementRepository(database).order("evt-1", "P-100", quantity, "maint-0")  # type: ignore[arg-type]
+        ProcurementRepository(database).order("evt-1", "P-100", quantity, "maint-0", "tkt-1")  # type: ignore[arg-type]
     database.transaction.assert_not_called()

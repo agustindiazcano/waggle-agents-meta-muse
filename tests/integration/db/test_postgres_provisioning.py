@@ -4,13 +4,14 @@ from pathlib import Path
 
 import pytest
 
+from waggle.db.compatibility import CompatibilityRepository
 from waggle.db.connection import Database
 from waggle.db.corridors import CorridorRepository
 from waggle.db.identities import PostgresIdentityStore
 from waggle.db.inventory import InventoryRepository, PartStock
 from waggle.db.tickets import TicketRepository
 from waggle.mcp_server.identity import hash_token
-from waggle.provisioning import load_spec, provision
+from waggle.provisioning import SpecError, load_spec, parse_spec, provision
 
 pytestmark = pytest.mark.heavy
 
@@ -24,6 +25,7 @@ def _run(database: Database) -> dict[str, str]:
         TicketRepository(database),
         CorridorRepository(database),
         PostgresIdentityStore(database),
+        CompatibilityRepository(database),
     )
     return dict(result.tokens)
 
@@ -41,5 +43,32 @@ def test_the_example_spec_provisions_a_fresh_database_and_a_rerun_changes_nothin
         "Z1",
         "Z2",
     }
+    compatibility = CompatibilityRepository(database)
+    assert compatibility.exists("C1", "BRG-6204")
+    assert not compatibility.exists("C1", "SEAL-08")
     assert _run(database) == {}
+    assert compatibility.count() == 2
     assert inventory.get("BRG-6204") == PartStock("BRG-6204", 10, 0)
+
+
+def test_a_spec_with_a_row_for_an_unknown_machine_creates_nothing(database: Database) -> None:
+    spec = parse_spec(
+        {
+            "parts": [{"part_number": "P-1", "on_hand": 1}],
+            "machines": ["M-1"],
+            "zones": [],
+            "identities": [],
+            "compatibility": [{"machine_id": "GHOST", "part_number": "P-1"}],
+        }
+    )
+    with pytest.raises(SpecError):
+        provision(
+            spec,
+            InventoryRepository(database),
+            TicketRepository(database),
+            CorridorRepository(database),
+            PostgresIdentityStore(database),
+            CompatibilityRepository(database),
+        )
+    assert InventoryRepository(database).get("P-1") is None
+    assert not TicketRepository(database).has_machine("M-1")
