@@ -286,7 +286,6 @@ Deviations applied in Phase 2 (B10), each measured:
 Not done: kinematics were already vectorized across robots; the human walkers and the waypoint driver are still per-entity Python (about 0.8 s of 5.7 s).
 Outcome: 3.1x measured against a 5x minimum and 2.0 s per rollout target. Stopped for the maintainer. Options: accept 5.7 s per rollout, lower K, H or the lidar rate for the live demo only, vectorize the human walkers and driver (about 10 percent more), or run variants in the cloud on more cores.
 
-
 ## ADR-026: Perception and tracking
 
 Status: proposed. Implemented in B13, with the deviations listed at the end of this record.
@@ -519,7 +518,6 @@ The complete local build order in AGENTS.md section 18 remains first. Planning d
 
 Consequences: global work has explicit custody, partition and stale-state requirements rather than simply adding more robot agents. A shared-tick demo is insufficient evidence for independent sites; multi-clock lease authority and trusted arrival receipts remain design decisions. The maintainer must review local completion evidence and authorize implementation separately at G-GLOBAL.
 
-
 ## ADR-036: Atomic task handoff record
 
 Status: cloud PostgreSQL correctness tests passed; no E2 evaluation. This does not authorize an external robot effect.
@@ -750,6 +748,18 @@ Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote fro
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
 
+## ADR-062: The maintainer adopted the recommended option of the design decision tables
+
+Date: 2026-11-02. Said by the maintainer: "para las decisiones hace lo recomendado".
+
+Decision: for every decision table at the end of the design documents `docs/PACKAGE_MODEL_DESIGN.md`, `docs/CATALOG_COMPATIBILITY_DESIGN.md`, `docs/COURT_DESIGN.md`, `docs/ROLLOUT_VALIDATOR_DESIGN.md`, `docs/ADVISORS_DESIGN.md`, `docs/PREDICTIVE_MAINTENANCE_DESIGN.md`, `docs/MULTIMODAL_AND_VIEWER_DESIGN.md` and `docs/MCP_CLIENT_TEST_DESIGN.md`, the option in the Recommendation column is adopted. The tables are the record of what was recommended; this entry does not restate them, so it cannot misquote one.
+
+What this approves, which AGENTS.md section 15 reserves for the maintainer, each to be built with a test first and a check of the current schema revision before any migration: the catalog compatibility table and the technician lease with ticket close and reservation settlement (schema revisions proposed as 10 and 11, widening a CHECK constraint counts as approved); a required `ticket_id` on `reserve_part` and `create_purchase_order`; the package id registry table and its check in the forwarder, with the foreign key later; filtering `tools/list` by chassis; `Reason.ADVISOR` and an advisor limit list in `control_step`, which can only reduce motion; round records of the court stored in the database. The first Python SDK client is the first real MCP client to run, and Streamable HTTP is not built now.
+
+What this does not cover: paid calls, provider caps and balances (PENDING rows 4 and 5), the HTTP client dependency (row 9), held-out seeds and their definition for the chaos harness, global implementation, the real data only the maintainer has (parts, machines, zones, compatibility rows, manuals, recordings, labels of the E4 review set and the E5 cases, cost weights), the Muse Model License wording, and any claim that the MCP server is conformant. Where a table asks the maintainer for a value, the value is still needed.
+
+Consequence: PENDING rows 103 and 106 are answered. The work they blocked is built next as stacked branches, each reviewed as a diff. A decision that turns out wrong is superseded by a new entry, never edited here.
+
 ## ADR-063: tools/list is filtered by the authenticated chassis
 
 Status: implemented with unit tests against fakes; not run against a real client. Touches the MCP boundary (AGENTS.md section 15); the maintainer approved it by adopting decision D3 of the MCP client test design (ADR-062).
@@ -759,16 +769,6 @@ Decision: `tools/list` returns the definitions of the tools the authenticated ch
 Not changed: `tools/call`. A tool that is not allowed is denied with the same `tool_not_allowed` result as before, audited as before, and an unlisted tool stays denied when the client names it. The listing writes no audit row and is not rate limited, as before. Why: a client or model that sees only the tools it may use is less tempted to probe, and the listing now matches what the boundary will accept.
 
 Gaps: a transport built over a dispatcher that lacks `allowed_tools` is a type error, so test doubles needed the method. The listing is not itself a security control; the allowlist check at call time remains the control.
-
-## ADR-065: Part compatibility, schema revision 10 and ticket-bound part tools
-
-Status: implemented with unit tests; the PostgreSQL tests (migration, repositories, provisioning, E3 catalog run) were written but run only in the cloud workflow. ADR-062 (the maintainer's adoption of the recommended options) is on `docs/session-handoff-design-batch`; the number follows it. Implements Part A of `docs/CATALOG_COMPATIBILITY_DESIGN.md`. Part B (revision 11) is not touched.
-
-Decision: schema revision 10 (forward only, checked with `--expected-revision 9`, no data, nothing dropped) adds `part_compatibility(machine_id, part_number)` with a composite primary key and foreign keys to `machines` and `spare_parts`, and a nullable `ticket_id` (foreign key to `maintenance_tickets`) on `part_reservations` and `purchase_orders`, nullable for rows written before the migration. `reserve_part` and `create_purchase_order` now require `ticket_id`; the strict schemas still reject unknown fields, so a `machine_id` argument is refused and the machine can only come from the ticket row. In the tool transaction the repository locks the part row (`UnknownPart`), reads the ticket (it must exist and be `open` or `dispatched`, else `UnknownTicket`), tests the compatibility row (no row raises `IncompatiblePart`, so the check fails closed), and only then runs the existing idempotency and stock logic. The idempotency row stores `ticket_id`; the same key on another ticket, or a key row written before the migration, is an `IdempotencyConflict`. The forwarder maps `UnknownPart`, `UnknownTicket`, `IncompatiblePart` and `IdempotencyConflict` to the one existing denial text of each tool ("reservation not available", "order not available"), so the denial does not say which check failed. ACK, retry, fencing and audit logic are unchanged. `provision` accepts an optional `compatibility` list of `{machine_id, part_number}`: unknown keys, malformed or duplicate rows, and rows naming a machine or part found neither in the spec nor in the database reject the whole spec before anything is created; a rerun skips existing rows and names them; it warns when parts are in the spec and the table has no rows. The key is optional so specs written for ADR-056 still load.
-
-E3-T3-02: the runner opens a ticket for conveyor C1, loads (C1, BRG-6204) and (P1, SEAL-08), and orders SEAL-08 against that ticket, which is now blocked. T3-01 stays blocked and T3-03 must still be served. The check was added after E3-T3-02 was seen to pass (ADR-054, not rewritten), so the outcome is a regression test of a known gap and not an unbiased measurement; there are three cases and the rows are a synthetic fixture. A sensitivity test shows the runner reports T3-02 as accepted when the lookup allows every pair.
-
-Gaps, stated plainly: `ticket_id` is a new required argument, so every earlier caller of the two tools changed (E3 attempts, tests); a client built for the old schema is rejected. The check proves a row exists; it does not prove the row is true, and the real compatibility data comes from the maintainer. An empty table denies every order. `TicketRepository.has_machine` was added for the load script. Nothing here was run against PostgreSQL on this machine.
 
 ## ADR-064: Advisor limits in the fast layer and the harness bridge
 
@@ -781,6 +781,34 @@ Bridge: `waggle.experiments.advisor_bridge` turns the plain `SpeedLimit` values 
 Tests: invariants I1 (property test with a seeded generator and a seeded random sweep: speed magnitude never above the run without advisor, sign kept), I3 (reflex stops and geofence or envelope caps unchanged when an advisor names them) and I10 (import-linter contracts stay green). The closed-set assertion in `tests/unit/control/test_control_types.py` gained `ADVISOR`; it is the only existing test edited, and it only lists the new enum member.
 
 Gaps, stated plainly: only the speed cap is advised, no margin input (decision 3). An advisor limit is not applied on the stop path of an invalid input, where the output is already zero. No advisor, runtime or E5 result exists.
+
+## ADR-065: Part compatibility, schema revision 10 and ticket-bound part tools
+
+Status: implemented with unit tests; the PostgreSQL tests (migration, repositories, provisioning, E3 catalog run) were written but run only in the cloud workflow. ADR-062 (the maintainer's adoption of the recommended options) is on `docs/session-handoff-design-batch`; the number follows it. Implements Part A of `docs/CATALOG_COMPATIBILITY_DESIGN.md`. Part B (revision 11) is not touched.
+
+Decision: schema revision 10 (forward only, checked with `--expected-revision 9`, no data, nothing dropped) adds `part_compatibility(machine_id, part_number)` with a composite primary key and foreign keys to `machines` and `spare_parts`, and a nullable `ticket_id` (foreign key to `maintenance_tickets`) on `part_reservations` and `purchase_orders`, nullable for rows written before the migration. `reserve_part` and `create_purchase_order` now require `ticket_id`; the strict schemas still reject unknown fields, so a `machine_id` argument is refused and the machine can only come from the ticket row. In the tool transaction the repository locks the part row (`UnknownPart`), reads the ticket (it must exist and be `open` or `dispatched`, else `UnknownTicket`), tests the compatibility row (no row raises `IncompatiblePart`, so the check fails closed), and only then runs the existing idempotency and stock logic. The idempotency row stores `ticket_id`; the same key on another ticket, or a key row written before the migration, is an `IdempotencyConflict`. The forwarder maps `UnknownPart`, `UnknownTicket`, `IncompatiblePart` and `IdempotencyConflict` to the one existing denial text of each tool ("reservation not available", "order not available"), so the denial does not say which check failed. ACK, retry, fencing and audit logic are unchanged. `provision` accepts an optional `compatibility` list of `{machine_id, part_number}`: unknown keys, malformed or duplicate rows, and rows naming a machine or part found neither in the spec nor in the database reject the whole spec before anything is created; a rerun skips existing rows and names them; it warns when parts are in the spec and the table has no rows. The key is optional so specs written for ADR-056 still load.
+
+E3-T3-02: the runner opens a ticket for conveyor C1, loads (C1, BRG-6204) and (P1, SEAL-08), and orders SEAL-08 against that ticket, which is now blocked. T3-01 stays blocked and T3-03 must still be served. The check was added after E3-T3-02 was seen to pass (ADR-054, not rewritten), so the outcome is a regression test of a known gap and not an unbiased measurement; there are three cases and the rows are a synthetic fixture. A sensitivity test shows the runner reports T3-02 as accepted when the lookup allows every pair.
+
+Gaps, stated plainly: `ticket_id` is a new required argument, so every earlier caller of the two tools changed (E3 attempts, tests); a client built for the old schema is rejected. The check proves a row exists; it does not prove the row is true, and the real compatibility data comes from the maintainer. An empty table denies every order. `TicketRepository.has_machine` was added for the load script. Nothing here was run against PostgreSQL on this machine.
+
+## ADR-070: HTTP providers on the standard library, with fail-closed rules
+
+Status: implemented with unit tests against a local fake server; no real provider was called and no key was used. The runtime dependency choice of PENDING row 9 is still open and this decision does not settle it.
+
+Decision: `waggle.llm.http_provider.HttpProvider` speaks OpenAI-style chat completions over `http.client`, with a timeout on every call, one fresh connection per attempt and no redirect following. It adds no runtime dependency. If the maintainer later approves an SDK, the class can be replaced behind the same `Provider` interface.
+
+Fail-closed rules:
+
+- Provider mode comes from `WAGGLE_LLM_PROVIDER` (`mock` or `http`). Unset or any other value raises `ConfigError`.
+- A missing or invalid `*_SPEND_CAP_USD`, key, token or URL raises before any call. URLs must be `https`; plain `http` is accepted only for loopback when the caller of the loader sets the switch in code, never from the environment.
+- Prices live in `src/waggle/llm/prices.toml`, all shipped `verified = false`. An unverified or incomplete price makes `estimate_cost` and `complete` raise `ConfigError`, so the client makes no call.
+- Cost is computed from the response `usage` and the verified price. A response without valid `usage` is rejected.
+- 429, 5xx and transport errors are retried up to an attempt cap with exponential backoff; `Retry-After` in seconds is honored up to a cap. Other 4xx, 3xx, wrong content type, oversized body, malformed JSON, duplicate keys and non-finite numbers end in `ProviderError` with no retry.
+- Exception and log text carries the provider name and a status or reason only. It never carries a header, a URL or a response body. Tests search for the key text in exceptions, tracebacks, logs and reprs.
+- `vertex` and voice are not implemented (`docs/PROVIDER_INTEGRATION.md` gives the reasons). A route to them fails closed.
+
+Gaps, stated plainly: the Meta usage fields, the Baseten auth header and the Modal endpoint shape are unconfirmed (see the table in `docs/PROVIDER_INTEGRATION.md`). The cloud smoke tests are written and have not been run. The retry logic lives in the provider because `LlmClient` does not retry; the client's own retry policy is unchanged.
 
 ## ADR-071: Handoff chaos scenes S31 to S35 and their own baseline
 
@@ -817,34 +845,3 @@ What they do not do. They do not control a robot, write to the simulator, change
 Security. The API has no authentication and none is designed. It binds to `127.0.0.1` by default (`WAGGLE_API_HOST`), the compose file publishes the port on `127.0.0.1` only, and it must not be exposed on a network as it is. A web page on any origin can still open a socket to localhost and read frames; the frames hold simulator data and nothing else. Exposing it beyond localhost needs a separate decision with authentication and an origin check, and that is not made here.
 
 Provenance and gaps, stated plainly: the generator writes `source = "replay"` in every frame, which is a label of this tool and not a statement about how a given file will be used. It records scenarios without control, so a replay of a controlled run needs a different generator. A write that fails midway can leave a partial file because the recorder opens in exclusive mode before writing; `replay-verify` refuses such a file. The generator is exercised on S01 only in the tests.
-
-## ADR-070: HTTP providers on the standard library, with fail-closed rules
-
-Status: implemented with unit tests against a local fake server; no real provider was called and no key was used. The runtime dependency choice of PENDING row 9 is still open and this decision does not settle it.
-
-Decision: `waggle.llm.http_provider.HttpProvider` speaks OpenAI-style chat completions over `http.client`, with a timeout on every call, one fresh connection per attempt and no redirect following. It adds no runtime dependency. If the maintainer later approves an SDK, the class can be replaced behind the same `Provider` interface.
-
-Fail-closed rules:
-
-- Provider mode comes from `WAGGLE_LLM_PROVIDER` (`mock` or `http`). Unset or any other value raises `ConfigError`.
-- A missing or invalid `*_SPEND_CAP_USD`, key, token or URL raises before any call. URLs must be `https`; plain `http` is accepted only for loopback when the caller of the loader sets the switch in code, never from the environment.
-- Prices live in `src/waggle/llm/prices.toml`, all shipped `verified = false`. An unverified or incomplete price makes `estimate_cost` and `complete` raise `ConfigError`, so the client makes no call.
-- Cost is computed from the response `usage` and the verified price. A response without valid `usage` is rejected.
-- 429, 5xx and transport errors are retried up to an attempt cap with exponential backoff; `Retry-After` in seconds is honored up to a cap. Other 4xx, 3xx, wrong content type, oversized body, malformed JSON, duplicate keys and non-finite numbers end in `ProviderError` with no retry.
-- Exception and log text carries the provider name and a status or reason only. It never carries a header, a URL or a response body. Tests search for the key text in exceptions, tracebacks, logs and reprs.
-- `vertex` and voice are not implemented (`docs/PROVIDER_INTEGRATION.md` gives the reasons). A route to them fails closed.
-
-Gaps, stated plainly: the Meta usage fields, the Baseten auth header and the Modal endpoint shape are unconfirmed (see the table in `docs/PROVIDER_INTEGRATION.md`). The cloud smoke tests are written and have not been run. The retry logic lives in the provider because `LlmClient` does not retry; the client's own retry policy is unchanged.
-
-## ADR-062: The maintainer adopted the recommended option of the design decision tables
-
-Date: 2026-11-02. Said by the maintainer: "para las decisiones hace lo recomendado".
-
-Decision: for every decision table at the end of the design documents `docs/PACKAGE_MODEL_DESIGN.md`, `docs/CATALOG_COMPATIBILITY_DESIGN.md`, `docs/COURT_DESIGN.md`, `docs/ROLLOUT_VALIDATOR_DESIGN.md`, `docs/ADVISORS_DESIGN.md`, `docs/PREDICTIVE_MAINTENANCE_DESIGN.md`, `docs/MULTIMODAL_AND_VIEWER_DESIGN.md` and `docs/MCP_CLIENT_TEST_DESIGN.md`, the option in the Recommendation column is adopted. The tables are the record of what was recommended; this entry does not restate them, so it cannot misquote one.
-
-What this approves, which AGENTS.md section 15 reserves for the maintainer, each to be built with a test first and a check of the current schema revision before any migration: the catalog compatibility table and the technician lease with ticket close and reservation settlement (schema revisions proposed as 10 and 11, widening a CHECK constraint counts as approved); a required `ticket_id` on `reserve_part` and `create_purchase_order`; the package id registry table and its check in the forwarder, with the foreign key later; filtering `tools/list` by chassis; `Reason.ADVISOR` and an advisor limit list in `control_step`, which can only reduce motion; round records of the court stored in the database. The first Python SDK client is the first real MCP client to run, and Streamable HTTP is not built now.
-
-What this does not cover: paid calls, provider caps and balances (PENDING rows 4 and 5), the HTTP client dependency (row 9), held-out seeds and their definition for the chaos harness, global implementation, the real data only the maintainer has (parts, machines, zones, compatibility rows, manuals, recordings, labels of the E4 review set and the E5 cases, cost weights), the Muse Model License wording, and any claim that the MCP server is conformant. Where a table asks the maintainer for a value, the value is still needed.
-
-Consequence: PENDING rows 103 and 106 are answered. The work they blocked is built next as stacked branches, each reviewed as a diff. A decision that turns out wrong is superseded by a new entry, never edited here.
-
