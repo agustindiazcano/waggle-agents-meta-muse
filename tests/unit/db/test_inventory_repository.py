@@ -15,7 +15,7 @@ def test_malformed_part_number_never_connects(part: str) -> None:
     with pytest.raises(ValueError):
         repo.get(part)
     with pytest.raises(ValueError):
-        repo.reserve("key-1", part, 1, "robot-0")
+        repo.reserve("key-1", part, 1, "robot-0", "tkt-1")
     database.transaction.assert_not_called()
 
 
@@ -23,7 +23,7 @@ def test_malformed_part_number_never_connects(part: str) -> None:
 def test_invalid_quantity_never_connects(quantity: object) -> None:
     database = MagicMock(spec=Database)
     with pytest.raises(ValueError):
-        InventoryRepository(database).reserve("key-1", "P-100", quantity, "robot-0")  # type: ignore[arg-type]
+        InventoryRepository(database).reserve("key-1", "P-100", quantity, "robot-0", "tkt-1")  # type: ignore[arg-type]
     database.transaction.assert_not_called()
 
 
@@ -31,7 +31,7 @@ def test_invalid_quantity_never_connects(quantity: object) -> None:
 def test_invalid_idempotency_key_never_connects(key: str) -> None:
     database = MagicMock(spec=Database)
     with pytest.raises(ValueError):
-        InventoryRepository(database).reserve(key, "P-100", 1, "robot-0")
+        InventoryRepository(database).reserve(key, "P-100", 1, "robot-0", "tkt-1")
     database.transaction.assert_not_called()
 
 

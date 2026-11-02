@@ -135,11 +135,28 @@ def test_fencing_token_is_a_positive_integer_claim() -> None:
 
 
 def test_quantity_bounds() -> None:
-    base = {"part_number": "P-100", "idempotency_key": "k1"}
+    base = {"part_number": "P-100", "idempotency_key": "k1", "ticket_id": "tkt-0123456789abcdef"}
     assert ok("reserve_part", "maintenance", {**base, "quantity": 1})
     assert ok("reserve_part", "maintenance", {**base, "quantity": 100})
     assert reason("reserve_part", "maintenance", {**base, "quantity": 0}) == "out_of_bounds"
     assert reason("reserve_part", "maintenance", {**base, "quantity": 101}) == "out_of_bounds"
+
+
+@pytest.mark.parametrize("tool", ["reserve_part", "create_purchase_order"])
+def test_part_tools_require_a_ticket_id_and_refuse_a_machine_id(tool: str) -> None:
+    base = {
+        "part_number": "P-100",
+        "quantity": 1,
+        "idempotency_key": "k1",
+        "ticket_id": "tkt-0123456789abcdef",
+    }
+    assert ok(tool, "maintenance", base)
+    without = {k: v for k, v in base.items() if k != "ticket_id"}
+    assert reason(tool, "maintenance", without) == "missing_field"
+    assert reason(tool, "maintenance", {**base, "machine_id": "C1"}) == "unknown_field"
+    assert reason(tool, "maintenance", {**base, "ticket_id": 5}) == "bad_type"
+    assert reason(tool, "maintenance", {**base, "ticket_id": "a b"}) == "bad_value"
+    assert reason(tool, "maintenance", {**base, "ticket_id": "t" * 65}) == "out_of_bounds"
 
 
 def test_free_text_is_bounded_and_free_of_control_characters() -> None:

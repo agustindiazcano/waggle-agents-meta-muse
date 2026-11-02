@@ -2,20 +2,22 @@
 
 The catalog is the table: a part number that is not in ``spare_parts`` does not exist, so no
 text from a manual or a model can create one. Reservations lock the part row first, then look
-up the idempotency key, so concurrent calls with one key reserve once and stock never goes
-below zero.
+read the ticket machine and its compatibility row, then look up the idempotency key, so
+concurrent calls with one key reserve once and stock never goes below zero (ADR-063).
 """
 
 import re
 from dataclasses import dataclass
 from typing import Literal, cast
 
+from waggle.db.compatibility import require_compatible
 from waggle.db.connection import Database
 from waggle.db.corridors import IdempotencyConflict
 
 _PART = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _KEY = re.compile(r"[A-Za-z0-9_.:-]{1,128}")
 _HOLDER = re.compile(r"[A-Za-z0-9_.-]{1,64}")
+_TICKET = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _QUANTITY_MAX = 1000
 _STOCK_MAX = 1_000_000
 
@@ -95,16 +97,20 @@ class InventoryRepository:
         # Column types and constraints fix the row types.
         return PartStock(cast(str, row[0]), cast(int, row[1]), cast(int, row[2]))
 
-    def reserve(self, key: str, part_number: str, quantity: int, holder: str) -> ReservationResult:
-        """Reserve stock once per key.
+    def reserve(
+        self, key: str, part_number: str, quantity: int, holder: str, ticket_id: str
+    ) -> ReservationResult:
+        """Reserve stock once per key, for the machine of an open or dispatched ticket.
 
-        Raises UnknownPart for a part outside the catalog and IdempotencyConflict when the key
-        was used with other values.
+        Raises UnknownPart for a part outside the catalog, UnknownTicket for a ticket that does
+        not exist or is not live, IncompatiblePart when the part does not fit the machine of the
+        ticket, and IdempotencyConflict when the key was used with other values or another ticket.
         """
         _text(_KEY, key, "idempotency key")
         _part(part_number)
         _bounded(quantity, 1, _QUANTITY_MAX, "quantity")
         _text(_HOLDER, holder, "holder")
+        _text(_TICKET, ticket_id, "ticket id")
         with self._database.transaction() as connection:
             part = connection.execute(
                 "SELECT on_hand, reserved FROM spare_parts WHERE part_number=%s FOR UPDATE",
@@ -112,13 +118,14 @@ class InventoryRepository:
             ).fetchone()
             if part is None:
                 raise UnknownPart(part_number)
+            require_compatible(connection, ticket_id, part_number)
             prior = connection.execute(
-                "SELECT part_number, quantity, holder FROM part_reservations "
+                "SELECT part_number, quantity, holder, ticket_id FROM part_reservations "
                 "WHERE idempotency_key=%s",
                 (key,),
             ).fetchone()
             if prior is not None:
-                if tuple(prior) != (part_number, quantity, holder):
+                if tuple(prior) != (part_number, quantity, holder, ticket_id):
                     raise IdempotencyConflict("idempotency key was used with other values")
                 return ReservationResult(True, "replayed", part_number, quantity)
             if cast(int, part[0]) - cast(int, part[1]) < quantity:
@@ -128,8 +135,9 @@ class InventoryRepository:
                 (quantity, part_number),
             )
             connection.execute(
-                "INSERT INTO part_reservations (idempotency_key, part_number, quantity, holder) "
-                "VALUES (%s, %s, %s, %s)",
-                (key, part_number, quantity, holder),
+                "INSERT INTO part_reservations "
+                "(idempotency_key, part_number, quantity, holder, ticket_id) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (key, part_number, quantity, holder, ticket_id),
             )
         return ReservationResult(True, "reserved", part_number, quantity)

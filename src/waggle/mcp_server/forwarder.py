@@ -11,6 +11,7 @@ from typing import Protocol
 
 from waggle.coordination.corridors import CorridorResult, ZoneObservation, ZoneToken
 from waggle.coordination.task_model import TaskRecord
+from waggle.db.compatibility import IncompatiblePart
 from waggle.db.corridors import IdempotencyConflict
 from waggle.db.inventory import PartStock, ReservationResult, UnknownPart
 from waggle.db.motion import EnqueueResult, MotionRefused, NewOrder
@@ -58,8 +59,10 @@ class InventoryPort(Protocol):
         """Counts for a catalog part, or None outside the catalog."""
         ...
 
-    def reserve(self, key: str, part_number: str, quantity: int, holder: str) -> ReservationResult:
-        """Reserve stock once per key."""
+    def reserve(
+        self, key: str, part_number: str, quantity: int, holder: str, ticket_id: str
+    ) -> ReservationResult:
+        """Reserve stock once per key, for the machine of the ticket."""
         ...
 
 
@@ -78,8 +81,10 @@ class TicketPort(Protocol):
 class ProcurementPort(Protocol):
     """The order operation of ``ProcurementRepository``."""
 
-    def order(self, key: str, part_number: str, quantity: int, requester: str) -> OrderResult:
-        """Place the order for a failure event once."""
+    def order(
+        self, key: str, part_number: str, quantity: int, requester: str, ticket_id: str
+    ) -> OrderResult:
+        """Place the order for a failure event once, for the machine of the ticket."""
         ...
 
 
@@ -213,8 +218,10 @@ class FencedForwarder:
                 str(args["part_number"]),
                 int(str(args["quantity"])),
                 identity.robot_id,
+                str(args["ticket_id"]),
             )
-        except (UnknownPart, IdempotencyConflict):
+        except (UnknownPart, UnknownTicket, IncompatiblePart, IdempotencyConflict):
+            # One text for every failed check, so the denial never says which one failed.
             raise ToolDenied("order not available") from None
         return {"ordered": result.ordered, "reason": result.reason}
 
@@ -238,8 +245,10 @@ class FencedForwarder:
                 str(args["part_number"]),
                 int(str(args["quantity"])),
                 identity.robot_id,
+                str(args["ticket_id"]),
             )
-        except (UnknownPart, IdempotencyConflict):
+        except (UnknownPart, UnknownTicket, IncompatiblePart, IdempotencyConflict):
+            # One text for every failed check, so the denial never says which one failed.
             raise ToolDenied("reservation not available") from None
         return {"reserved": result.granted, "reason": result.reason}
 

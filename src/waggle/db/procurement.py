@@ -1,13 +1,15 @@
 """PostgreSQL simulated purchase orders (ADR-049, T16).
 
 An order is placed only for a catalog part and only when no unit is available, once per failure
-event key. The part row is locked first, so concurrent calls with one key place one order.
+event key. The part row is locked first, so concurrent calls with one key place one order. The
+part must fit the machine of the ticket named in the call (ADR-063).
 """
 
 import re
 from dataclasses import dataclass
 from typing import Literal, cast
 
+from waggle.db.compatibility import require_compatible
 from waggle.db.connection import Database
 from waggle.db.corridors import IdempotencyConflict
 from waggle.db.inventory import UnknownPart
@@ -15,6 +17,7 @@ from waggle.db.inventory import UnknownPart
 _PART = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _KEY = re.compile(r"[A-Za-z0-9_.:-]{1,128}")
 _REQUESTER = re.compile(r"[A-Za-z0-9_.-]{1,64}")
+_TICKET = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _QUANTITY_MAX = 1000
 
 
@@ -34,11 +37,14 @@ class ProcurementRepository:
     def __init__(self, database: Database) -> None:
         self._database = database
 
-    def order(self, key: str, part_number: str, quantity: int, requester: str) -> OrderResult:
-        """Place the order for a failure event once.
+    def order(
+        self, key: str, part_number: str, quantity: int, requester: str, ticket_id: str
+    ) -> OrderResult:
+        """Place the order for a failure event once, against an open or dispatched ticket.
 
-        Raises UnknownPart for a part outside the catalog and IdempotencyConflict when the key
-        was used with other values.
+        Raises UnknownPart for a part outside the catalog, UnknownTicket for a ticket that does
+        not exist or is not live, IncompatiblePart when the part does not fit the machine of the
+        ticket, and IdempotencyConflict when the key was used with other values or another ticket.
         """
         if not isinstance(key, str) or _KEY.fullmatch(key) is None:
             raise ValueError("invalid idempotency key")
@@ -48,6 +54,8 @@ class ProcurementRepository:
             raise ValueError("invalid quantity")
         if not isinstance(requester, str) or _REQUESTER.fullmatch(requester) is None:
             raise ValueError("invalid requester")
+        if not isinstance(ticket_id, str) or _TICKET.fullmatch(ticket_id) is None:
+            raise ValueError("invalid ticket id")
         with self._database.transaction() as connection:
             part = connection.execute(
                 "SELECT on_hand, reserved FROM spare_parts WHERE part_number=%s FOR UPDATE",
@@ -55,20 +63,22 @@ class ProcurementRepository:
             ).fetchone()
             if part is None:
                 raise UnknownPart(part_number)
+            require_compatible(connection, ticket_id, part_number)
             prior = connection.execute(
-                "SELECT part_number, quantity, requester FROM purchase_orders "
+                "SELECT part_number, quantity, requester, ticket_id FROM purchase_orders "
                 "WHERE idempotency_key=%s",
                 (key,),
             ).fetchone()
             if prior is not None:
-                if tuple(prior) != (part_number, quantity, requester):
+                if tuple(prior) != (part_number, quantity, requester, ticket_id):
                     raise IdempotencyConflict("idempotency key was used with other values")
                 return OrderResult(True, "replayed", part_number, quantity)
             if cast(int, part[0]) - cast(int, part[1]) > 0:
                 return OrderResult(False, "stock_available", part_number, quantity)
             connection.execute(
-                "INSERT INTO purchase_orders (idempotency_key, part_number, quantity, requester) "
-                "VALUES (%s, %s, %s, %s)",
-                (key, part_number, quantity, requester),
+                "INSERT INTO purchase_orders "
+                "(idempotency_key, part_number, quantity, requester, ticket_id) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (key, part_number, quantity, requester, ticket_id),
             )
         return OrderResult(True, "ordered", part_number, quantity)
