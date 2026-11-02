@@ -1,9 +1,58 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8"><title>Waggle Hive</title></head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Waggle Hive viewer</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; font-family: system-ui, sans-serif; background: #14181f; color: #e6e9ef; display: flex; flex-direction: column; height: 100vh; }
+      header, footer { padding: 8px 12px; background: #1c222c; }
+      header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      h1 { font-size: 16px; margin: 0; }
+      #error { margin: 12px; padding: 12px; background: #5a1d1d; border: 1px solid #ff5a5a; }
+      #viewer { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+      #viewer[hidden], #error[hidden] { display: none; }
+      #main { flex: 1; display: flex; min-height: 0; }
+      #canvas { flex: 1; min-width: 0; }
+      aside { width: 280px; padding: 8px 12px; overflow: auto; background: #1c222c; font-size: 13px; }
+      aside h2 { font-size: 13px; margin: 8px 0 4px; }
+      aside ul { margin: 0; padding-left: 16px; }
+      #controls { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #1c222c; }
+      #scrub { flex: 1; }
+      #hashbar { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; }
+      .muted { color: #9aa3b2; }
+    </style>
+  </head>
   <body>
-    <h1>Waggle Hive</h1>
-    <p>Placeholder frontend. Phase 7 replaces this.</p>
+    <header>
+      <h1>Waggle Hive viewer</h1>
+      <label>Replay file <input id="file" type="file" accept=".jsonl,.json,.txt" /></label>
+      <span class="muted">Replay mode only. This page draws recorded frames and decides nothing.</span>
+    </header>
+    <div id="error" role="alert" hidden></div>
+    <div id="viewer" hidden>
+      <div id="main">
+        <div id="canvas"></div>
+        <aside>
+          <div id="meta" class="muted"></div>
+          <h2>Zones</h2>
+          <ul id="zones"></ul>
+          <h2>Events</h2>
+          <ul id="events"></ul>
+        </aside>
+      </div>
+      <div id="controls">
+        <button id="play" type="button">Play</button>
+        <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame" />
+        <span id="tick"></span>
+      </div>
+      <div id="hashbar-row" style="padding: 4px 12px; background: #1c222c">
+        <div class="muted">State hash recorded in the file for this frame (not recomputed here)</div>
+        <div id="hashbar"><span id="hash"></span></div>
+      </div>
+    </div>
     <footer><p>Built with Muse Spark Open</p></footer>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

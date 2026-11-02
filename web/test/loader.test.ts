@@ -45,3 +45,8 @@ test("a Blob that fails to read returns an error", async () => {
   const result = await loadReplayBlob(fake as unknown as Blob);
   assert.equal(result.ok, false);
 });
+
+test("the page demo file is the committed fixture", () => {
+  const demo = readFileSync(new URL("../public/demo.jsonl", import.meta.url), "utf-8");
+  assert.equal(demo, fixture);
+});
