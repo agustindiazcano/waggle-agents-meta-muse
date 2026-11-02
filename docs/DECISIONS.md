@@ -749,3 +749,15 @@ Decision: `waggle.experiments.e3_fast_layer` runs E3-T2-02 (an untrusted SOP ask
 Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote from the case setup and need maintainer review. A first version put the reading 8 m ahead; the geofence edge was then 5 m away and a carrier at 2 m/s can stop in that distance, so the cap did not drop. The test caught it and the reading moved to 4 m. No limit was changed.
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
+
+## ADR-063: Advisor limits in the fast layer and the harness bridge
+
+Status: implemented with unit and property tests; E5 has not been run and no advisor runtime exists. Maintainer adoption of the recommended option of decision 2 in `docs/ADVISORS_DESIGN.md` (ADR-062) approved this interface change. Stacked on `feat/advisors-core`.
+
+Decision: `Reason.ADVISOR` joins the closed reason set of ADR-027, ranked below `CPA` and above `CLASS_MAX` for ties. `control_step` takes an optional `advisor_limits` sequence of `Limit` values, default empty. Each one is relabeled `Reason.ADVISOR` inside the step and joins the same minimum as every other limit, so an advisor cannot name `GEOFENCE`, `ESTOP` or `WATCHDOG`, cannot raise a cap, cannot flip the sign of a command and cannot relax another limit. A cap that is not finite or is negative is turned into a zero cap by the arbiter, with reason `INPUT_MISSING`. No threshold, margin or existing limit was changed. With an empty list the output and the state equal those of a call without the argument, and a rig run with an empty caution log has the same state hash as a run without an advisor.
+
+Bridge: `waggle.experiments.advisor_bridge` turns the plain `SpeedLimit` values of `waggle.governance.caution_limits` into `Limit(speed_cap, Reason.ADVISOR)` and reads the caution log per robot and tick. It sits in the harness because `waggle.control` must not import `waggle.governance` (AGENTS.md 5.8); no import contract changed. `ControlRig` takes an optional `advisor` hook with the signature `(robot_index, tick, class_max)`. Replay reads the stored log, so the same seed and the same log give the same state hash.
+
+Tests: invariants I1 (property test with a seeded generator and a seeded random sweep: speed magnitude never above the run without advisor, sign kept), I3 (reflex stops and geofence or envelope caps unchanged when an advisor names them) and I10 (import-linter contracts stay green). The closed-set assertion in `tests/unit/control/test_control_types.py` gained `ADVISOR`; it is the only existing test edited, and it only lists the new enum member.
+
+Gaps, stated plainly: only the speed cap is advised, no margin input (decision 3). An advisor limit is not applied on the stop path of an invalid input, where the output is already zero. No advisor, runtime or E5 result exists.
