@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 10
+LATEST_REVISION = 11
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -237,6 +237,38 @@ _COMPATIBILITY_DDL: tuple[LiteralString, ...] = (
         REFERENCES maintenance_tickets(ticket_id)""",
 )
 
+_TECHNICIAN_DDL: tuple[LiteralString, ...] = (
+    """ALTER TABLE maintenance_tickets ADD COLUMN technician text
+        CHECK (technician ~ '^[A-Za-z0-9_.-]{1,64}$')""",
+    """ALTER TABLE maintenance_tickets ADD COLUMN zone_token bigint CHECK (zone_token > 0)""",
+    """ALTER TABLE maintenance_tickets ADD COLUMN closed_at timestamptz""",
+    # The two checks of revision 8 carry generated names, so they are found by their text.
+    """DO $$
+    DECLARE c record;
+    BEGIN
+        FOR c IN SELECT conname FROM pg_constraint
+            WHERE conrelid = 'maintenance_tickets'::regclass AND contype = 'c'
+            AND pg_get_constraintdef(oid) LIKE '%status%'
+        LOOP
+            EXECUTE format('ALTER TABLE maintenance_tickets DROP CONSTRAINT %I', c.conname);
+        END LOOP;
+    END $$""",
+    """ALTER TABLE maintenance_tickets
+        ADD CONSTRAINT maintenance_tickets_status_check
+            CHECK (status IN ('open', 'dispatched', 'closed')),
+        ADD CONSTRAINT maintenance_tickets_state_check CHECK (
+            (status = 'open' AND zone_id IS NULL AND dispatched_by IS NULL
+                AND technician IS NULL AND zone_token IS NULL AND closed_at IS NULL)
+            OR (status = 'dispatched' AND zone_id IS NOT NULL AND dispatched_by IS NOT NULL
+                AND closed_at IS NULL AND (technician IS NULL) = (zone_token IS NULL))
+            OR (status = 'closed' AND closed_at IS NOT NULL))""",
+    """ALTER TABLE part_reservations ADD COLUMN status text NOT NULL DEFAULT 'reserved'
+        CHECK (status IN ('reserved', 'consumed', 'released'))""",
+    """ALTER TABLE part_reservations ADD COLUMN settled_at timestamptz""",
+    """ALTER TABLE part_reservations ADD CONSTRAINT part_reservations_settled_check
+        CHECK ((status = 'reserved') = (settled_at IS NULL))""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -248,6 +280,7 @@ _MIGRATIONS = {
     8: _MAINTENANCE_DDL,
     9: _MOTION_DDL,
     10: _COMPATIBILITY_DDL,
+    11: _TECHNICIAN_DDL,
 }
 
 
