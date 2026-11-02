@@ -48,5 +48,14 @@
     "current_base_a": 2.0,
     "current_per_load_a": 5.5,
     "current_offset_gain_a": 1.8
+  },
+  "telemetry": {
+    "temperature_sigma_c": 0.35,
+    "vibration_sigma": 0.12,
+    "current_sigma_a": 0.18,
+    "load_sigma": 0.02,
+    "temperature_bias_sigma_c": 0.8,
+    "vibration_bias_sigma": 0.1,
+    "current_bias_sigma_a": 0.15
   }
 }

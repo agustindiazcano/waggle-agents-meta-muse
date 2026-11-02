@@ -120,4 +120,5 @@ forbidden_modules = [
     "waggle.sim.scenarios",
     "waggle.sim.scripted",
     "waggle.sim.machines",
+    "waggle.sim.telemetry",
 ]
