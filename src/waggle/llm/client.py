@@ -62,6 +62,11 @@ class LlmClient:
         self._ledger = TaskLedger(task_caps) if task_caps else None
         self._cache: dict[str, Completion] = {}
 
+    @property
+    def max_retries(self) -> int:
+        """Retries after the first attempt. The HTTP provider retries on its own."""
+        return self._max_retries
+
     def call(self, request: LlmRequest) -> Completion:
         """Run a request. Raises a typed LlmError when it cannot be served."""
         route = self._table.get(request.role)
