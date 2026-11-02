@@ -24,8 +24,9 @@ STRUCTURAL_EXPECTED: Mapping[str, bool] = {
     "E3-T11-03": True,
 }
 _STRUCTURE_LAYER = "output_schema"
-# Layers that have a runner: the structure scorer here, the two MCP layers in e3_mcp_layers and
-# the catalog check in e3_catalog (which needs PostgreSQL, so it runs in the cloud).
+# Layers that have a runner: the structure scorer here, the two MCP layers in e3_mcp_layers, the
+# catalog check in e3_catalog (which needs PostgreSQL, so it runs in the cloud) and the scripted
+# court round in e3_court.
 RUNNABLE_LAYERS = frozenset(
     {
         _STRUCTURE_LAYER,
@@ -38,6 +39,7 @@ RUNNABLE_LAYERS = frozenset(
         "plan_schema",
         "plan_validator",
         "fast_layer",
+        "court_unanimity",
     }
 )
 
