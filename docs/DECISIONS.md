@@ -749,3 +749,21 @@ Decision: `waggle.experiments.e3_fast_layer` runs E3-T2-02 (an untrusted SOP ask
 Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote from the case setup and need maintainer review. A first version put the reading 8 m ahead; the geofence edge was then 5 m away and a carrier at 2 m/s can stop in that distance, so the cap did not drop. The test caught it and the reading moved to 4 m. No limit was changed.
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
+
+## ADR-070: HTTP providers on the standard library, with fail-closed rules
+
+Status: implemented with unit tests against a local fake server; no real provider was called and no key was used. The runtime dependency choice of PENDING row 9 is still open and this decision does not settle it.
+
+Decision: `waggle.llm.http_provider.HttpProvider` speaks OpenAI-style chat completions over `http.client`, with a timeout on every call, one fresh connection per attempt and no redirect following. It adds no runtime dependency. If the maintainer later approves an SDK, the class can be replaced behind the same `Provider` interface.
+
+Fail-closed rules:
+
+- Provider mode comes from `WAGGLE_LLM_PROVIDER` (`mock` or `http`). Unset or any other value raises `ConfigError`.
+- A missing or invalid `*_SPEND_CAP_USD`, key, token or URL raises before any call. URLs must be `https`; plain `http` is accepted only for loopback when the caller of the loader sets the switch in code, never from the environment.
+- Prices live in `src/waggle/llm/prices.toml`, all shipped `verified = false`. An unverified or incomplete price makes `estimate_cost` and `complete` raise `ConfigError`, so the client makes no call.
+- Cost is computed from the response `usage` and the verified price. A response without valid `usage` is rejected.
+- 429, 5xx and transport errors are retried up to an attempt cap with exponential backoff; `Retry-After` in seconds is honored up to a cap. Other 4xx, 3xx, wrong content type, oversized body, malformed JSON, duplicate keys and non-finite numbers end in `ProviderError` with no retry.
+- Exception and log text carries the provider name and a status or reason only. It never carries a header, a URL or a response body. Tests search for the key text in exceptions, tracebacks, logs and reprs.
+- `vertex` and voice are not implemented (`docs/PROVIDER_INTEGRATION.md` gives the reasons). A route to them fails closed.
+
+Gaps, stated plainly: the Meta usage fields, the Baseten auth header and the Modal endpoint shape are unconfirmed (see the table in `docs/PROVIDER_INTEGRATION.md`). The cloud smoke tests are written and have not been run. The retry logic lives in the provider because `LlmClient` does not retry; the client's own retry policy is unchanged.
