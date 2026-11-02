@@ -5,11 +5,20 @@ switched off (held-out runs). Nothing else moves a call to another provider.
 """
 
 import logging
-from collections.abc import Mapping
+import math
+import time
+from collections.abc import Callable, Mapping
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 
 from waggle.llm.budget import BudgetGuard
 from waggle.llm.call_log import CallLog
-from waggle.llm.errors import BudgetExceededError, ConfigError, ProviderError
+from waggle.llm.errors import (
+    BudgetExceededError,
+    ConfigError,
+    ProviderError,
+    ProviderTimeoutError,
+)
 from waggle.llm.models import CallRecord, CallStatus, Completion, LlmRequest
 from waggle.llm.providers import Provider
 from waggle.llm.routing import RouteSpec, RoutingTable, resolve_model_id
@@ -31,7 +40,19 @@ class LlmClient:
         environ: Mapping[str, str],
         fallbacks_enabled: bool,
         task_caps: TaskCaps | None = None,
+        max_retries: int = 0,
+        backoff_s: float = 0.0,
+        timeout_s: float | None = None,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
+        if max_retries < 0 or not math.isfinite(backoff_s) or backoff_s < 0:
+            raise ConfigError("max_retries and backoff_s must be finite and >= 0")
+        if timeout_s is not None and (not math.isfinite(timeout_s) or timeout_s <= 0):
+            raise ConfigError("timeout_s must be finite and > 0")
+        self._max_retries = max_retries
+        self._backoff_s = backoff_s
+        self._timeout_s = timeout_s
+        self._sleep = sleep
         self._providers = providers
         self._table = table
         self._guard = guard
@@ -70,15 +91,44 @@ class LlmClient:
         if self._ledger is not None and request.task_id is not None:
             self._ledger.check(request.task_id, estimate)
         self._guard.check(spec.provider, estimate, request_id=request.request_id, role=request.role)
-        try:
-            completion = provider.complete(request, model_id)
-        except ProviderError:
-            self._record(request, spec.provider, model_id, "error", label, None)
-            raise
+        completion = self._complete_with_retries(request, spec, provider, model_id, label)
         self._record(request, spec.provider, model_id, "ok", label, completion)
         if self._ledger is not None and request.task_id is not None:
             self._ledger.record(request.task_id, completion.cost_usd)
         return completion
+
+    def _complete_with_retries(
+        self,
+        request: LlmRequest,
+        spec: RouteSpec,
+        provider: Provider,
+        model_id: str,
+        label: str | None,
+    ) -> Completion:
+        """Retry transport errors only, with exponential backoff and a hard cap."""
+        for attempt in range(self._max_retries + 1):
+            try:
+                return self._complete_once(provider, request, model_id)
+            except ProviderError:
+                self._record(request, spec.provider, model_id, "error", label, None)
+                if attempt == self._max_retries:
+                    raise
+                self._sleep(self._backoff_s * 2**attempt)
+        raise AssertionError("unreachable: the last attempt returns or raises")
+
+    def _complete_once(self, provider: Provider, request: LlmRequest, model_id: str) -> Completion:
+        if self._timeout_s is None:
+            return provider.complete(request, model_id)
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(provider.complete, request, model_id)
+        try:
+            return future.result(timeout=self._timeout_s)
+        except FutureTimeout:
+            raise ProviderTimeoutError(
+                f"{provider.name}: timeout after {self._timeout_s}s"
+            ) from None
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)
 
     def _record(
         self,
