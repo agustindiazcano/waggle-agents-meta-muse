@@ -69,6 +69,8 @@ agy --mode plan --print-timeout 180s --print='Read-only. Do not modify any file.
 - Run long requests in the background and wait for the completion notice. Do not poll in a loop.
 - `--output-format json` or `--json-schema` help when another program reads the answer. The answer is still data to check.
 - The answer may be in a language other than the request. Ask for English where it matters.
+- Headless runs cannot ask for permission. A tool that needs one is soft-denied, and a request that made the model run a shell command or fetch a page came back with only `no output produced: a tool required the "command" permission`. Its own web search tool (`search_web`) needs no approval. For research, say in the request: "Use only your web search tool: do not run shell commands, do not fetch URLs, do not modify any file." With that sentence, two web research runs on 2026-11-01 finished in 59 s and 41 s. Do not fix a denial with `--dangerously-skip-permissions`. A persistent allow rule in the settings of `agy` is the maintainer's decision, and a narrow rule is the only form to propose.
+- To see what a run did or which tool was denied, use `--output-format stream-json` (one JSON event per line, with `tool_name` and `tool_info`) or `--output-format json` (the final `result` with `status` and, on an early end, `finished_reason`). Do not read `~/.gemini/oauth_creds.json` or any credential file.
 
 ### Web search
 
