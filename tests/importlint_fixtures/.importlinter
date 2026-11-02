@@ -44,6 +44,8 @@ forbidden_modules =
     fixture_pkg.sim.scripted
     fixture_pkg.sim.packages
     fixture_pkg.sim.frame
+    fixture_pkg.sim.machines
+    fixture_pkg.sim.telemetry
 
 [importlinter:contract:validation-no-llm-side]
 name = fixture: validation must not import llm, governance or mcp_server
@@ -84,3 +86,11 @@ forbidden_modules =
     fastapi
     starlette
     uvicorn
+
+[importlinter:contract:predictor-no-sim]
+name = fixture: the predictor must not import the simulator
+type = forbidden
+source_modules =
+    fixture_pkg.maintenance.predictor
+forbidden_modules =
+    fixture_pkg.sim

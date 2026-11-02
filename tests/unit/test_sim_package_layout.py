@@ -28,6 +28,8 @@ GROUND_TRUTH = [
     "scripted",
     "packages",
     "frame",
+    "machines",
+    "telemetry",
 ]
 
 

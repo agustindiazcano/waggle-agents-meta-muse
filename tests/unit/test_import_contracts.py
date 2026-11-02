@@ -25,6 +25,7 @@ CONTRACT_IDS = [
     "validation-no-llm-side",
     "e2-baseline-isolated",
     "core-no-web",
+    "predictor-no-sim",
 ]
 
 

@@ -1,0 +1,21 @@
+{
+  "baseline": {
+    "warmup_samples": 160,
+    "max_warmup_samples": 700,
+    "min_load_span": 0.17,
+    "temperature_margin_c": 0.9,
+    "sigma_floor": 0.04,
+    "alpha_min": 0.82,
+    "alpha_max": 0.995
+  },
+  "cusum": {
+    "slack": 0.7,
+    "threshold": 12.0,
+    "observer_gain": 0.08
+  },
+  "estimate": {
+    "intercept_memory": 0.97,
+    "level_memory": 0.91,
+    "temperature_limit_c": 95.0
+  }
+}
