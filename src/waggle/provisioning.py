@@ -1,8 +1,10 @@
 """Load catalog, machines, zones and robot identities from a spec file (ADR-056).
 
 Data is provisioned by this script and never by a migration. The spec is validated in full
-before anything is created. A rerun is safe: existing parts, machines and active identities are
-skipped and reported, existing zones are left as they are, and stock is never reset. A token is
+before anything is created, including every compatibility row (ADR-065): a row that names a
+machine or part absent from both the spec and the database rejects the whole spec. A rerun is
+safe: existing parts, machines, compatibility rows and active identities are skipped and
+reported, existing zones are left as they are, and stock is never reset. A token is
 generated per new identity, only its digest reaches the database, and the token goes to a new
 file that is never overwritten. Tokens are never printed or logged.
 """
@@ -19,6 +21,7 @@ from typing import Protocol, TextIO
 
 import psycopg.errors
 
+from waggle.db.compatibility import CompatibilityRepository
 from waggle.db.connection import Database
 from waggle.db.corridors import CorridorRepository
 from waggle.db.identities import PostgresIdentityStore
@@ -32,6 +35,7 @@ logger = logging.getLogger("waggle.provisioning")
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _STOCK_MAX = 1_000_000
 _KEYS = frozenset({"parts", "machines", "zones", "identities"})
+_OPTIONAL_KEYS = frozenset({"compatibility"})
 
 
 class SpecError(ValueError):
@@ -50,6 +54,7 @@ class Spec:
     machines: tuple[str, ...]
     zones: tuple[str, ...]
     identities: tuple[tuple[str, str], ...]
+    compatibility: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -61,6 +66,8 @@ class Provisioned:
     zones: tuple[str, ...]
     skipped: tuple[str, ...]
     tokens: Mapping[str, str] = field(repr=False)
+    compatibility: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
 
 
 def _identifier(value: object, what: str) -> str:
@@ -96,8 +103,10 @@ def _stock(value: object) -> int:
 
 def parse_spec(body: object) -> Spec:
     """Validate a decoded spec strictly: unknown, missing or duplicate entries are errors."""
-    if not isinstance(body, dict) or set(body) != _KEYS:
-        raise SpecError(f"the spec must have exactly the keys {sorted(_KEYS)}")
+    if not isinstance(body, dict) or not _KEYS <= set(body) <= _KEYS | _OPTIONAL_KEYS:
+        raise SpecError(
+            f"the spec must have the keys {sorted(_KEYS)} and may have {sorted(_OPTIONAL_KEYS)}"
+        )
     parts = [
         (
             _identifier(e["part_number"], "part number"),
@@ -121,7 +130,15 @@ def parse_spec(body: object) -> Spec:
             raise SpecError("unknown chassis")
         identities.append((chassis, _identifier(entry["robot_id"], "robot id")))
     _unique([f"{c}/{r}" for c, r in identities], "identity")
-    return Spec(tuple(parts), machines, zones, tuple(identities))
+    pairs = [
+        (_identifier(e["machine_id"], "machine id"), _identifier(e["part_number"], "part number"))
+        for e in (
+            _entry(item, frozenset({"machine_id", "part_number"}), "compatibility row")
+            for item in (_list(body, "compatibility") if "compatibility" in body else [])
+        )
+    ]
+    _unique([f"{m}/{p}" for m, p in pairs], "compatibility row")
+    return Spec(tuple(parts), machines, zones, tuple(identities), tuple(pairs))
 
 
 def load_spec(path: Path) -> Spec:
@@ -140,6 +157,13 @@ class _Inventory(Protocol):
 
 class _Machines(Protocol):
     def add_machine(self, machine_id: str) -> None: ...
+    def has_machine(self, machine_id: str) -> bool: ...
+
+
+class _Compatibility(Protocol):
+    def exists(self, machine_id: str, part_number: str) -> bool: ...
+    def add(self, machine_id: str, part_number: str) -> None: ...
+    def count(self) -> int: ...
 
 
 class _Zones(Protocol):
@@ -150,14 +174,30 @@ class _Identities(Protocol):
     def register(self, token_hash: str, chassis: str, robot_id: str) -> None: ...
 
 
+def _check_references(spec: Spec, inventory: _Inventory, machines: _Machines) -> None:
+    spec_parts = {p for p, _ in spec.parts}
+    spec_machines = set(spec.machines)
+    for machine_id, part_number in spec.compatibility:
+        if machine_id not in spec_machines and not machines.has_machine(machine_id):
+            raise SpecError("a compatibility row names an unknown machine")
+        if part_number not in spec_parts and inventory.get(part_number) is None:
+            raise SpecError("a compatibility row names an unknown part")
+
+
 def provision(
     spec: Spec,
     inventory: _Inventory,
     machines: _Machines,
     zones: _Zones,
     identities: _Identities,
+    compatibility: _Compatibility,
 ) -> Provisioned:
-    """Create what is missing. Existing rows are skipped and named in ``skipped``."""
+    """Create what is missing. Existing rows are skipped and named in ``skipped``.
+
+    Raises SpecError, before anything is created, for a compatibility row that names a machine
+    or part found neither in the spec nor in the database.
+    """
+    _check_references(spec, inventory, machines)
     created_parts, created_machines, skipped = [], [], []
     tokens: dict[str, str] = {}
     for part_number, on_hand in spec.parts:
@@ -183,8 +223,27 @@ def provision(
             skipped.append(f"identity:{robot_id}")
         else:
             tokens[robot_id] = token
+    created_rows = []
+    for machine_id, part_number in spec.compatibility:
+        if compatibility.exists(machine_id, part_number):
+            skipped.append(f"compatibility:{machine_id}/{part_number}")
+            continue
+        compatibility.add(machine_id, part_number)
+        created_rows.append(f"{machine_id}/{part_number}")
+    warnings = []
+    if spec.parts and compatibility.count() == 0:
+        warnings.append(
+            "parts exist and the compatibility table is empty: every part order is denied "
+            "until compatibility rows are loaded"
+        )
     return Provisioned(
-        tuple(created_parts), tuple(created_machines), spec.zones, tuple(skipped), tokens
+        tuple(created_parts),
+        tuple(created_machines),
+        spec.zones,
+        tuple(skipped),
+        tokens,
+        tuple(created_rows),
+        tuple(warnings),
     )
 
 
@@ -215,18 +274,26 @@ def main(argv: Sequence[str], environ: Mapping[str, str], stderr: TextIO) -> int
             TicketRepository(database),
             CorridorRepository(database),
             PostgresIdentityStore(database),
+            CompatibilityRepository(database),
         )
         if result.tokens:
             write_tokens(out_path, result.tokens)
     except (SpecError, TargetExists, ValueError, psycopg.Error) as error:
         stderr.write(f"provision failed: {type(error).__name__}\n")
         return 2
+    report(result, spec, stderr)
+    return 0
+
+
+def report(result: Provisioned, spec: Spec, stderr: TextIO) -> None:
+    """Write the summary and any warnings to standard error. Never writes a token."""
     stderr.write(
         f"created {len(result.parts)} parts, {len(result.machines)} machines, "
-        f"{len(spec.zones)} zones, {len(result.tokens)} identities; "
-        f"skipped {len(result.skipped)}\n"
+        f"{len(spec.zones)} zones, {len(result.tokens)} identities, "
+        f"{len(result.compatibility)} compatibility rows; skipped {len(result.skipped)}\n"
     )
-    return 0
+    for warning in result.warnings:
+        stderr.write(f"warning: {warning}\n")
 
 
 def run() -> int:

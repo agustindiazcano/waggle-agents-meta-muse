@@ -25,6 +25,10 @@ SPEC = {
         {"chassis": "carrier", "robot_id": "C1"},
         {"chassis": "tech_repair", "robot_id": "TECH-1"},
     ],
+    "compatibility": [
+        {"machine_id": "C1", "part_number": "BRG-6204"},
+        {"machine_id": "CONV-1", "part_number": "SEAL-08"},
+    ],
 }
 
 
@@ -47,6 +51,23 @@ class _Machines:
         if machine_id in self.ids:
             raise psycopg.errors.UniqueViolation("duplicate")
         self.ids.add(machine_id)
+
+    def has_machine(self, machine_id: str) -> bool:
+        return machine_id in self.ids
+
+
+class _Compatibility:
+    def __init__(self) -> None:
+        self.rows: set[tuple[str, str]] = set()
+
+    def exists(self, machine_id: str, part_number: str) -> bool:
+        return (machine_id, part_number) in self.rows
+
+    def add(self, machine_id: str, part_number: str) -> None:
+        self.rows.add((machine_id, part_number))
+
+    def count(self) -> int:
+        return len(self.rows)
 
 
 class _Zones:
@@ -73,9 +94,21 @@ def _write(path: Path, body: object) -> Path:
 
 
 def _run(
-    inventory: _Inventory, machines: _Machines, zones: _Zones, identities: _Identities
+    inventory: _Inventory,
+    machines: _Machines,
+    zones: _Zones,
+    identities: _Identities,
+    compatibility: _Compatibility | None = None,
+    body: object = SPEC,
 ) -> Provisioned:
-    return provision(parse_spec(SPEC), inventory, machines, zones, identities)
+    return provision(
+        parse_spec(body),
+        inventory,
+        machines,
+        zones,
+        identities,
+        compatibility if compatibility is not None else _Compatibility(),
+    )
 
 
 def test_everything_in_the_spec_is_created() -> None:
@@ -133,6 +166,13 @@ def test_the_result_never_contains_a_token_in_its_text() -> None:
         lambda s: s["identities"][0].update(chassis="submarine"),
         lambda s: s["identities"][0].update(robot_id="a b"),
         lambda s: s["identities"].append(s["identities"][0]),
+        lambda s: s.update(compatibility={}),
+        lambda s: s["compatibility"].append(s["compatibility"][0]),
+        lambda s: s["compatibility"][0].update(note="x"),
+        lambda s: s["compatibility"][0].pop("part_number"),
+        lambda s: s["compatibility"][0].update(machine_id="bad id"),
+        lambda s: s["compatibility"][0].update(part_number=5),
+        lambda s: s["compatibility"].append("C1/BRG-6204"),
     ],
 )
 def test_an_invalid_spec_is_rejected_before_anything_is_created(mutate: object) -> None:
@@ -140,6 +180,82 @@ def test_an_invalid_spec_is_rejected_before_anything_is_created(mutate: object) 
     mutate(body)  # type: ignore[operator]
     with pytest.raises(SpecError):
         parse_spec(body)
+
+
+def test_the_compatibility_key_is_optional_for_older_specs() -> None:
+    body = {k: v for k, v in SPEC.items() if k != "compatibility"}
+    assert parse_spec(body).compatibility == ()
+
+
+def test_compatibility_rows_are_created_after_parts_and_machines() -> None:
+    compatibility = _Compatibility()
+    result = _run(_Inventory(), _Machines(), _Zones(), _Identities(), compatibility)
+    assert compatibility.rows == {("C1", "BRG-6204"), ("CONV-1", "SEAL-08")}
+    assert result.warnings == ()
+
+
+def test_a_rerun_skips_existing_compatibility_rows_and_names_them() -> None:
+    inventory, machines, zones, identities = _Inventory(), _Machines(), _Zones(), _Identities()
+    compatibility = _Compatibility()
+    _run(inventory, machines, zones, identities, compatibility)
+    again = _run(inventory, machines, zones, identities, compatibility)
+    assert {"compatibility:C1/BRG-6204", "compatibility:CONV-1/SEAL-08"} <= set(again.skipped)
+    assert compatibility.rows == {("C1", "BRG-6204"), ("CONV-1", "SEAL-08")}
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        {"machine_id": "GHOST", "part_number": "BRG-6204"},
+        {"machine_id": "C1", "part_number": "GHOST-1"},
+    ],
+)
+def test_a_row_naming_an_unknown_machine_or_part_rejects_the_spec_before_anything_is_created(
+    row: dict[str, str],
+) -> None:
+    body = json.loads(json.dumps(SPEC))
+    body["compatibility"].append(row)
+    inventory, machines, zones, identities = _Inventory(), _Machines(), _Zones(), _Identities()
+    compatibility = _Compatibility()
+    with pytest.raises(SpecError):
+        _run(inventory, machines, zones, identities, compatibility, body)
+    assert inventory.parts == {} and machines.ids == set() and zones.names == set()
+    assert identities.active == {} and compatibility.rows == set()
+
+
+def test_a_row_may_name_a_machine_and_part_that_already_exist_in_the_database() -> None:
+    inventory, machines = _Inventory(), _Machines()
+    _run(inventory, machines, _Zones(), _Identities())
+    body = {
+        "parts": [],
+        "machines": [],
+        "zones": [],
+        "identities": [],
+        "compatibility": [{"machine_id": "C1", "part_number": "SEAL-08"}],
+    }
+    compatibility = _Compatibility()
+    _run(inventory, machines, _Zones(), _Identities(), compatibility, body)
+    assert compatibility.rows == {("C1", "SEAL-08")}
+
+
+def test_parts_without_any_compatibility_row_produce_a_warning() -> None:
+    body = {k: v for k, v in SPEC.items() if k != "compatibility"}
+    result = _run(_Inventory(), _Machines(), _Zones(), _Identities(), body=body)
+    assert len(result.warnings) == 1
+    assert "compatibility" in result.warnings[0]
+
+
+def test_the_warning_is_written_to_standard_error(tmp_path: Path) -> None:
+    import io
+
+    from waggle.provisioning import report
+
+    err = io.StringIO()
+    result = _run(
+        _Inventory(), _Machines(), _Zones(), _Identities(), body={**SPEC, "compatibility": []}
+    )
+    report(result, parse_spec({**SPEC, "compatibility": []}), err)
+    assert "warning" in err.getvalue()
 
 
 def test_load_spec_rejects_text_that_is_not_json(tmp_path: Path) -> None:

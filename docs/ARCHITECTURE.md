@@ -302,7 +302,7 @@ Every claim increments the task token and attempt. Worker transitions check exac
 - Persistence (ADR-037, implemented, cloud correctness verified): `waggle.db.mcp_audit` over schema revision 4 writes intent and result rows and counts the rate-limit window under the per-chassis advisory lock. The dispatcher `waggle.mcp_server.boundary` (ADR-038, implemented against fakes, not evaluated) orders the checks. The PostgreSQL identity store `waggle.db.identities` (ADR-039, revision 5) is implemented. The concrete forwarder and the transport are pending.
 - Rate limit serialization: a transaction-scoped advisory lock on a 64-bit key per chassis (for example `hashtextextended`), taken before counting and held until the intent row is inserted. Test: 30 simultaneous calls from one chassis.
 
-Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `reserve_part`, `dispatch_tech`, `open_ticket`, `get_task`, `get_inventory`, `create_purchase_order` (designed, not implemented).
+Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `reserve_part`, `dispatch_tech`, `open_ticket`, `get_task`, `get_inventory`, `create_purchase_order` (designed, not implemented). `reserve_part` and `create_purchase_order` take a required `ticket_id` and no machine; the repository reads the machine from the ticket and checks `part_compatibility` in the transaction that locks the part row, failing closed (ADR-065).
 
 ## Court
 
@@ -333,7 +333,7 @@ Tools: `move_waypoint`, `pick_package`, `deliver_package`, `release_zone`, `rese
 
 ## Data model (summary)
 
-`robots`, `robot_identities`, `zones`, `tasks`, `task_events`, `machines`, `machine_telemetry` (sampled), `spare_parts`, `maintenance_tickets` (unique idempotency key), `failure_history` (synthetic, separate from the simulator dynamics), `purchase_orders` (unique idempotency key per failure event), `mcp_audit` (intent and result rows), `llm_calls`, `knowledge_chunks` (pgvector), `operator_inbox`.
+`robots`, `robot_identities`, `zones`, `tasks`, `task_events`, `machines`, `machine_telemetry` (sampled), `spare_parts`, `part_compatibility` (machine and part pairs, loaded by the provisioning script), `maintenance_tickets` (unique idempotency key), `failure_history` (synthetic, separate from the simulator dynamics), `purchase_orders` (unique idempotency key per failure event), `mcp_audit` (intent and result rows), `llm_calls`, `knowledge_chunks` (pgvector), `operator_inbox`.
 
 ## Observability
 

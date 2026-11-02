@@ -73,6 +73,15 @@ class TicketRepository:
         with self._database.transaction() as connection:
             connection.execute("INSERT INTO machines (machine_id) VALUES (%s)", (machine_id,))
 
+    def has_machine(self, machine_id: str) -> bool:
+        """Whether the machine is in the catalog. Used by the load script."""
+        _id(machine_id, "machine id")
+        with self._database.transaction() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM machines WHERE machine_id=%s", (machine_id,)
+            ).fetchone()
+        return row is not None
+
     def open_ticket(self, key: str, machine_id: str, summary: str, opener: str) -> TicketResult:
         """Open the ticket for a failure event once.
 

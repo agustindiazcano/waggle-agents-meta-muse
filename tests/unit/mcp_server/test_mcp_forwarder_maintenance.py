@@ -2,6 +2,7 @@
 
 import pytest
 
+from waggle.db.compatibility import IncompatiblePart
 from waggle.db.corridors import IdempotencyConflict
 from waggle.db.inventory import UnknownPart
 from waggle.db.procurement import OrderResult
@@ -36,12 +37,14 @@ class FakeProcurement:
     def __init__(self, error: Exception | None = None, reason: str = "ordered") -> None:
         self.error = error
         self.reason = reason
-        self.calls: list[tuple[str, str, int, str]] = []
+        self.calls: list[tuple[str, str, int, str, str]] = []
 
-    def order(self, key: str, part_number: str, quantity: int, requester: str) -> OrderResult:
+    def order(
+        self, key: str, part_number: str, quantity: int, requester: str, ticket_id: str
+    ) -> OrderResult:
         if self.error:
             raise self.error
-        self.calls.append((key, part_number, quantity, requester))
+        self.calls.append((key, part_number, quantity, requester, ticket_id))
         if self.reason == "stock_available":
             return OrderResult(False, "stock_available", part_number, quantity)
         return OrderResult(True, "ordered", part_number, quantity)
@@ -95,14 +98,20 @@ def test_dispatch_tech_denies_unknown_references_and_a_second_zone(error: Except
         )
 
 
-ORDER = {"part_number": "P-100", "quantity": 4, "idempotency_key": "evt-9"}
+TICKET = "tkt-0000000000000001"
+ORDER = {
+    "part_number": "P-100",
+    "quantity": 4,
+    "idempotency_key": "evt-9",
+    "ticket_id": TICKET,
+}
 
 
 def test_purchase_order_is_placed_for_the_requester() -> None:
     procurement = FakeProcurement()
     out = _forwarder(procurement=procurement).forward(MAINT, "create_purchase_order", ORDER, 5)
     assert out == {"ordered": True, "reason": "ordered"}
-    assert procurement.calls == [("evt-9", "P-100", 4, "maint-0")]
+    assert procurement.calls == [("evt-9", "P-100", 4, "maint-0", TICKET)]
 
 
 def test_purchase_order_with_stock_available_is_a_result_not_an_error() -> None:
@@ -112,12 +121,31 @@ def test_purchase_order_with_stock_available_is_a_result_not_an_error() -> None:
     assert out == {"ordered": False, "reason": "stock_available"}
 
 
-@pytest.mark.parametrize("error", [UnknownPart("P-100"), IdempotencyConflict("reuse")])
-def test_purchase_order_denies_unknown_part_and_key_reuse(error: Exception) -> None:
+DENIED = [
+    UnknownPart("P-100"),
+    IdempotencyConflict("reuse"),
+    IncompatiblePart("P-100"),
+    UnknownTicket(TICKET),
+]
+
+
+@pytest.mark.parametrize("error", DENIED)
+def test_purchase_order_denies_every_failed_check(error: Exception) -> None:
     with pytest.raises(ToolDenied):
         _forwarder(procurement=FakeProcurement(error)).forward(
             MAINT, "create_purchase_order", ORDER, 5
         )
+
+
+def test_purchase_order_denial_text_is_the_same_for_every_failed_check() -> None:
+    texts = set()
+    for error in DENIED:
+        with pytest.raises(ToolDenied) as denied:
+            _forwarder(procurement=FakeProcurement(error)).forward(
+                MAINT, "create_purchase_order", ORDER, 5
+            )
+        texts.add(str(denied.value))
+    assert texts == {"order not available"}
 
 
 @pytest.mark.parametrize("tool", ["open_ticket", "dispatch_tech", "create_purchase_order"])

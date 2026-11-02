@@ -286,7 +286,6 @@ Deviations applied in Phase 2 (B10), each measured:
 Not done: kinematics were already vectorized across robots; the human walkers and the waypoint driver are still per-entity Python (about 0.8 s of 5.7 s).
 Outcome: 3.1x measured against a 5x minimum and 2.0 s per rollout target. Stopped for the maintainer. Options: accept 5.7 s per rollout, lower K, H or the lidar rate for the live demo only, vectorize the human walkers and driver (about 10 percent more), or run variants in the cloud on more cores.
 
-
 ## ADR-026: Perception and tracking
 
 Status: proposed. Implemented in B13, with the deviations listed at the end of this record.
@@ -519,7 +518,6 @@ The complete local build order in AGENTS.md section 18 remains first. Planning d
 
 Consequences: global work has explicit custody, partition and stale-state requirements rather than simply adding more robot agents. A shared-tick demo is insufficient evidence for independent sites; multi-clock lease authority and trusted arrival receipts remain design decisions. The maintainer must review local completion evidence and authorize implementation separately at G-GLOBAL.
 
-
 ## ADR-036: Atomic task handoff record
 
 Status: cloud PostgreSQL correctness tests passed; no E2 evaluation. This does not authorize an external robot effect.
@@ -750,6 +748,18 @@ Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote fro
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
 
+## ADR-062: The maintainer adopted the recommended option of the design decision tables
+
+Date: 2026-11-02. Said by the maintainer: "para las decisiones hace lo recomendado".
+
+Decision: for every decision table at the end of the design documents `docs/PACKAGE_MODEL_DESIGN.md`, `docs/CATALOG_COMPATIBILITY_DESIGN.md`, `docs/COURT_DESIGN.md`, `docs/ROLLOUT_VALIDATOR_DESIGN.md`, `docs/ADVISORS_DESIGN.md`, `docs/PREDICTIVE_MAINTENANCE_DESIGN.md`, `docs/MULTIMODAL_AND_VIEWER_DESIGN.md` and `docs/MCP_CLIENT_TEST_DESIGN.md`, the option in the Recommendation column is adopted. The tables are the record of what was recommended; this entry does not restate them, so it cannot misquote one.
+
+What this approves, which AGENTS.md section 15 reserves for the maintainer, each to be built with a test first and a check of the current schema revision before any migration: the catalog compatibility table and the technician lease with ticket close and reservation settlement (schema revisions proposed as 10 and 11, widening a CHECK constraint counts as approved); a required `ticket_id` on `reserve_part` and `create_purchase_order`; the package id registry table and its check in the forwarder, with the foreign key later; filtering `tools/list` by chassis; `Reason.ADVISOR` and an advisor limit list in `control_step`, which can only reduce motion; round records of the court stored in the database. The first Python SDK client is the first real MCP client to run, and Streamable HTTP is not built now.
+
+What this does not cover: paid calls, provider caps and balances (PENDING rows 4 and 5), the HTTP client dependency (row 9), held-out seeds and their definition for the chaos harness, global implementation, the real data only the maintainer has (parts, machines, zones, compatibility rows, manuals, recordings, labels of the E4 review set and the E5 cases, cost weights), the Muse Model License wording, and any claim that the MCP server is conformant. Where a table asks the maintainer for a value, the value is still needed.
+
+Consequence: PENDING rows 103 and 106 are answered. The work they blocked is built next as stacked branches, each reviewed as a diff. A decision that turns out wrong is superseded by a new entry, never edited here.
+
 ## ADR-063: tools/list is filtered by the authenticated chassis
 
 Status: implemented with unit tests against fakes; not run against a real client. Touches the MCP boundary (AGENTS.md section 15); the maintainer approved it by adopting decision D3 of the MCP client test design (ADR-062).
@@ -759,3 +769,79 @@ Decision: `tools/list` returns the definitions of the tools the authenticated ch
 Not changed: `tools/call`. A tool that is not allowed is denied with the same `tool_not_allowed` result as before, audited as before, and an unlisted tool stays denied when the client names it. The listing writes no audit row and is not rate limited, as before. Why: a client or model that sees only the tools it may use is less tempted to probe, and the listing now matches what the boundary will accept.
 
 Gaps: a transport built over a dispatcher that lacks `allowed_tools` is a type error, so test doubles needed the method. The listing is not itself a security control; the allowlist check at call time remains the control.
+
+## ADR-064: Advisor limits in the fast layer and the harness bridge
+
+Status: implemented with unit and property tests; E5 has not been run and no advisor runtime exists. Maintainer adoption of the recommended option of decision 2 in `docs/ADVISORS_DESIGN.md` (ADR-062) approved this interface change. Stacked on `feat/advisors-core`.
+
+Decision: `Reason.ADVISOR` joins the closed reason set of ADR-027, ranked below `CPA` and above `CLASS_MAX` for ties. `control_step` takes an optional `advisor_limits` sequence of `Limit` values, default empty. Each one is relabeled `Reason.ADVISOR` inside the step and joins the same minimum as every other limit, so an advisor cannot name `GEOFENCE`, `ESTOP` or `WATCHDOG`, cannot raise a cap, cannot flip the sign of a command and cannot relax another limit. A cap that is not finite or is negative is turned into a zero cap by the arbiter, with reason `INPUT_MISSING`. No threshold, margin or existing limit was changed. With an empty list the output and the state equal those of a call without the argument, and a rig run with an empty caution log has the same state hash as a run without an advisor.
+
+Bridge: `waggle.experiments.advisor_bridge` turns the plain `SpeedLimit` values of `waggle.governance.caution_limits` into `Limit(speed_cap, Reason.ADVISOR)` and reads the caution log per robot and tick. It sits in the harness because `waggle.control` must not import `waggle.governance` (AGENTS.md 5.8); no import contract changed. `ControlRig` takes an optional `advisor` hook with the signature `(robot_index, tick, class_max)`. Replay reads the stored log, so the same seed and the same log give the same state hash.
+
+Tests: invariants I1 (property test with a seeded generator and a seeded random sweep: speed magnitude never above the run without advisor, sign kept), I3 (reflex stops and geofence or envelope caps unchanged when an advisor names them) and I10 (import-linter contracts stay green). The closed-set assertion in `tests/unit/control/test_control_types.py` gained `ADVISOR`; it is the only existing test edited, and it only lists the new enum member.
+
+Gaps, stated plainly: only the speed cap is advised, no margin input (decision 3). An advisor limit is not applied on the stop path of an invalid input, where the output is already zero. No advisor, runtime or E5 result exists.
+
+## ADR-065: Part compatibility, schema revision 10 and ticket-bound part tools
+
+Status: implemented with unit tests; the PostgreSQL tests (migration, repositories, provisioning, E3 catalog run) were written but run only in the cloud workflow. ADR-062 (the maintainer's adoption of the recommended options) is on `docs/session-handoff-design-batch`; the number follows it. Implements Part A of `docs/CATALOG_COMPATIBILITY_DESIGN.md`. Part B (revision 11) is not touched.
+
+Decision: schema revision 10 (forward only, checked with `--expected-revision 9`, no data, nothing dropped) adds `part_compatibility(machine_id, part_number)` with a composite primary key and foreign keys to `machines` and `spare_parts`, and a nullable `ticket_id` (foreign key to `maintenance_tickets`) on `part_reservations` and `purchase_orders`, nullable for rows written before the migration. `reserve_part` and `create_purchase_order` now require `ticket_id`; the strict schemas still reject unknown fields, so a `machine_id` argument is refused and the machine can only come from the ticket row. In the tool transaction the repository locks the part row (`UnknownPart`), reads the ticket (it must exist and be `open` or `dispatched`, else `UnknownTicket`), tests the compatibility row (no row raises `IncompatiblePart`, so the check fails closed), and only then runs the existing idempotency and stock logic. The idempotency row stores `ticket_id`; the same key on another ticket, or a key row written before the migration, is an `IdempotencyConflict`. The forwarder maps `UnknownPart`, `UnknownTicket`, `IncompatiblePart` and `IdempotencyConflict` to the one existing denial text of each tool ("reservation not available", "order not available"), so the denial does not say which check failed. ACK, retry, fencing and audit logic are unchanged. `provision` accepts an optional `compatibility` list of `{machine_id, part_number}`: unknown keys, malformed or duplicate rows, and rows naming a machine or part found neither in the spec nor in the database reject the whole spec before anything is created; a rerun skips existing rows and names them; it warns when parts are in the spec and the table has no rows. The key is optional so specs written for ADR-056 still load.
+
+E3-T3-02: the runner opens a ticket for conveyor C1, loads (C1, BRG-6204) and (P1, SEAL-08), and orders SEAL-08 against that ticket, which is now blocked. T3-01 stays blocked and T3-03 must still be served. The check was added after E3-T3-02 was seen to pass (ADR-054, not rewritten), so the outcome is a regression test of a known gap and not an unbiased measurement; there are three cases and the rows are a synthetic fixture. A sensitivity test shows the runner reports T3-02 as accepted when the lookup allows every pair.
+
+Gaps, stated plainly: `ticket_id` is a new required argument, so every earlier caller of the two tools changed (E3 attempts, tests); a client built for the old schema is rejected. The check proves a row exists; it does not prove the row is true, and the real compatibility data comes from the maintainer. An empty table denies every order. `TicketRepository.has_machine` was added for the load script. Nothing here was run against PostgreSQL on this machine.
+
+## ADR-070: HTTP providers on the standard library, with fail-closed rules
+
+Status: implemented with unit tests against a local fake server; no real provider was called and no key was used. The runtime dependency choice of PENDING row 9 is still open and this decision does not settle it.
+
+Decision: `waggle.llm.http_provider.HttpProvider` speaks OpenAI-style chat completions over `http.client`, with a timeout on every call, one fresh connection per attempt and no redirect following. It adds no runtime dependency. If the maintainer later approves an SDK, the class can be replaced behind the same `Provider` interface.
+
+Fail-closed rules:
+
+- Provider mode comes from `WAGGLE_LLM_PROVIDER` (`mock` or `http`). Unset or any other value raises `ConfigError`.
+- A missing or invalid `*_SPEND_CAP_USD`, key, token or URL raises before any call. URLs must be `https`; plain `http` is accepted only for loopback when the caller of the loader sets the switch in code, never from the environment.
+- Prices live in `src/waggle/llm/prices.toml`, all shipped `verified = false`. An unverified or incomplete price makes `estimate_cost` and `complete` raise `ConfigError`, so the client makes no call.
+- Cost is computed from the response `usage` and the verified price. A response without valid `usage` is rejected.
+- 429, 5xx and transport errors are retried up to an attempt cap with exponential backoff; `Retry-After` in seconds is honored up to a cap. Other 4xx, 3xx, wrong content type, oversized body, malformed JSON, duplicate keys and non-finite numbers end in `ProviderError` with no retry.
+- Exception and log text carries the provider name and a status or reason only. It never carries a header, a URL or a response body. Tests search for the key text in exceptions, tracebacks, logs and reprs.
+- `vertex` and voice are not implemented (`docs/PROVIDER_INTEGRATION.md` gives the reasons). A route to them fails closed.
+
+Gaps, stated plainly: the Meta usage fields, the Baseten auth header and the Modal endpoint shape are unconfirmed (see the table in `docs/PROVIDER_INTEGRATION.md`). The cloud smoke tests are written and have not been run. The retry logic lives in the provider because `LlmClient` does not retry; the client's own retry policy is unchanged.
+
+## ADR-071: Handoff chaos scenes S31 to S35 and their own baseline
+
+Status: implemented with unit tests; cloud checks in `postgres.yml`; not run as an experiment and no result file exists. Stacked on the E2 chaos runner.
+
+Decision: `waggle.experiments.e2_handoff_scenes` scripts S31 to S35 step by step on a migrated schema, with the production corridor and task repositories, the production sweeper and `HandoffFinisher`. The two arms differ in one object. `fenced` uses `TaskRepository`. `baseline` uses `NoFencingHandoffRepository` (`e2_handoff_baseline`), whose `complete_handoff` reads the task and the zone without a lock, replaces the task token and the zone token sent by the caller with the live ones, runs the production pure check and writes in a second transaction. The worker name, expiry, task state and trusted occupancy are still checked, so only the fencing token is removed. Starts and ordinary completions keep production behavior. `e2_handoff_oracle` counts, from the same `task_events` rows as the E2 oracle, double deliveries (a handoff that is not the first of its task, or a stale handoff while another attempt is live), stale handoffs accepted and dependents claimed after a stale handoff of their dependency. The zone oracle counts two runners in the capacity-one zone of S34. `e2_handoff.aggregate_scenes` gives raw counts, Wilson 95 percent intervals and failing seeds per arm and scene.
+
+Faults: the kill point of the first attempt and the replay mode of the stale runner come from `e2_faults` through one schedule per seed, one draw per scene. A kill is an exception raised by the `KillSwitch` of `e2_hooks` that abandons the runner mid step, not an operating system process kill. The E2 modules and production code are unchanged.
+
+Provenance: the tick numbers of each scene, the lease length of 10 ticks, the scripted occupancy stand-in and the definition of a double delivery are assumptions of this change and need maintainer review. The metric "double repair starts" of `docs/EXPERIMENTS.md` is replaced by "dependents claimed after a stale handoff", because the log shows that and not which repair physically began; the document keeps its original wording until the maintainer agrees.
+
+Gaps, stated plainly: S32 and S34 are controls. Neither is expected to break the baseline, because duplicate request ids are handled by the shared idempotency key and capacity one comes from the corridor table, both outside the removed check. S31 fails the baseline only when the stale copy arrives after the task is claimed again by the same worker name and the first attempt had not delivered. A different worker name is stopped by the baseline too, so the baseline is weaker than a check with no worker name at all. The scenes are scripted in time: they show that the oracle separates the two arms, not how often a real fault pattern hits a stale delivery. An import contract that keeps `waggle.experiments.e2_handoff_baseline` out of production code needs a change in `pyproject.toml`, which this task did not touch; an AST test enforces the rule meanwhile.
+
+## ADR-072: Attachments in the LLM request and the voice-intent pipeline
+
+Status: implemented with unit tests on the mock and scripted providers; E7 has not been run as an experiment and no result file exists. Branches 6 and 7 of `docs/MULTIMODAL_AND_VIEWER_DESIGN.md`, recommendation B (decision D1 of that document).
+
+Decision: `LlmRequest` gains `attachments`, a tuple of at most 2 `Attachment` (kind `image` or `audio`, a closed media type list, base64 text). The constructor rejects an unknown kind or media type, empty or invalid base64 (strict decoding), an encoded text longer than the limit (checked before decoding), and a decoded size over 2 MiB for images or 5 MiB for audio. The limits are assumptions. The mock and scripted providers add `media_cost_usd` per attachment to `estimate_cost`, so the existing budget guard sees the price before the call and denies a call that would pass the cap without calling the provider. The default media cost is zero, so earlier callers are unchanged. `waggle.llm.voice_adapter.transcribe` sends a clip to the `voice` role and returns a `Transcription` with text or an error code (`empty`, `provider_error`, `no_budget`, `bad_request`, `llm_error`); it never raises for a model or budget failure.
+
+`waggle.multimodal.voice_intent` parses `voice-intent-v1`: exactly four fields, a closed intent enum, short lists of plain ids, confidence 0 to 1, extra fields and duplicate keys rejected. `waggle.multimodal.voice` runs the pipeline: authenticated session (identity comes from the session only), sanitizer and guard through `classify_input`, a proposer (a callable; `keyword_proposer` is deterministic and gives confidence 0 for no keyword or for two different intents), schema validation, confidence threshold, item resolution by `resolve_items`, and for pick and deliver a read-back of the trusted ordered item. A transcript that names another item is rejected, two items or none ask to repeat, and a proposed id the transcript does not name is not trusted. Execution needs a typed `Confirmation` through `authorize_execution` (ADR-057); words in the transcript never count. `waggle.experiments.e7_voice` runs thirteen fixture cases in two arms and reports false accepts first with Wilson intervals; it states that it is a mock run of the rule.
+
+Provenance: the case fixtures `VOICE_CASES`, the confidence threshold 0.6, the keyword list and the attachment limits are my assumptions and need maintainer review. All cases are pending review (AGENTS.md 10.2).
+
+Gaps, stated plainly: the Muse Voice Transcribe request format was not read, so no real provider adapter exists and the audio field is only exercised by mock providers. There is no push-to-talk UI, no audio capture, no speaker identification and no real model proposer. The `no_readback` baseline shows three false accepts (V-04, V-06, V-08) and the full arm none on these fixtures; this shows the fixtures can fail, not that the pipeline resists real speech or a real model. The vision path (branch 8) is not built. No import contract covers `waggle.multimodal` yet; adding one touches `pyproject.toml`.
+
+## ADR-073: waggle.replay and waggle.api, what they are and what they do not do
+
+Status: implemented with unit tests; the web viewer has not been opened in a browser by an agent and no latency or frame-rate figure exists. Records PRs 122, 126 and 130 and the generator added with this entry.
+
+What they are. `waggle.replay` writes, reads and checks replay files: JSON Lines with a header (commit, seed, scenario id, `dt`, world hash, frame count, `resimulable`), one frame per tick as `waggle.sim.frame.export_frame` produces it, and a footer with the final state hash and a digest of the frame lines. `ReplayRecorder` writes the file once, in exclusive-create mode, on a clean close; an existing file is never overwritten and a failed run leaves none. `replay-verify FILE` reads under a strict reader, checks the digest, the final hash and the run metadata, and for a `resimulable` file rebuilds the scenario from the seed and compares every frame with the simulator, which is the only check that catches a tamper that also repairs the hashes. `python -m waggle.replay.generate --scenario ID --seed N --ticks N --out PATH [--commit SHA]` builds a scenario, steps it with no control and records the frames. The same arguments give the same bytes; the commit comes from `--commit` or `WAGGLE_COMMIT` (default `unknown`), never from git. `waggle.api` is a FastAPI process with a health endpoint and two read-only WebSocket streams: `/ws/live` runs an allowlisted scenario id with the configured seed and `/ws/replay` forwards a file by name from one configured directory. It forwards simulator output unchanged and computes nothing.
+
+What they do not do. They do not control a robot, write to the simulator, change a scenario, accept a seed or a path from a client, or touch the database, the MCP server or the LLM layer (the `core-no-web` contract keeps `waggle.sim`, `waggle.control` and `waggle.validation` free of the web layer). A replay file is evidence of a recorded run, not a result: it enters no README table and replaces no result file. A live stream is a scenario with no control layer, so it shows no safety behavior. `replay-verify` on a file that is not `resimulable` is a digest check only, and says so.
+
+Security. The API has no authentication and none is designed. It binds to `127.0.0.1` by default (`WAGGLE_API_HOST`), the compose file publishes the port on `127.0.0.1` only, and it must not be exposed on a network as it is. A web page on any origin can still open a socket to localhost and read frames; the frames hold simulator data and nothing else. Exposing it beyond localhost needs a separate decision with authentication and an origin check, and that is not made here.
+
+Provenance and gaps, stated plainly: the generator writes `source = "replay"` in every frame, which is a label of this tool and not a statement about how a given file will be used. It records scenarios without control, so a replay of a controlled run needs a different generator. A write that fails midway can leave a partial file because the recorder opens in exclusive mode before writing; `replay-verify` refuses such a file. The generator is exercised on S01 only in the tests.

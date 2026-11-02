@@ -95,13 +95,19 @@ SCHEMAS: Mapping[str, Mapping[str, str]] = {
     "release_zone": {"zone_id": "id", "token": "token"},
     "get_task": {"task_id": "id"},
     "get_inventory": {"part_number": "id"},
-    "reserve_part": {"part_number": "id", "quantity": "quantity", "idempotency_key": "id"},
+    "reserve_part": {
+        "part_number": "id",
+        "quantity": "quantity",
+        "idempotency_key": "id",
+        "ticket_id": "id",
+    },
     "dispatch_tech": {"ticket_id": "id", "zone_id": "id"},
     "open_ticket": {"machine_id": "id", "idempotency_key": "id", "summary": "text"},
     "create_purchase_order": {
         "part_number": "id",
         "quantity": "quantity",
         "idempotency_key": "id",
+        "ticket_id": "id",
     },
 }
 

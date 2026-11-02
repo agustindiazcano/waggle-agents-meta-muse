@@ -11,13 +11,14 @@ only through a ``LidarScan``, a ``RobotOdometry`` and ``BeaconReport`` items), c
 import math
 import time
 from collections import deque
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 
 import numpy as np
 from numpy.typing import NDArray
 
 from waggle.control.step import ControlInputs, ControlState, control_step
-from waggle.control.types import ControlRequest
+from waggle.control.types import ControlRequest, Limit
 from waggle.experiments.e1_config import FALSE_STOP_GAP_M, E1Config, Sensing
 from waggle.sim import sensors, state, world
 from waggle.sim.engine import System
@@ -27,6 +28,8 @@ from waggle.sim.robots import RobotFleet, footprint_corners
 from waggle.sim.sensors import BeaconConfig, LidarConfig, OdometryNoise
 
 Floats = NDArray[np.float64]
+AdvisorLimits = Callable[[int, int, float], Sequence[Limit]]
+"""Robot index, tick and class maximum speed to the advisor limits in force (ADR-064)."""
 _MOVING = 1e-9
 
 
@@ -57,8 +60,15 @@ def streams_for(config: E1Config, robots: int) -> dict[str, int]:
 class ControlRig:
     """Runs ``control_step`` for every robot every tick and applies the limited commands."""
 
-    def __init__(self, config: E1Config, fleet: RobotFleet, box: world.World) -> None:
+    def __init__(
+        self,
+        config: E1Config,
+        fleet: RobotFleet,
+        box: world.World,
+        advisor: AdvisorLimits | None = None,
+    ) -> None:
         self.config = config
+        self.advisor = advisor
         self.fleet = fleet
         self.static = sensors.static_segments(box)
         self.lidar = LidarConfig()
@@ -177,8 +187,11 @@ class ControlRig:
                 use_cpa=self.config.cpa,
                 map_segments=self.static,
             )
+            caution = (
+                self.advisor(i, tick, self.params[i].max_speed) if self.advisor is not None else ()
+            )
             started = time.perf_counter_ns()
-            self.states[i], out = control_step(self.states[i], inputs)
+            self.states[i], out = control_step(self.states[i], inputs, advisor_limits=caution)
             self.tally.latency_us.append((time.perf_counter_ns() - started) / 1000.0)
             self.tally.control_calls += 1
             commands[i] = (out.speed, out.turn)
