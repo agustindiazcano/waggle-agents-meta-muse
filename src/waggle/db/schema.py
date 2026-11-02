@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 11
+LATEST_REVISION = 12
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -269,6 +269,14 @@ _TECHNICIAN_DDL: tuple[LiteralString, ...] = (
         CHECK ((status = 'reserved') = (settled_at IS NULL))""",
 )
 
+_PACKAGE_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE packages (
+        package_id text PRIMARY KEY CHECK (package_id ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        source text NOT NULL DEFAULT 'scenario' CHECK (length(source) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -281,6 +289,7 @@ _MIGRATIONS = {
     9: _MOTION_DDL,
     10: _COMPATIBILITY_DDL,
     11: _TECHNICIAN_DDL,
+    12: _PACKAGE_DDL,
 }
 
 

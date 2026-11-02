@@ -26,6 +26,7 @@ from waggle.db.connection import Database
 from waggle.db.corridors import CorridorRepository
 from waggle.db.identities import PostgresIdentityStore
 from waggle.db.inventory import InventoryRepository
+from waggle.db.packages import PackageRegistry
 from waggle.db.tickets import TicketRepository
 from waggle.mcp_server.allowlist import ALLOWLIST
 from waggle.mcp_server.identity import generate_token, hash_token
@@ -35,7 +36,7 @@ logger = logging.getLogger("waggle.provisioning")
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _STOCK_MAX = 1_000_000
 _KEYS = frozenset({"parts", "machines", "zones", "identities"})
-_OPTIONAL_KEYS = frozenset({"compatibility"})
+_OPTIONAL_KEYS = frozenset({"compatibility", "packages"})
 
 
 class SpecError(ValueError):
@@ -55,6 +56,7 @@ class Spec:
     zones: tuple[str, ...]
     identities: tuple[tuple[str, str], ...]
     compatibility: tuple[tuple[str, str], ...] = ()
+    packages: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -68,6 +70,7 @@ class Provisioned:
     tokens: Mapping[str, str] = field(repr=False)
     compatibility: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
+    packages: tuple[str, ...] = ()
 
 
 def _identifier(value: object, what: str) -> str:
@@ -138,7 +141,14 @@ def parse_spec(body: object) -> Spec:
         )
     ]
     _unique([f"{m}/{p}" for m, p in pairs], "compatibility row")
-    return Spec(tuple(parts), machines, zones, tuple(identities), tuple(pairs))
+    package_ids = _unique(
+        [
+            _identifier(p, "package id")
+            for p in (_list(body, "packages") if "packages" in body else [])
+        ],
+        "package id",
+    )
+    return Spec(tuple(parts), machines, zones, tuple(identities), tuple(pairs), package_ids)
 
 
 def load_spec(path: Path) -> Spec:
@@ -166,6 +176,11 @@ class _Compatibility(Protocol):
     def count(self) -> int: ...
 
 
+class _Packages(Protocol):
+    def has(self, package_id: str) -> bool: ...
+    def add(self, package_id: str, source: str = ...) -> None: ...
+
+
 class _Zones(Protocol):
     def register(self, resources: tuple[str, ...]) -> None: ...
 
@@ -191,6 +206,7 @@ def provision(
     zones: _Zones,
     identities: _Identities,
     compatibility: _Compatibility,
+    packages: _Packages | None = None,
 ) -> Provisioned:
     """Create what is missing. Existing rows are skipped and named in ``skipped``.
 
@@ -230,6 +246,15 @@ def provision(
             continue
         compatibility.add(machine_id, part_number)
         created_rows.append(f"{machine_id}/{part_number}")
+    created_packages = []
+    for package_id in spec.packages:
+        if packages is None:
+            raise SpecError("the spec lists packages but no registry was given")
+        if packages.has(package_id):
+            skipped.append(f"package:{package_id}")
+            continue
+        packages.add(package_id)
+        created_packages.append(package_id)
     warnings = []
     if spec.parts and compatibility.count() == 0:
         warnings.append(
@@ -244,6 +269,7 @@ def provision(
         tokens,
         tuple(created_rows),
         tuple(warnings),
+        tuple(created_packages),
     )
 
 
@@ -275,6 +301,7 @@ def main(argv: Sequence[str], environ: Mapping[str, str], stderr: TextIO) -> int
             CorridorRepository(database),
             PostgresIdentityStore(database),
             CompatibilityRepository(database),
+            PackageRegistry(database),
         )
         if result.tokens:
             write_tokens(out_path, result.tokens)
