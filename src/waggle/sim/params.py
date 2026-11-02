@@ -28,6 +28,12 @@ HUMAN_RADIUS = 0.30
 HUMAN_WALK_SPEED = 1.4
 """Assumed human walking and approach speed in m/s (assumption)."""
 
+PACKAGE_PICK_RADIUS = 1.0
+"""A pick needs the robot within this many meters of the package (assumption to calibrate)."""
+
+PACKAGE_SPEED_BOUND = 0.1
+"""A pick, a deliver or a drop needs a speed at or below this in m/s (assumption to calibrate)."""
+
 _TICK_TOLERANCE = 1e-9
 _KINEMATICS = ("bicycle", "differential")
 
@@ -43,6 +49,15 @@ class RobotKind(StrEnum):
     FORKLIFT = "forklift"
     PARTS_RUNNER = "parts_runner"
     TECH_REPAIR = "tech_repair"
+
+
+PACKAGE_CAPACITY: Mapping[RobotKind, int] = {
+    RobotKind.CARRIER: 1,
+    RobotKind.FORKLIFT: 2,
+    RobotKind.PARTS_RUNNER: 1,
+    RobotKind.TECH_REPAIR: 1,
+}
+"""Packages a chassis may hold at once (assumption to calibrate; no claim about real payloads)."""
 
 
 def ticks_for(seconds: float) -> int:
