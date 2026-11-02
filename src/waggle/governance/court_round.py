@@ -71,6 +71,7 @@ class PreCheckFailure:
 
 
 PreCheck = Callable[[], PreCheckFailure | None]
+DecideFn = Callable[[Sequence[Verdict | None]], Decision]
 
 
 @dataclass(frozen=True)
@@ -228,6 +229,7 @@ def run_round(
     deadline_s: float,
     pre_checks: Sequence[PreCheck] = (),
     repeat: int | None = None,
+    decide_fn: DecideFn = decide,
 ) -> RoundResult:
     """Run one round for the configured ``roles`` and return the action and its record.
 
@@ -249,7 +251,7 @@ def run_round(
         reason = "budget" if _cause(error) == "budget" else "config"
         return _persist(store, ctx.ending("escalate", reason))
     members = _run_members(ctx, roles, call_log, deadline_s, repeat)
-    return _persist(store, _decide(ctx, members, roles))
+    return _persist(store, _decide(ctx, members, roles, decide_fn))
 
 
 def _run_members(
@@ -280,10 +282,12 @@ def _run_members(
         pool.shutdown(wait=False, cancel_futures=True)
 
 
-def _decide(ctx: _Context, members: tuple[MemberResult, ...], roles: Sequence[str]) -> RoundResult:
+def _decide(
+    ctx: _Context, members: tuple[MemberResult, ...], roles: Sequence[str], decide_fn: DecideFn
+) -> RoundResult:
     broken = check_composition(members, roles)
     votes: list[Verdict | None] = [m.vote.verdict if m.vote else None for m in members]
-    decision = Decision.ESCALATE if broken else decide(votes)
+    decision = Decision.ESCALATE if broken else decide_fn(votes)
     if broken:
         reason = broken
     elif decision is Decision.EXECUTE:
