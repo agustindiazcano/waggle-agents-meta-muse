@@ -872,6 +872,16 @@ Decision: `waggle.maintenance.loop.MaintenanceLoop` takes predictor `Assessment`
 
 Gaps, stated plainly: nothing backs the port with the MCP tools yet, and the manual sheet that yields `PartPlan` does not exist (branch 6). A completed event is closed to new alerts until `reset` is called after a repair, which nothing calls yet. The loop does not act on the severity levels of the reflex path; those stay in `waggle.control`. No false alarm, missed failure or lead time has been measured.
 
+## ADR-077: The llm_calls table, schema revision 13, and the client factory
+
+Status: implemented with unit tests (migration text, record validation, factory in mock mode and fail-closed cases); the PostgreSQL tests run only in the cloud workflow. No real provider was called and no key was used. Stacked on `feat/package-registry` (ADR-075), because all three change `schema.py`. Settles the part of PENDING row 110 that said `build_providers` had no caller and the `llm_calls` table did not exist.
+
+Decision: revision 13 (forward only, `--expected-revision 12`, no data, nothing dropped) adds `llm_calls`: request id, task id, role, provider, model id, status (`ok`, `denied`, `error`, `cached`), tokens, latency, cost, fallback label, a `mode` of `mock` or `http`, and a `clock_timestamp()` time. Costs and latency must be finite and not negative. There is no column for a prompt or a response, so the log cannot leak either. `waggle.db.llm_calls.PostgresCallLog` implements the existing `CallLog` protocol, so `BudgetGuard` and the client work unchanged, and spend now holds across processes. Its `mode` is set where the log is built, so a mock run and a real run are told apart without changing `CallRecord`. `cost_by_task` sums `ok` rows per task (optionally by role prefix, such as `court_`) and leaves `cached` rows out; `count_by_status` gives raw counts. A write that fails raises: the guard reads spend from this log, so dropping a row could let a paid call go uncounted (fail closed).
+
+`waggle.llm.client_factory.build_client(environ, log, fallbacks_enabled=...)` builds the one production client from `build_providers`, `load_routes` and a `BudgetGuard` over the given log. `fallbacks_enabled` has no default, so a held-out run must say False. The client retry stays at zero because the HTTP provider already retries 429 and 5xx; `LlmClient.max_retries` is now readable so a test can assert it. The factory makes no call.
+
+Gaps, stated plainly: the experiment harnesses still build their own scripted clients and the in-memory log; nothing yet passes a `PostgresCallLog` or a `build_client` result into a real run. `BudgetGuard.spent` reads every row on each check, which is fine at this volume and not designed for a long run. The `mode` label is a promise of the caller, not something the table can verify. Prices stay unverified, so an http client refuses any call (ADR-070). No cost figure exists.
+
 ## ADR-078: Plan validator stage C, one deterministic rollout without humans
 
 Status: implemented with unit tests; no run on development or held-out seeds and no result file. Implements stage C of `docs/ROLLOUT_VALIDATOR_DESIGN.md` (section 2.1, option C), after the counterexample record, the static geometry stage and the geofence check that were already on `main`. Not formal verification: it checks one simulated run under the stated assumptions.
