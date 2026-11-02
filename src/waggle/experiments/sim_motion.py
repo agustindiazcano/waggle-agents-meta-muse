@@ -2,10 +2,12 @@
 
 The MCP server only queues orders; the simulator owns ground truth, so it executes them. A
 ``move_waypoint`` order replaces the robot's route with one waypoint and resolves ``done`` when
-the waypoint driver reports arrival, or ``failed`` when the deadline passes. The simulator has no
-package model, so ``pick_package`` and ``deliver_package`` resolve ``failed`` at once: nothing is
-reported as done that did not happen. An order for a robot the simulation does not have also
-fails. Only the live simulation runs this system, never a rollout fork.
+the waypoint driver reports arrival, or ``failed`` when the deadline passes. ``pick_package`` and
+``deliver_package`` go to the package model, which checks ground truth and resolves ``done`` or
+``failed`` in the same tick. With no package model they resolve ``failed`` at once: nothing is
+reported as done that did not happen. An order for a robot the simulation does not have, or for a
+robot with an active order, also fails. Only the live simulation runs this system, never a
+rollout fork.
 """
 
 from collections.abc import Mapping
@@ -16,6 +18,7 @@ import numpy as np
 from waggle.db.motion import MotionOrder
 from waggle.sim import state
 from waggle.sim.engine import System
+from waggle.sim.packages import PackageModel
 from waggle.sim.scripted import WaypointDriver
 
 
@@ -40,6 +43,7 @@ class MotionExecutor:
         queue: OrderQueue,
         robot_index: Mapping[str, int],
         timeout_ticks: int,
+        packages: PackageModel | None = None,
     ) -> None:
         if driver.loop:
             raise ValueError("the driver must be one-shot so arrival is observable")
@@ -49,6 +53,7 @@ class MotionExecutor:
         self._queue = queue
         self._index = dict(robot_index)
         self._timeout = timeout_ticks
+        self._packages = packages
         self._active: dict[int, tuple[int, int]] = {}
 
     def system(self) -> System:
@@ -80,11 +85,28 @@ class MotionExecutor:
                 continue
             i = self._index.get(item.robot_id)
             order = item.order
-            if i is None or i in busy or order.tool != "move_waypoint":
+            if i is None or i in busy:
                 self._queue.resolve(item.order_id, "failed", sim.tick)
+                continue
+            if order.tool != "move_waypoint":
+                self._package_order(sim, item, i)
                 continue
             self._driver.routes[i] = [(float(order.x or 0.0), float(order.y or 0.0))]
             wp = sim.arrays["script_wp"]
             wp[i] = 0
             self._active[item.order_id] = (i, sim.tick + self._timeout)
             busy.add(i)
+
+    def _package_order(self, sim: state.SimState, item: MotionOrder, robot: int) -> None:
+        """Run a package order on the model and resolve it in the same tick."""
+        outcome = False
+        order = item.order
+        if self._packages is not None and order.package_id is not None:
+            if order.tool == "pick_package":
+                outcome = self._packages.pick(sim, item.order_id, robot, order.package_id).ok
+            elif order.zone_id is not None:
+                result = self._packages.deliver(
+                    sim, item.order_id, robot, order.package_id, order.zone_id
+                )
+                outcome = result.ok
+        self._queue.resolve(item.order_id, "done" if outcome else "failed", sim.tick)

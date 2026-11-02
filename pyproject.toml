@@ -137,4 +137,5 @@ forbidden_modules = [
     "waggle.sim.rollout",
     "waggle.sim.scenarios",
     "waggle.sim.scripted",
+    "waggle.sim.packages",
 ]
