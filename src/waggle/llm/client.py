@@ -7,7 +7,7 @@ switched off (held-out runs). Nothing else moves a call to another provider.
 import logging
 import math
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 
@@ -81,6 +81,30 @@ class LlmClient:
             result = self._attempt(request, fallback, label)
         self._cache[request.request_id] = result
         return result
+
+    def preflight(self, requests: Sequence[LlmRequest]) -> None:
+        """Check that all requests fit their provider caps together, making no call.
+
+        Uses the primary route of each role. Cached requests cost nothing. Raises the same typed
+        errors as ``call`` (``BudgetExceededError``, ``InvalidCapError``, ``UnknownRoleError``,
+        ``ConfigError``), so a caller can refuse a whole set before any partial work starts.
+        """
+        planned: dict[str, float] = {}
+        for request in requests:
+            spec = self._table.get(request.role).primary
+            provider = self._providers.get(spec.provider)
+            if provider is None:
+                raise ConfigError(f"no provider registered for {spec.provider}")
+            if request.request_id in self._cache:
+                continue
+            planned[spec.provider] = planned.get(spec.provider, 0.0) + provider.estimate_cost(
+                request
+            )
+        for name, estimate in planned.items():
+            remaining = self._guard.remaining(name)
+            if estimate > remaining:
+                cap = remaining + self._guard.spent(name)
+                raise BudgetExceededError(name, self._guard.spent(name), estimate, cap)
 
     def _attempt(self, request: LlmRequest, spec: RouteSpec, label: str | None) -> Completion:
         provider = self._providers.get(spec.provider)

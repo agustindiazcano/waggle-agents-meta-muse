@@ -9,6 +9,7 @@ routing table, never from this file.
 
 import asyncio
 import hashlib
+from collections.abc import Sequence
 from pathlib import Path
 from string import Template
 
@@ -71,8 +72,28 @@ class CourtReviewer:
     """Calls the court roles through the shared client, so budget, retries and the call log
     apply."""
 
+    prompt_version = COURT_PROMPT_VERSION
+    prompt_hash = COURT_PROMPT_HASH
+
     def __init__(self, client: LlmClient) -> None:
         self._client = client
+
+    def request_id(self, role: str, review: ReviewRequest, repeat: int | None = None) -> str:
+        """Request id this reviewer uses for a role and a request."""
+        return court_request_id(role, review, repeat)
+
+    def preflight(
+        self,
+        roles: Sequence[str],
+        review: ReviewRequest,
+        *,
+        task_id: str | None = None,
+        repeat: int | None = None,
+    ) -> None:
+        """Refuse the whole round, before any call, if the caps cannot cover every role."""
+        self._client.preflight(
+            [build_llm_request(r, review, task_id=task_id, repeat=repeat) for r in roles]
+        )
 
     def ask(
         self,
