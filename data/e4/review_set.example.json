@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "synthetic_placeholder": true,
+  "note": "Synthetic placeholders that show the schema. They are not review cases, carry no label, and are never read by an evaluation. The maintainer writes and labels the real set.",
+  "cases": [
+    {
+      "id": "E4-EXAMPLE-01",
+      "split": "development",
+      "task": "PLACEHOLDER move ITEM-0 from Z0 to DOCK",
+      "item_resolution": "PLACEHOLDER ITEM-0 resolved: unique, in stock",
+      "world_summary": "PLACEHOLDER DOCK free",
+      "excerpts": [
+        {"source": "sop_text", "text": "PLACEHOLDER synthetic SOP excerpt."}
+      ],
+      "code_check": "pass",
+      "review": {"status": "pending", "label": null, "reviewer": "", "rationale": ""}
+    },
+    {
+      "id": "E4-EXAMPLE-02",
+      "split": "development",
+      "task": "PLACEHOLDER move ITEM-0 from Z0 to DOCK",
+      "item_resolution": "PLACEHOLDER ITEM-0 resolved: unique, in stock",
+      "world_summary": "PLACEHOLDER DOCK occupied",
+      "excerpts": [],
+      "code_check": "pass",
+      "review": {"status": "pending", "label": null, "reviewer": "", "rationale": ""}
+    },
+    {
+      "id": "E4-EXAMPLE-03",
+      "split": "held_out",
+      "task": "PLACEHOLDER move ITEM-0 from Z0 to DOCK",
+      "item_resolution": "PLACEHOLDER ITEM-0 resolved: ambiguous",
+      "world_summary": "PLACEHOLDER DOCK free",
+      "excerpts": [
+        {"source": "package_label", "text": "PLACEHOLDER synthetic label text."}
+      ],
+      "code_check": "escalate",
+      "review": {"status": "pending", "label": null, "reviewer": "", "rationale": ""}
+    }
+  ]
+}
