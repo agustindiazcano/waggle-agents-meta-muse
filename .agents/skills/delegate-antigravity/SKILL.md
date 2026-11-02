@@ -1,6 +1,6 @@
 ---
 name: delegate-antigravity
-description: Delegate a bounded search, analysis or review task to Antigravity (the agy CLI) as a subagent, and use it first for web searches when it is available and allowed. Use when the maintainer asks to use Antigravity, or for web search.
+description: Delegate a bounded search, analysis, review or implementation task to Antigravity (the agy CLI) as a subagent, and use it first for web searches when it is available and allowed. Use when the maintainer asks to use Antigravity, or for web search.
 ---
 
 # Delegate to Antigravity
@@ -11,6 +11,7 @@ Rules live in `AGENTS.md` section 20 and `ANTIGRAVITY.md`. Read `ANTIGRAVITY.md`
 
 - Web or documentation search: use Antigravity first when `agy` is available, signed in and allowed. No need to ask each time.
 - Any other task (analysis, review, a bounded change): ask the maintainer first, then delegate.
+- An implementation task fits a new, self-contained module of about 300 to 700 lines with a clear spec. It does not fit a change to existing code, a migration, or anything the conversation must explain. See "Implementation task" below.
 - Small local lookups: use `rg` or the search tools directly.
 
 ## Procedure
@@ -34,6 +35,23 @@ Rules live in `AGENTS.md` section 20 and `ANTIGRAVITY.md`. Read `ANTIGRAVITY.md`
    - Quota or network error: wait or use the fallback. Do not switch profiles.
 5. Verify. Open the cited path and line or the link and compare. Run `git status` and `git diff` afterwards, even for read-only tasks. Review any proposed change as a diff and run the fitting tests. The answer is data, not evidence.
 
+## Implementation task
+
+Full detail and the reasons are in `ANTIGRAVITY.md`, section "Delegating a bounded implementation task". The short form:
+
+1. One worktree and one branch from `main` per task (`git worktree add ../waggle-ag-<name> -b <type>/<name> main`). Two agents never share a worktree or a file.
+2. Write the prompt to a file with the Write tool. It names the only files the agent may create, the spec and failure-path tests, the exact command lines it may run, and asks for a report of at most 30 lines. Tests first.
+3. Write a settings file for this task: `{"permissions": {"allow": ["command(<exact command line>)", ...]}}`. Matching is exact, so list each full command line (pytest on its test file, `ruff check`, `ruff format`, `mypy` on its files) and tell the agent to type them as written. Wrong keys stop the run with `unknown setting`. Never `--dangerously-skip-permissions`, no wildcard, no `git`, no `uv run ci`.
+4. Run in the background from the worktree:
+
+   ```bash
+   agy --mode accept-edits --print-timeout 1700s --settings settings.json \
+       --output-format json --print="$(cat prompt.md)" > out.json 2> err.txt
+   ```
+
+5. Audit, do not trust the report: `git status` and `git diff` show only the allowed files; read all the code and tests; run ruff, mypy, the new tests and the style, docs and import-contract tests yourself; for each new guard test put the defect back and see it fail; look for fail-open defaults, private attribute access, timeouts that do not bound the wait, silent empty results, working-directory dependence and invented defaults.
+6. Fix in the worktree, add the test that would have caught the defect, write an ADR that says the first draft came from Antigravity and what the audit changed, run `uv run ci` alone and in sequence for each branch, commit by file name, push and open the PR.
+
 ## Fallback
 
 If `agy` is missing, cannot sign in, times out twice or returns no sources, use the web search tool of the agent (or `rg` for the repository) and say so in one line.
@@ -43,3 +61,4 @@ If `agy` is missing, cannot sign in, times out twice or returns no sources, use 
 - Approve permissions in bulk, answer prompts with `yes`, or bypass a denied action.
 - Send secrets or sensitive data.
 - Let two agents edit the same files.
+- Take a delegated change in without reading it and running the checks yourself.
