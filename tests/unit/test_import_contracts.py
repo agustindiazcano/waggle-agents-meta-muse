@@ -24,6 +24,7 @@ CONTRACT_IDS = [
     "control-no-ground-truth",
     "validation-no-llm-side",
     "e2-baseline-isolated",
+    "core-no-web",
 ]
 
 

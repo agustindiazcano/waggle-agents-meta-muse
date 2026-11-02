@@ -27,6 +27,7 @@ GROUND_TRUTH = [
     "scenarios",
     "scripted",
     "packages",
+    "frame",
 ]
 
 

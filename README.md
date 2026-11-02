@@ -57,7 +57,8 @@ Scaling to thousands of agents is reported as an extrapolation from a stub calib
 
 ## Third-party libraries
 
-- numpy 2.5.4 (pinned): the only runtime dependency, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
+- numpy 2.5.4 (pinned): the only runtime dependency of the simulator and control, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
+- fastapi 0.162.0 and uvicorn[standard] 0.54.0 (pinned): runtime dependencies of `waggle.api` only, which streams simulator frames over a read-only WebSocket. Import contracts forbid `waggle.sim`, `waggle.control` and `waggle.validation` from importing them. Approved by the maintainer (ADR-029). httpx is a dev dependency, used only by the Starlette test client.
 
 ## Scope and limits
 
