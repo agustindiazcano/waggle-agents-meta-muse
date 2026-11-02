@@ -1,0 +1,52 @@
+{
+  "thermal": {
+    "ambient_c": 22.0,
+    "housing_capacity": 900.0,
+    "bearing_capacity": 120.0,
+    "bearing_housing_conductance": 4.5,
+    "housing_ambient_conductance": 7.5,
+    "heat_base_w": 14.0,
+    "heat_per_load_w": 60.0
+  },
+  "wear": {
+    "healthy_probability": 0.25,
+    "onset_min_s": 400.0,
+    "onset_max_s": 1200.0,
+    "bearing_rate_min": 0.015,
+    "bearing_rate_max": 0.03,
+    "bearing_seed": 0.01,
+    "bearing_load_exponent": 1.5,
+    "bearing_state_exponent": 1.0,
+    "lube_rate_min": 0.0018,
+    "lube_rate_max": 0.0032,
+    "lube_load_exponent": 1.2,
+    "offset_step_min": 0.3,
+    "offset_step_max": 1.0,
+    "damage_budget": 200.0,
+    "rate_noise_sigma": 0.15
+  },
+  "load": {
+    "base_min": 0.35,
+    "base_max": 0.65,
+    "amp_min": 0.05,
+    "amp_max": 0.25,
+    "period_min_s": 240.0,
+    "period_max_s": 900.0,
+    "task_gain": 0.2,
+    "task_cap": 8.0
+  },
+  "effects": {
+    "friction_heat_wear_w": 150.0,
+    "friction_heat_lube_w": 110.0,
+    "friction_heat_offset_w": 55.0,
+    "vibration_base": 1.2,
+    "vibration_per_load": 0.8,
+    "vibration_wear_gain": 6.5,
+    "vibration_lube_gain": 4.0,
+    "vibration_lube_knee": 0.6,
+    "vibration_offset_gain": 2.2,
+    "current_base_a": 2.0,
+    "current_per_load_a": 5.5,
+    "current_offset_gain_a": 1.8
+  }
+}
