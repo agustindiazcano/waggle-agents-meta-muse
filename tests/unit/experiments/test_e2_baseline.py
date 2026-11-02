@@ -93,7 +93,7 @@ def test_no_production_module_imports_the_baseline() -> None:
 
 
 def test_only_experiments_modules_import_the_baseline() -> None:
-    allowed = {"e2_baseline.py", "e2_chaos.py"}
+    allowed = {"e2_baseline.py", "e2_chaos_worker.py"}
     offenders = [
         path.name
         for path in (SRC / "experiments").glob("*.py")
