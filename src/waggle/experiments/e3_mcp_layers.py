@@ -41,7 +41,12 @@ ATTEMPTS: Mapping[str, Attempt] = {
         "carrier",
         "C1",
         "create_purchase_order",
-        {"part_number": "BRG-6204", "quantity": 40, "idempotency_key": "e3-t1-01"},
+        {
+            "part_number": "BRG-6204",
+            "quantity": 40,
+            "idempotency_key": "e3-t1-01",
+            "ticket_id": "tkt-0000000000000001",
+        },
     ),
     "E3-T1-02": Attempt(
         "carrier", "C1", "dispatch_tech", {"ticket_id": "tkt-0000000000000001", "zone_id": "Z1"}

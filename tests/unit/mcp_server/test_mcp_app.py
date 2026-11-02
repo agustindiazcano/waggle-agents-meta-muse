@@ -137,10 +137,16 @@ def test_main_serves_lines_when_the_revision_matches() -> None:
     ("tool", "args"),
     [
         ("get_inventory", {"part_number": "P-1"}),
-        ("reserve_part", {"part_number": "P-1", "quantity": 1, "idempotency_key": "k"}),
+        (
+            "reserve_part",
+            {"part_number": "P-1", "quantity": 1, "idempotency_key": "k", "ticket_id": "tkt-1"},
+        ),
         ("open_ticket", {"machine_id": "M-1", "idempotency_key": "k", "summary": "s"}),
         ("dispatch_tech", {"ticket_id": "tkt-0123456789abcdef", "zone_id": "z"}),
-        ("create_purchase_order", {"part_number": "P-1", "quantity": 1, "idempotency_key": "k"}),
+        (
+            "create_purchase_order",
+            {"part_number": "P-1", "quantity": 1, "idempotency_key": "k", "ticket_id": "tkt-1"},
+        ),
     ],
 )
 def test_maintenance_tools_are_wired_to_the_database(tool: str, args: dict[str, object]) -> None:

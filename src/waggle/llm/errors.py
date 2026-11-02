@@ -30,6 +30,10 @@ class UnknownRoleError(LlmError):
     """The role is not in the routing table."""
 
 
+class InvalidAttachmentError(LlmError, ValueError):
+    """An image or audio attachment breaks a limit or is not valid base64."""
+
+
 class ConfigError(LlmError):
     """A route needs a configuration value that is missing."""
 

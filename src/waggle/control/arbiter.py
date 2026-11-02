@@ -19,6 +19,7 @@ _PRIORITY = (
     Reason.ENVELOPE,
     Reason.OCCLUSION,
     Reason.CPA,
+    Reason.ADVISOR,
     Reason.CLASS_MAX,
     Reason.REQUEST,
 )

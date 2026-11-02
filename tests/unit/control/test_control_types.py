@@ -19,6 +19,7 @@ def test_reason_is_the_closed_set_of_adr_027() -> None:
         "SCAN_INVALID",
         "INPUT_MISSING",
         "ESTOP",
+        "ADVISOR",
     }
 
 
