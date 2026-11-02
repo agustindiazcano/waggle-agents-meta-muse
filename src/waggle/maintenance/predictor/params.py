@@ -13,8 +13,16 @@ from pathlib import Path
 from waggle.maintenance.predictor.types import PredictorError
 
 _SECTIONS = {
-    "baseline": ("warmup_samples", "sigma_floor", "alpha_min", "alpha_max"),
-    "cusum": ("slack", "threshold"),
+    "baseline": (
+        "temperature_margin_c",
+        "warmup_samples",
+        "max_warmup_samples",
+        "min_load_span",
+        "sigma_floor",
+        "alpha_min",
+        "alpha_max",
+    ),
+    "cusum": ("slack", "threshold", "observer_gain"),
     "estimate": ("intercept_memory", "level_memory", "temperature_limit_c"),
 }
 MIN_WARMUP = 30
@@ -25,11 +33,15 @@ class PredictorParams:
     """Every predictor parameter, flat."""
 
     warmup_samples: int
+    max_warmup_samples: int
+    temperature_margin_c: float
+    min_load_span: float
     sigma_floor: float
     alpha_min: float
     alpha_max: float
     slack: float
     threshold: float
+    observer_gain: float
     intercept_memory: float
     level_memory: float
     temperature_limit_c: float
@@ -44,11 +56,17 @@ def validate(p: PredictorParams) -> None:
     """Reject values that make the model meaningless. Fails closed."""
     if p.warmup_samples < MIN_WARMUP:
         raise PredictorError(f"warmup_samples must be at least {MIN_WARMUP}")
+    if p.max_warmup_samples < p.warmup_samples:
+        raise PredictorError("max_warmup_samples must not be below warmup_samples")
+    if not 0.0 < p.min_load_span < 1.0:
+        raise PredictorError("min_load_span must be strictly between 0 and 1")
     if not 0.0 < p.alpha_min < p.alpha_max < 1.0:
         raise PredictorError("alpha_min and alpha_max must satisfy 0 < alpha_min < alpha_max < 1")
+    if p.temperature_margin_c < 0.0:
+        raise PredictorError("temperature_margin_c must not be negative")
     if p.sigma_floor <= 0.0 or p.threshold <= 0.0 or p.slack < 0.0:
         raise PredictorError("sigma_floor and threshold must be positive, slack not negative")
-    for name in ("intercept_memory", "level_memory"):
+    for name in ("intercept_memory", "level_memory", "observer_gain"):
         if not 0.0 < getattr(p, name) < 1.0:
             raise PredictorError(f"{name} must be strictly between 0 and 1")
 
@@ -68,7 +86,8 @@ def load_params(path: Path | None = None) -> PredictorParams:
             if not math.isfinite(value):
                 raise PredictorError(f"{section}.{key} must be finite")
             flat[key] = float(value)
-    flat["warmup_samples"] = int(flat["warmup_samples"])
+    for name in ("warmup_samples", "max_warmup_samples"):
+        flat[name] = int(flat[name])
     params = PredictorParams(**flat)  # type: ignore[arg-type]  # warmup_samples was cast to int
     validate(params)
     return params

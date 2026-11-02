@@ -171,3 +171,22 @@ def test_blind_channel_fault_is_not_flagged() -> None:
     """A fault the three channels do not show must stay unflagged: the predictor is blind."""
     out = _run(_series(3, fault_from=600, vib_slope=0.0, heat_slope=0.0))
     assert not any(a.flag for a in out)
+
+
+def test_the_baseline_window_grows_until_the_load_has_varied() -> None:
+    flat_start = [dataclasses.replace(r, load=0.5) for r in _series(2, samples=200)]
+    varied = _series(2, samples=500)[200:]
+    out = _run(flat_start + varied)
+    first_warm = next(i for i, a in enumerate(out) if a.warm)
+    assert first_warm >= PARAMS.warmup_samples
+    assert first_warm > 199, "a flat load must not complete the baseline"
+
+
+def test_a_machine_whose_load_never_varies_is_unfit_and_never_scorable() -> None:
+    flat = [
+        dataclasses.replace(r, load=0.5) for r in _series(2, samples=PARAMS.max_warmup_samples + 50)
+    ]
+    out = _run(flat)
+    assert not any(a.warm for a in out)
+    assert not out[-1].scorable
+    assert not any(a.flag for a in out)

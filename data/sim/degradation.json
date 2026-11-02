@@ -28,10 +28,10 @@
   "load": {
     "base_min": 0.35,
     "base_max": 0.65,
-    "amp_min": 0.05,
+    "amp_min": 0.12,
     "amp_max": 0.25,
-    "period_min_s": 240.0,
-    "period_max_s": 900.0,
+    "period_min_s": 90.0,
+    "period_max_s": 240.0,
     "task_gain": 0.2,
     "task_cap": 8.0
   },
