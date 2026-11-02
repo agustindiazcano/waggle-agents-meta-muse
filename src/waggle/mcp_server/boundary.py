@@ -18,6 +18,7 @@ from typing import Protocol
 
 from waggle.db.corridors import IdempotencyConflict
 from waggle.db.mcp_audit import AuditIntent, IntentOutcome, RateLimit, ResultRecord
+from waggle.mcp_server.allowlist import allowed_tools
 from waggle.mcp_server.bounds import MapExtent
 from waggle.mcp_server.identity import AuthError, Identity, IdentityStore, authenticate
 from waggle.mcp_server.schemas import SchemaError, validate_call
@@ -140,6 +141,15 @@ class Boundary:
         if decision.replayed:
             return CallResult(False, "duplicate_request", replayed=True)
         return self._forward(identity, request_id, name, checked)
+
+    def allowed_tools(self, token: str) -> frozenset[str]:
+        """Tools the token's chassis may call, for tools/list. The chassis comes from the
+        token only. A token that does not authenticate gets the empty set (fail closed)."""
+        try:
+            identity = authenticate(token, self._store)
+        except AuthError:
+            return frozenset()
+        return allowed_tools(identity.chassis)
 
     def _deny(self, intent: AuditIntent, reason: str) -> CallResult:
         try:

@@ -7,6 +7,7 @@ import pytest
 
 from waggle import __version__
 from waggle.mcp_server.boundary import CallResult
+from waggle.mcp_server.schemas import SCHEMAS
 from waggle.mcp_server.transport import LineServer
 
 TOKEN = "c" * 43
@@ -24,6 +25,9 @@ class FakeBoundary:
     ) -> CallResult:
         self.calls.append((request_id, args))
         return CallResult(True, data={"accepted": True})
+
+    def allowed_tools(self, token: str) -> frozenset[str]:
+        return frozenset(SCHEMAS)
 
 
 def _server() -> tuple[LineServer, FakeBoundary]:

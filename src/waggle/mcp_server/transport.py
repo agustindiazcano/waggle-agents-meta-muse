@@ -66,6 +66,10 @@ class Dispatcher(Protocol):
         """Run one call and return a typed result."""
         ...
 
+    def allowed_tools(self, token: str) -> frozenset[str]:
+        """Names of the tools the token's chassis may call. Empty when it cannot be told."""
+        ...
+
 
 def _reject_constant(value: str) -> object:
     raise ValueError("non-finite number")
@@ -82,8 +86,8 @@ def _error(msg_id: object, code: int, message: str, data: object = None) -> str:
     return _dump({"jsonrpc": "2.0", "id": msg_id, "error": error})
 
 
-def _tool_definitions() -> list[dict[str, object]]:
-    """Advisory input schemas. The boundary enforces the real bounds per chassis."""
+def _tool_definitions(allowed: frozenset[str]) -> list[dict[str, object]]:
+    """Advisory input schemas of the allowed tools. The boundary enforces the real bounds."""
     return [
         {
             "name": name,
@@ -96,6 +100,7 @@ def _tool_definitions() -> list[dict[str, object]]:
             },
         }
         for name, schema in sorted(SCHEMAS.items())
+        if name in allowed
     ]
 
 
@@ -193,7 +198,7 @@ class LineServer:
                 "capabilities": _CAPABILITIES,
             }
         elif method == "tools/list":
-            result = {"tools": _tool_definitions()}
+            result = {"tools": self._list_tools()}
         elif method == "tools/call":
             called = self._call(msg_id, params)
             if isinstance(called, str):
@@ -205,6 +210,15 @@ class LineServer:
             result["resultType"] = "complete"
             result["_meta"] = {_SERVER_INFO_KEY: _SERVER_INFO}
         return _dump({"jsonrpc": "2.0", "id": msg_id, "result": result})
+
+    def _list_tools(self) -> list[dict[str, object]]:
+        """Definitions for this process's chassis. Request params are never read."""
+        try:
+            allowed = self._dispatcher.allowed_tools(self._token)
+        except Exception as err:
+            logger.error("tool listing failed: %s", type(err).__name__)
+            allowed = frozenset()
+        return _tool_definitions(allowed)
 
     def _call(self, msg_id: object, params: object) -> dict[str, object] | str:
         """The tool result payload, or an error line."""
