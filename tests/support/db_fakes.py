@@ -11,6 +11,7 @@ class FakeCursor:
 
     def __init__(self, row: tuple[object, ...] | None) -> None:
         self._row = row
+        self.rowcount = 1
 
     def fetchone(self) -> tuple[object, ...] | None:
         return self._row
