@@ -64,7 +64,7 @@ Coordinated handoff (designed, not implemented):
 - Method: 500 concurrent tasks, kill workers at random points, expire leases early, duplicate deliveries, delay the database.
 - Metrics: double assignments, two robots in a one-lane zone, stale-token writes accepted, tasks recovered, tasks stuck, recovery time, deadlocks (robots that stop making progress on a cycle of waits; counted in the S13 to S18 density scenarios).
 - Baseline: lease check outside the tool, no token. Expected to show failures. Report them.
-- Handoff chaos test (implemented, not evaluated; ADR-071): S31 to S35 scripted with a seeded kill point and replay mode. Counts of double deliveries and dependents claimed after a stale handoff. Baseline without fencing for the handoff path, expected to show nonzero counts in S31 (late replay), S33 and S35 and none in the controls S32 and S34.
+- Handoff chaos test (implemented, not evaluated; ADR-071): S31 to S35 under seeded kills. Counts of double deliveries and double repair starts (measured as dependents claimed after a stale handoff). Baseline without fencing for the handoff path, expected to show nonzero counts in S31 (late replay), S33 and S35 and none in the controls S32 and S34.
 - Property tests with Hypothesis: token monotonicity, mutual exclusion, no accepted write with a stale token.
 
 ### E2 simulator admission component
