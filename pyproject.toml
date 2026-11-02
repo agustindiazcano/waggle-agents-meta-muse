@@ -91,6 +91,24 @@ source_modules = ["waggle.mcp_server"]
 forbidden_modules = ["waggle.governance"]
 
 [[tool.importlinter.contracts]]
+id = "e2-baseline-isolated"
+name = "production code must not import the E2 no-fencing baseline"
+type = "forbidden"
+source_modules = [
+    "waggle.worker",
+    "waggle.db",
+    "waggle.mcp_server",
+    "waggle.governance",
+    "waggle.llm",
+    "waggle.maintenance",
+    "waggle.coordination",
+    "waggle.sim",
+    "waggle.control",
+    "waggle.validation",
+]
+forbidden_modules = ["waggle.experiments.e2_baseline"]
+
+[[tool.importlinter.contracts]]
 id = "validation-no-llm-side"
 name = "waggle.validation must not import the LLM side"
 type = "forbidden"
