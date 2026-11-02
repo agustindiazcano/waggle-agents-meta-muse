@@ -750,7 +750,7 @@ Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote fro
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
 
-## ADR-070: waggle.replay and waggle.api, what they are and what they do not do
+## ADR-073: waggle.replay and waggle.api, what they are and what they do not do
 
 Status: implemented with unit tests; the web viewer has not been opened in a browser by an agent and no latency or frame-rate figure exists. Records PRs 122, 126 and 130 and the generator added with this entry.
 
