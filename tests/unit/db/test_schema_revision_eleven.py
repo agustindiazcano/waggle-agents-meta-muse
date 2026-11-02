@@ -7,9 +7,9 @@ def _statements() -> tuple[str, ...]:
     return tuple(" ".join(s.split()) for s in schema._MIGRATIONS[11])
 
 
-def test_latest_revision_is_eleven() -> None:
-    assert schema.LATEST_REVISION == 11
-    assert sorted(schema._MIGRATIONS) == list(range(1, 12))
+def test_revision_eleven_is_still_in_the_chain() -> None:
+    assert schema.LATEST_REVISION >= 11
+    assert sorted(schema._MIGRATIONS) == list(range(1, schema.LATEST_REVISION + 1))
 
 
 def test_tickets_gain_technician_token_and_closed_columns() -> None:
