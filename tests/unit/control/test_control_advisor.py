@@ -1,4 +1,4 @@
-"""Advisor limits in the fast layer (ADR-063): they can only reduce motion.
+"""Advisor limits in the fast layer (ADR-064): they can only reduce motion.
 
 Invariants I1, I3 and I10 of docs/ADVISORS_DESIGN.md against the real arbiter and control_step.
 """

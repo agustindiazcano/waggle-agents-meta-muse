@@ -750,7 +750,7 @@ Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote fro
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
 
-## ADR-063: Advisor limits in the fast layer and the harness bridge
+## ADR-064: Advisor limits in the fast layer and the harness bridge
 
 Status: implemented with unit and property tests; E5 has not been run and no advisor runtime exists. Maintainer adoption of the recommended option of decision 2 in `docs/ADVISORS_DESIGN.md` (ADR-062) approved this interface change. Stacked on `feat/advisors-core`.
 

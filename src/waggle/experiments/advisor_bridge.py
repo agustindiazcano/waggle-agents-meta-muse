@@ -1,4 +1,4 @@
-"""Harness bridge from recorded advisor cautions to fast-layer limits (ADR-063).
+"""Harness bridge from recorded advisor cautions to fast-layer limits (ADR-064).
 
 ``waggle.control`` must not import ``waggle.governance``, so the two meet here, in the harness.
 The bridge only reads the caution log and builds ``Limit(speed_cap, Reason.ADVISOR)`` values. A

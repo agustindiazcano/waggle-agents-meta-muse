@@ -150,7 +150,7 @@ def control_step(
 ) -> tuple[ControlState, ControlOutput]:
     """Limit one motion command. Missing or stale input gives a stop with its reason.
 
-    ``advisor_limits`` are extra speed caps from recorded advisor cautions (ADR-063). Each one is
+    ``advisor_limits`` are extra speed caps from recorded advisor cautions (ADR-064). Each one is
     relabeled ``Reason.ADVISOR`` and enters the same minimum as every other limit, so it can only
     lower the speed. An invalid cap (not finite or negative) becomes a zero cap in the arbiter.
     """

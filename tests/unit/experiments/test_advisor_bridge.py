@@ -1,4 +1,4 @@
-"""The harness bridge from recorded cautions to fast-layer limits, and replay (ADR-063).
+"""The harness bridge from recorded cautions to fast-layer limits, and replay (ADR-064).
 
 The bridge sits in waggle.experiments because waggle.control must not import governance.
 """

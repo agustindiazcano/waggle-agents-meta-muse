@@ -29,7 +29,7 @@ from waggle.sim.sensors import BeaconConfig, LidarConfig, OdometryNoise
 
 Floats = NDArray[np.float64]
 AdvisorLimits = Callable[[int, int, float], Sequence[Limit]]
-"""Robot index, tick and class maximum speed to the advisor limits in force (ADR-063)."""
+"""Robot index, tick and class maximum speed to the advisor limits in force (ADR-064)."""
 _MOVING = 1e-9
 
 
