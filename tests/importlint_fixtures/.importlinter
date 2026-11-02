@@ -1,5 +1,6 @@
 [importlinter]
 root_package = fixture_pkg
+include_external_packages = True
 
 [importlinter:contract:sim-control-no-llm-side]
 name = fixture: sim and control must not import llm, governance, maintenance or mcp_server
@@ -42,6 +43,9 @@ forbidden_modules =
     fixture_pkg.sim.scenarios
     fixture_pkg.sim.scripted
     fixture_pkg.sim.packages
+    fixture_pkg.sim.frame
+    fixture_pkg.sim.machines
+    fixture_pkg.sim.telemetry
 
 [importlinter:contract:validation-no-llm-side]
 name = fixture: validation must not import llm, governance or mcp_server
@@ -69,3 +73,24 @@ source_modules =
     fixture_pkg.validation
 forbidden_modules =
     fixture_pkg.experiments.e2_baseline
+
+[importlinter:contract:core-no-web]
+name = fixture: sim, control and validation must not import api or a web library
+type = forbidden
+source_modules =
+    fixture_pkg.sim
+    fixture_pkg.control
+    fixture_pkg.validation
+forbidden_modules =
+    fixture_pkg.api
+    fastapi
+    starlette
+    uvicorn
+
+[importlinter:contract:predictor-no-sim]
+name = fixture: the predictor must not import the simulator
+type = forbidden
+source_modules =
+    fixture_pkg.maintenance.predictor
+forbidden_modules =
+    fixture_pkg.sim

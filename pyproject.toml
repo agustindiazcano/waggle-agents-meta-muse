@@ -6,8 +6,10 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "fastapi==0.162.0",
     "numpy==2.5.4",
     "psycopg[binary]==3.3.6",
+    "uvicorn[standard]==0.54.0",
 ]
 
 [project.scripts]
@@ -19,6 +21,7 @@ experiments-dev = "waggle.experiments.e1_run:main"
 experiments-test = "waggle.tasks:experiments_test"
 report = "waggle.experiments.e1_report:main"
 provision = "waggle.provisioning:run"
+replay-verify = "waggle.replay.verify:run"
 
 [dependency-groups]
 dev = [
@@ -29,6 +32,7 @@ dev = [
     "hypothesis",
     "import-linter",
     "pre-commit",
+    "httpx>=0.28.1",
 ]
 
 [build-system]
@@ -70,6 +74,7 @@ show_missing = true
 
 [tool.importlinter]
 root_package = "waggle"
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 id = "sim-control-no-llm-side"
@@ -115,6 +120,13 @@ type = "forbidden"
 source_modules = ["waggle.validation"]
 forbidden_modules = ["waggle.llm", "waggle.governance", "waggle.mcp_server"]
 
+[[tool.importlinter.contracts]]
+id = "predictor-no-sim"
+name = "waggle.maintenance.predictor must not import the simulator (AGENTS.md 9.8)"
+type = "forbidden"
+source_modules = ["waggle.maintenance.predictor"]
+forbidden_modules = ["waggle.sim"]
+
 # Control reads only waggle.sim.observations. waggle.sim.__init__ and observations import
 # nothing from the project: import-linter also flags indirect chains, so any import there
 # of a ground-truth module would make every control import of observations a violation.
@@ -138,4 +150,16 @@ forbidden_modules = [
     "waggle.sim.scenarios",
     "waggle.sim.scripted",
     "waggle.sim.packages",
+    "waggle.sim.frame",
+    "waggle.sim.machines",
+    "waggle.sim.telemetry",
 ]
+
+# waggle.api is the only package that may use the web libraries (ADR-029). The core must not
+# import it or any web library, directly or through a chain.
+[[tool.importlinter.contracts]]
+id = "core-no-web"
+name = "sim, control and validation must not import waggle.api or a web library"
+type = "forbidden"
+source_modules = ["waggle.sim", "waggle.control", "waggle.validation"]
+forbidden_modules = ["waggle.api", "fastapi", "starlette", "uvicorn"]

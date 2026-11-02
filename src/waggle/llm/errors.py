@@ -36,3 +36,7 @@ class ConfigError(LlmError):
 
 class ProviderError(LlmError):
     """The provider call failed (outage, timeout, rejected request)."""
+
+
+class ProviderTimeoutError(ProviderError):
+    """The provider call did not finish inside the per-call timeout."""
