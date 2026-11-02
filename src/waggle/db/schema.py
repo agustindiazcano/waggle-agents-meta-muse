@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 12
+LATEST_REVISION = 13
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -277,6 +277,27 @@ _PACKAGE_DDL: tuple[LiteralString, ...] = (
     )""",
 )
 
+_LLM_CALLS_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE llm_calls (
+        call_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        request_id text NOT NULL CHECK (length(request_id) BETWEEN 1 AND 128),
+        task_id text CHECK (task_id IS NULL OR length(task_id) BETWEEN 1 AND 128),
+        role text NOT NULL CHECK (length(role) BETWEEN 1 AND 64),
+        provider text NOT NULL CHECK (provider IN ('meta', 'baseten', 'modal', 'vertex')),
+        model_id text NOT NULL CHECK (length(model_id) <= 200),
+        status text NOT NULL CHECK (status IN ('ok', 'denied', 'error', 'cached')),
+        tokens_in integer NOT NULL CHECK (tokens_in >= 0),
+        tokens_out integer NOT NULL CHECK (tokens_out >= 0),
+        latency_s double precision NOT NULL CHECK (latency_s >= 0 AND latency_s < 'Infinity'),
+        cost_usd double precision NOT NULL CHECK (cost_usd >= 0 AND cost_usd < 'Infinity'),
+        fallback_label text CHECK (fallback_label IS NULL OR length(fallback_label) <= 200),
+        mode text NOT NULL CHECK (mode IN ('mock', 'http')),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+    """CREATE INDEX llm_calls_task ON llm_calls (task_id) WHERE task_id IS NOT NULL""",
+    """CREATE INDEX llm_calls_spend ON llm_calls (provider) WHERE status = 'ok'""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -290,6 +311,7 @@ _MIGRATIONS = {
     10: _COMPATIBILITY_DDL,
     11: _TECHNICIAN_DDL,
     12: _PACKAGE_DDL,
+    13: _LLM_CALLS_DDL,
 }
 
 

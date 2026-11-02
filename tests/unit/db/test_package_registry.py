@@ -14,9 +14,9 @@ def _statements() -> tuple[str, ...]:
     return tuple(" ".join(s.split()) for s in schema._MIGRATIONS[12])
 
 
-def test_latest_revision_is_twelve() -> None:
-    assert schema.LATEST_REVISION == 12
-    assert sorted(schema._MIGRATIONS) == list(range(1, 13))
+def test_revision_twelve_is_in_the_chain() -> None:
+    assert schema.LATEST_REVISION >= 12
+    assert sorted(schema._MIGRATIONS) == list(range(1, schema.LATEST_REVISION + 1))
 
 
 def test_the_registry_table_has_an_id_key_a_source_and_no_location() -> None:
