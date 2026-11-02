@@ -110,6 +110,20 @@ def _event_name(value: str) -> None:
         raise ValueError("invalid event identifier")
 
 
+def lock_zones(connection: psycopg.Connection[Row], holder: str) -> CorridorState:
+    """Lock every zone row, and the holder, inside the caller's transaction.
+
+    For a caller that must change another row in the same transaction. The caller locks its own
+    row first and the zone rows second, in every tool that touches both.
+    """
+    return _lock(connection, holder)
+
+
+def write_zones(connection: psycopg.Connection[Row], state: CorridorState) -> None:
+    """Persist a state produced by the pure model, inside the caller's transaction."""
+    _write(connection, state)
+
+
 class CorridorRepository:
     """Apply the pure corridor model under PostgreSQL locks and durable counters."""
 
