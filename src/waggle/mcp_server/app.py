@@ -19,6 +19,7 @@ from waggle.db.inventory import InventoryRepository
 from waggle.db.mcp_audit import McpAuditRepository, RateLimit
 from waggle.db.motion import MotionOrderRepository
 from waggle.db.occupancy import TrustedStateRepository
+from waggle.db.packages import PackageRegistry
 from waggle.db.procurement import ProcurementRepository
 from waggle.db.schema import LATEST_REVISION, current_revision
 from waggle.db.tasks import TaskRepository
@@ -111,6 +112,7 @@ def build_forwarder(database: Database) -> FencedForwarder:
         tickets=TicketRepository(database),
         procurement=ProcurementRepository(database),
         motion=MotionOrderRepository(database),
+        packages=PackageRegistry(database),
     )
 
 

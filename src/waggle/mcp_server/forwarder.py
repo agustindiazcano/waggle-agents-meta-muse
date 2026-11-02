@@ -96,6 +96,14 @@ class MotionPort(Protocol):
         ...
 
 
+class PackagePort(Protocol):
+    """The id check of ``PackageRegistry``."""
+
+    def has(self, package_id: str) -> bool:
+        """Whether the package id is registered."""
+        ...
+
+
 class TickSource(Protocol):
     """A trusted shared tick. It must not be derived from a request."""
 
@@ -125,6 +133,7 @@ class FencedForwarder:
         tickets: TicketPort | None = None,
         procurement: ProcurementPort | None = None,
         motion: MotionPort | None = None,
+        packages: PackagePort | None = None,
     ) -> None:
         self._corridors = corridors
         self._tasks = tasks
@@ -134,6 +143,7 @@ class FencedForwarder:
         self._tickets = tickets
         self._procurement = procurement
         self._motion = motion
+        self._packages = packages
 
     def forward(
         self, identity: Identity, tool: str, args: Mapping[str, object], timeout_s: float
@@ -162,6 +172,13 @@ class FencedForwarder:
     ) -> Mapping[str, object]:
         """Queue an order. The server moves nothing: the simulator bridge executes it."""
         task_id = str(args["task_id"])
+        if (
+            tool != "move_waypoint"
+            and self._packages is not None
+            and not self._packages.has(str(args["package_id"]))
+        ):
+            # An id outside the registry never reaches the queue. One text, no cause (ADR-050).
+            raise ToolDenied("order not available")
         if tool == "move_waypoint":
             order = NewOrder(
                 tool,

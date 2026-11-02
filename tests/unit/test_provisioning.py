@@ -304,3 +304,35 @@ def test_main_rejects_an_invalid_spec(tmp_path: Path) -> None:
     spec = _write(tmp_path / "spec.json", {"parts": []})
     code, message = _main(spec, tmp_path / "tokens.json", {"DATABASE_URL": "postgresql://x/y"})
     assert (code, message) == (2, "provision failed: SpecError\n")
+
+
+class _Packages:
+    def __init__(self) -> None:
+        self.ids: set[str] = set()
+
+    def has(self, package_id: str) -> bool:
+        return package_id in self.ids
+
+    def add(self, package_id: str, source: str = "scenario") -> None:
+        self.ids.add(package_id)
+
+
+def test_the_packages_key_is_optional_for_older_specs() -> None:
+    assert parse_spec(SPEC).packages == ()
+
+
+def test_package_ids_are_validated_and_must_be_unique() -> None:
+    assert parse_spec({**SPEC, "packages": ["pk-1", "pk-2"]}).packages == ("pk-1", "pk-2")
+    for bad in (["pk-1", "pk-1"], ["bad id"], [3], "pk-1"):
+        with pytest.raises(SpecError):
+            parse_spec({**SPEC, "packages": bad})
+
+
+def test_package_ids_are_registered_and_a_rerun_skips_them() -> None:
+    packages = _Packages()
+    spec = parse_spec({**SPEC, "packages": ["pk-1", "pk-2"]})
+    args = (spec, _Inventory(), _Machines(), _Zones(), _Identities(), _Compatibility())
+    first = provision(*args, packages=packages)
+    assert packages.ids == {"pk-1", "pk-2"} and first.packages == ("pk-1", "pk-2")
+    again = provision(*args, packages=packages)
+    assert again.packages == () and "package:pk-1" in again.skipped
