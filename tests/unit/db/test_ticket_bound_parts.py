@@ -1,4 +1,4 @@
-"""reserve and order check the ticket machine against the compatibility table (ADR-063).
+"""reserve and order check the ticket machine against the compatibility table (ADR-065).
 
 The order of statements matters: the part row is locked first, then the ticket and the pair are
 read, then the idempotency row, then stock. A refused call changes nothing.

@@ -3,7 +3,7 @@
 The catalog is the table: a part number that is not in ``spare_parts`` does not exist, so no
 text from a manual or a model can create one. Reservations lock the part row first, then look
 read the ticket machine and its compatibility row, then look up the idempotency key, so
-concurrent calls with one key reserve once and stock never goes below zero (ADR-063).
+concurrent calls with one key reserve once and stock never goes below zero (ADR-065).
 """
 
 import re

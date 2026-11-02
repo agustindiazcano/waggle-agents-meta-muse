@@ -750,7 +750,7 @@ Provenance: `HAZARD_READING`, `ODOMETRY` and `REQUEST` are a fixture I wrote fro
 
 Gaps, stated plainly: the result shows that no text path reaches this check and that the geofence limit works for one geometry. It says nothing about whether a model resists the text, and it does not exercise the separation margin or the occlusion cap. One case, no benign case.
 
-## ADR-063: Part compatibility, schema revision 10 and ticket-bound part tools
+## ADR-065: Part compatibility, schema revision 10 and ticket-bound part tools
 
 Status: implemented with unit tests; the PostgreSQL tests (migration, repositories, provisioning, E3 catalog run) were written but run only in the cloud workflow. ADR-062 (the maintainer's adoption of the recommended options) is on `docs/session-handoff-design-batch`; the number follows it. Implements Part A of `docs/CATALOG_COMPATIBILITY_DESIGN.md`. Part B (revision 11) is not touched.
 

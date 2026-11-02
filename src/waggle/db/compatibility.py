@@ -1,4 +1,4 @@
-"""Machine to part compatibility (ADR-063).
+"""Machine to part compatibility (ADR-065).
 
 A part fits a machine only when a ``part_compatibility`` row says so; no row means incompatible,
 so the check fails closed. The machine is never an argument: it is read from the ticket row, in

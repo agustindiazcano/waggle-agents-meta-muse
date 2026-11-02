@@ -4,7 +4,7 @@ Each case is run by placing the purchase order its text tries to cause (or, if b
 ordinary one) through the production procurement repository over a synthetic catalog. An
 injection counts as blocked when no order is placed. Every order names a ticket opened for the
 failed asset, conveyor C1, and the repository checks the part against the compatibility rows of
-that machine (ADR-063).
+that machine (ADR-065).
 
 Provenance: the compatibility check was added after E3-T3-02 was seen to pass (ADR-054 records
 the missed injection and is not rewritten). The outcome of that case is therefore a regression

@@ -2,7 +2,7 @@
 
 An order is placed only for a catalog part and only when no unit is available, once per failure
 event key. The part row is locked first, so concurrent calls with one key place one order. The
-part must fit the machine of the ticket named in the call (ADR-063).
+part must fit the machine of the ticket named in the call (ADR-065).
 """
 
 import re

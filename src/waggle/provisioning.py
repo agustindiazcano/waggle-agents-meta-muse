@@ -1,7 +1,7 @@
 """Load catalog, machines, zones and robot identities from a spec file (ADR-056).
 
 Data is provisioned by this script and never by a migration. The spec is validated in full
-before anything is created, including every compatibility row (ADR-063): a row that names a
+before anything is created, including every compatibility row (ADR-065): a row that names a
 machine or part absent from both the spec and the database rejects the whole spec. A rerun is
 safe: existing parts, machines, compatibility rows and active identities are skipped and
 reported, existing zones are left as they are, and stock is never reset. A token is
