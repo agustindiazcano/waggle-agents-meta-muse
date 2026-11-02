@@ -27,6 +27,9 @@ class FakeBoundary:
         self.calls.append((token, request_id, tool, args))
         return self.result
 
+    def allowed_tools(self, token: str) -> frozenset[str]:
+        return frozenset(SCHEMAS)
+
 
 _INIT_LINE = json.dumps(
     {
@@ -60,7 +63,7 @@ def _tools_call(msg_id: object, name: object, arguments: object) -> dict[str, ob
     }
 
 
-def test_tools_list_names_every_tool_in_a_stable_order_with_strict_schemas() -> None:
+def test_tools_list_names_every_allowed_tool_in_a_stable_order_with_strict_schemas() -> None:
     server, _ = _server()
     reply = _call(server, {"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     assert reply is not None

@@ -20,6 +20,12 @@ ALLOWLIST: Mapping[str, frozenset[str]] = {
 TOOLS: frozenset[str] = frozenset().union(*ALLOWLIST.values())
 
 
+def allowed_tools(chassis: str) -> frozenset[str]:
+    """The tools a chassis may call. Unknown means empty. The only reader of ``ALLOWLIST``
+    for both the call path and the tool listing, so the two cannot drift."""
+    return ALLOWLIST.get(chassis, frozenset())
+
+
 def is_allowed(chassis: str, tool: str) -> bool:
     """True only when the chassis is known and lists the tool. Unknown means denied."""
-    return tool in ALLOWLIST.get(chassis, frozenset())
+    return tool in allowed_tools(chassis)
