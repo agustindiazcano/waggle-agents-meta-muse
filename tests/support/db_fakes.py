@@ -15,6 +15,10 @@ class FakeCursor:
     def fetchone(self) -> tuple[object, ...] | None:
         return self._row
 
+    def fetchall(self) -> list[tuple[object, ...]]:
+        """No rows for a statement the handler did not answer, else the one canned row."""
+        return [] if self._row is None else [self._row]
+
 
 class FakeConnection:
     """Records every statement and answers it through ``handler`` (a SELECT) or None."""

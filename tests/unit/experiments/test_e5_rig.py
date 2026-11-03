@@ -31,6 +31,7 @@ def test_c0_without_advisor_equals_the_e1_run_of_the_same_configuration() -> Non
         timeout_s=2.0,
         rate_limit_ticks=5,
         max_response_chars=1024,
+        near_threshold_m=3.0,
         classifier=CLASSIFIER,
         base_config=BY_NAME[name],
     )
@@ -60,6 +61,7 @@ def test_the_widening_counter_counts_a_planted_widening(monkeypatch: pytest.Monk
         timeout_s=2.0,
         rate_limit_ticks=5,
         max_response_chars=1024,
+        near_threshold_m=3.0,
         classifier=CLASSIFIER,
         base_config=BY_NAME["envelope_occlusion_cpa_lidar_beacons"],
     )

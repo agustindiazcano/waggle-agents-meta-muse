@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 
 from waggle.control.step import ControlInputs, control_step
-from waggle.control.types import ControlRequest
+from waggle.control.types import ControlRequest, Reason
 from waggle.experiments.advisor_bridge import AdvisorBridge
 from waggle.experiments.e1_config import E1Config
 from waggle.experiments.e1_rig import ControlRig
@@ -36,6 +36,18 @@ class E5Rig(ControlRig):
         self.widening_ticks = 0
         self.min_separation_m = math.inf
         self.last_reasons: list[str | None] = [None] * fleet.count
+        self.last_limits_hit: list[tuple[str, ...] | None] = [None] * fleet.count
+
+    def occluded(self, robot_index: int) -> bool | None:
+        """Whether the occlusion limit was hit at the robot's last step, from the fast layer.
+
+        None (unknown) before the first step, and when the run has no occlusion layer: the
+        absence of a limit then says nothing about occlusion.
+        """
+        hit = self.last_limits_hit[robot_index]
+        if hit is None or not self.config.occlusion:
+            return None
+        return Reason.OCCLUSION.value in hit
 
     def _step(self, sim: Any, rngs: dict[str, np.random.Generator]) -> None:
         tick = sim.tick
@@ -118,6 +130,7 @@ class E5Rig(ControlRig):
             self.tally.control_calls += 1
             commands[i] = (out.speed, out.turn)
             self.last_reasons[i] = out.reason.value
+            self.last_limits_hit[i] = tuple(r.value for r in out.limits_hit)
             self.tally.requested_speed += abs(float(requested[0]))
             self.tally.limited_speed += abs(out.speed)
             self._count_stop(
