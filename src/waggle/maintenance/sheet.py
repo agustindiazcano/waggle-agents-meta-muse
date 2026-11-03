@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
-from waggle.experiments.failure_log import FailureMode
+from waggle.maintenance.failure_cases import FailureMode
 from waggle.maintenance.loop import PartPlan
 
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,64}")

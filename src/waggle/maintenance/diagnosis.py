@@ -12,7 +12,7 @@ from collections.abc import Collection, Sequence, Set
 from dataclasses import dataclass
 from typing import Literal
 
-from waggle.experiments.failure_log import FailureCase, FailureMode, similar_cases
+from waggle.maintenance.failure_cases import FailureCase, FailureMode, similar_cases
 
 EscalationReason = Literal["no_similar_case", "mixed_parts", "part_not_in_catalog"]
 _FLOOR = 1e-9
