@@ -12,21 +12,33 @@ Tests verify that:
 """
 
 import ast
-import json
+import logging
+import threading
+import time
 from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
+from validation_rig import (
+    SAFE,
+    SAFE_START,
+    _config,
+    _node,
+    _plan,
+    _static,
+)
 
-from waggle.coordination.corridors import Direction
-from waggle.coordination.routing import AisleEdge, AisleGraph, AisleNode
 from waggle.sim.params import RobotKind
-from waggle.sim.scenarios import load_map
-from waggle.validation.belief import HumanPrior
+from waggle.validation.belief import HumanPrior, HumanState
+from waggle.validation.belief_builder import (
+    Belief,
+    TrackedEntity,
+    TrackSnapshot,
+    build_belief,
+)
 from waggle.validation.counterexample import Counterexample, CounterexampleCode, Rule
-from waggle.validation.path_compiler import StaticMap, compile_plan
-from waggle.validation.plan import Plan, PlanContext, parse_plan
-from waggle.validation.plan_rollout import RolloutConfig, RolloutOutcome, run_plan_rollout
+from waggle.validation.path_compiler import compile_plan
+from waggle.validation.plan_rollout import RolloutOutcome, run_plan_rollout
 from waggle.validation.variants import (
     AggregatedResult,
     aggregate,
@@ -34,93 +46,13 @@ from waggle.validation.variants import (
     validate_with_variants,
 )
 
-ZONES = frozenset(
-    {"lane_1", "station_1", "depot_n", "corridor_s", "aisle_1", "connector_e", "corridor_n"}
-)
-CONTEXT = PlanContext({"R1": 1.5, "R2": 1.5}, frozenset({"ITEM-1"}), ZONES)
+
+def _entity(eid: int, x: float, y: float) -> TrackedEntity:
+    return TrackedEntity(eid, x, y, 0.0, 0.0, 0.1, 5)
 
 
-def _both(a: str, b: str, cost: float, corridor: str | None = None) -> tuple[AisleEdge, ...]:
-    back = Direction.REVERSE if corridor else Direction.FORWARD
-    return (AisleEdge(a, b, cost, corridor), AisleEdge(b, a, cost, corridor, back))
-
-
-def _graph() -> AisleGraph:
-    points = {
-        "sw": (3.0, 2.0),
-        "sm": (20.0, 2.0),
-        "se": (37.0, 2.0),
-        "nw": (3.0, 22.0),
-        "nm": (20.0, 22.0),
-        "ne": (37.0, 22.0),
-        "isle": (20.0, 9.0),
-    }
-    edges = (
-        *_both("sw", "sm", 17.0),
-        *_both("sm", "se", 17.0),
-        *_both("nw", "nm", 18.0),
-        *_both("nm", "ne", 17.0),
-        *_both("se", "ne", 20.0),
-        *_both("sw", "nw", 20.0, "lane_1"),
-    )
-    return AisleGraph(tuple(AisleNode(k, *v) for k, v in points.items()), edges)
-
-
-def _static(robot_start: dict[str, str]) -> StaticMap:
-    return StaticMap(
-        world=load_map("A"),
-        graph=_graph(),
-        zone_anchor={
-            "station_1": "nw",
-            "depot_n": "ne",
-            "corridor_s": "sm",
-            "aisle_1": "isle",
-            "connector_e": "se",
-            "lane_1": "sw",
-        },
-        robot_start=robot_start,
-        clearance_m=0.9,
-    )
-
-
-def _config(**over: object) -> RolloutConfig:
-    base: dict[str, object] = {
-        "robot_kinds": {"R1": RobotKind.CARRIER, "R2": RobotKind.CARRIER},
-        "hazard_zone_ids": frozenset(),
-        "separation_margin_m": 0.5,
-    }
-    base.update(over)
-    return RolloutConfig(**base)  # type: ignore[arg-type]
-
-
-def _node(label: str, robot: str, target: str, **over: object) -> dict[str, object]:
-    base: dict[str, object] = {
-        "label": label,
-        "robot_id": robot,
-        "item_id": None,
-        "target_zone_id": target,
-        "action": "MOVE",
-        "corridor_zone_ids": [],
-        "avoid_zone_ids": [],
-        "wait_for": [],
-        "speed_cap_mps": None,
-    }
-    base.update(over)
-    return base
-
-
-def _plan(*nodes: dict[str, object], escalate: bool = False) -> Plan:
-    body = {
-        "nodes": list(nodes),
-        "rationale": "r",
-        "escalate": escalate,
-        "escalation_reason": "needs_operator" if escalate else None,
-    }
-    return parse_plan(json.dumps(body), "m-1", CONTEXT)
-
-
-SAFE_START = {"R1": "sw", "R2": "ne"}
-SAFE = (_node("a", "R1", "connector_e"), _node("b", "R2", "station_1"))
+def _b(prior: HumanPrior) -> Belief:
+    return build_belief(TrackSnapshot(tick=0, entities=()), prior)
 
 
 def test_aggregate_all_pass_accepts() -> None:
@@ -220,8 +152,12 @@ def test_determinism_workers_1_equals_workers_2() -> None:
     config = _config()
     prior = HumanPrior("p1", "v1", {"station_1": 0.01})
 
-    res1 = validate_with_variants(plan, static, config, prior, k=3, max_attempts=1000, workers=1)
-    res2 = validate_with_variants(plan, static, config, prior, k=3, max_attempts=1000, workers=2)
+    res1 = validate_with_variants(
+        plan, static, config, _b(prior), k=3, max_attempts=1000, workers=1, variant_timeout_s=60.0
+    )
+    res2 = validate_with_variants(
+        plan, static, config, _b(prior), k=3, max_attempts=1000, workers=2, variant_timeout_s=60.0
+    )
 
     assert res1.accepted == res2.accepted
     assert res1.counterexamples == res2.counterexamples
@@ -238,7 +174,14 @@ def test_planted_human_fails_in_one_variant_and_aggregate_rejects() -> None:
     # Area of corridor_s is [0, 0, 40, 5] = 200 m^2. Density 0.02 -> 4 humans.
     prior_with_human = HumanPrior("p_plant", "v1", {"corridor_s": 0.05})
     res_plant = validate_with_variants(
-        plan, static, config, prior_with_human, k=3, max_attempts=1000, workers=1
+        plan,
+        static,
+        config,
+        _b(prior_with_human),
+        k=3,
+        max_attempts=1000,
+        workers=1,
+        variant_timeout_s=60.0,
     )
 
     assert not res_plant.accepted
@@ -253,10 +196,18 @@ def test_plan_without_planted_fault_is_accepted() -> None:
     plan = _plan(*SAFE)
     static = _static(SAFE_START)
     config = _config()
-    # A clean prior where humans are placed in unused aisle_2 (y in [13, 17])
-    prior_clean = HumanPrior("p_clean", "v1", {"aisle_2": 0.01})
+    # Density 0 places no human. With density above 0 a sampled human walks straight for 45 s
+    # and may cross the robots, so acceptance would depend on the digest seeds, not on the plan.
+    prior_clean = HumanPrior("p_clean", "v1", {"aisle_2": 0.0})
     res = validate_with_variants(
-        plan, static, config, prior_clean, k=3, max_attempts=1000, workers=1
+        plan,
+        static,
+        config,
+        _b(prior_clean),
+        k=3,
+        max_attempts=1000,
+        workers=1,
+        variant_timeout_s=60.0,
     )
     assert res.accepted
     assert res.counterexamples == ()
@@ -315,6 +266,115 @@ def test_validate_requires_k_and_the_attempt_cap() -> None:
     plan = _plan(*SAFE)
     prior = HumanPrior("p", "v1", {"aisle_2": 0.01})
     with pytest.raises(TypeError):
-        validate_with_variants(plan, _static(SAFE_START), _config(), prior, max_attempts=10)  # type: ignore[call-arg]
+        validate_with_variants(
+            plan, _static(SAFE_START), _config(), _b(prior), max_attempts=10, variant_timeout_s=60.0
+        )  # type: ignore[call-arg]
     with pytest.raises(TypeError):
-        validate_with_variants(plan, _static(SAFE_START), _config(), prior, k=2)  # type: ignore[call-arg]
+        validate_with_variants(
+            plan, _static(SAFE_START), _config(), _b(prior), k=2, variant_timeout_s=60.0
+        )  # type: ignore[call-arg]
+
+
+def test_the_plan_rollout_takes_walkers_and_the_variant_rollout_is_the_same_function() -> None:
+    plan = _plan(_node("a", "R1", "connector_e"))
+    static = _static({"R1": "sw"})
+    config = _config(robot_kinds={"R1": RobotKind.CARRIER})
+    paths = compile_plan(plan, static).paths
+    blocker = [HumanState((20.0, 2.0), (0.0, 0.0))]
+    clear = run_plan_rollout(paths, static, config)
+    assert run_plan_rollout(paths, static, config, walkers=()) == clear
+    hit = run_plan_rollout(paths, static, config, walkers=blocker)
+    codes = {c.code for c in hit.counterexamples}
+    assert codes & {CounterexampleCode.COLLISION, CounterexampleCode.SEPARATION_VIOLATION}
+    assert hit.final_hash != clear.final_hash
+    assert run_variant_rollout(paths, static, config, blocker, config.seed) == hit
+
+
+def test_the_variant_seed_reaches_the_engine_through_the_one_rollout() -> None:
+    plan = _plan(_node("a", "R1", "connector_e"))
+    static = _static({"R1": "sw"})
+    config = _config(robot_kinds={"R1": RobotKind.CARRIER})
+    paths = compile_plan(plan, static).paths
+    walker = [HumanState((20.0, 8.0), (0.0, 1.4))]
+    seeded = run_variant_rollout(paths, static, config, walker, 7)
+    assert seeded == run_plan_rollout(
+        paths, static, _config(robot_kinds=config.robot_kinds, seed=7), walkers=walker
+    )
+
+
+def test_variants_module_has_no_second_rollout_loop() -> None:
+    source = Path(__file__).parents[3] / "src" / "waggle" / "validation" / "variants.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+    names = {a.name for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) for a in n.names}
+    assert not names & {"engine", "detector", "scripted", "robots", "humans"}
+
+
+def _blocked_rollout(release: threading.Event) -> object:
+    def blocked(*_args: object, **_kwargs: object) -> RolloutOutcome:
+        release.wait(timeout=8.0)
+        return RolloutOutcome((), "late", 1)
+
+    return blocked
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+def test_a_variant_that_never_returns_is_a_rejection_and_does_not_block(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, workers: int
+) -> None:
+    release = threading.Event()
+    monkeypatch.setattr("waggle.validation.variants.run_variant_rollout", _blocked_rollout(release))
+    prior = HumanPrior("p", "v1", {"aisle_2": 0.01})
+    caplog.set_level(logging.WARNING, logger="waggle.validation.variants")
+    started = time.monotonic()
+    try:
+        res = validate_with_variants(
+            _plan(*SAFE),
+            _static(SAFE_START),
+            _config(),
+            _b(prior),
+            k=2,
+            max_attempts=1000,
+            workers=workers,
+            variant_timeout_s=0.3,
+        )
+        elapsed = time.monotonic() - started
+    finally:
+        release.set()
+    assert elapsed < 3.0
+    assert not res.accepted
+    assert any("timed out" in r.getMessage() for r in caplog.records)
+    assert any("timeout" in n for n in res.notes)
+
+
+def test_the_variant_timeout_is_required_and_must_be_positive() -> None:
+    prior = HumanPrior("p", "v1", {"aisle_2": 0.01})
+    with pytest.raises(TypeError):
+        validate_with_variants(
+            _plan(*SAFE), _static(SAFE_START), _config(), _b(prior), k=1, max_attempts=10
+        )  # type: ignore[call-arg]
+    for bad in (0.0, -1.0, float("nan"), float("inf")):
+        with pytest.raises(ValueError):
+            validate_with_variants(
+                _plan(*SAFE),
+                _static(SAFE_START),
+                _config(),
+                _b(prior),
+                k=1,
+                max_attempts=10,
+                variant_timeout_s=bad,
+            )
+
+
+def test_known_tracked_humans_are_part_of_every_variant() -> None:
+    snapshot = TrackSnapshot(tick=5, entities=(_entity(1, 20.0, 2.0),))
+    belief = build_belief(snapshot, HumanPrior("p", "v1", {"aisle_2": 0.01}))
+    res = validate_with_variants(
+        _plan(_node("a", "R1", "connector_e")),
+        _static({"R1": "sw"}),
+        _config(robot_kinds={"R1": RobotKind.CARRIER}),
+        belief,
+        k=2,
+        max_attempts=1000,
+        variant_timeout_s=60.0,
+    )
+    assert not res.accepted
