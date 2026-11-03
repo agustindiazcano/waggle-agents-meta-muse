@@ -155,3 +155,33 @@ def test_limits_must_be_positive() -> None:
         AdvisorInputLimits(
             max_prompt_chars=0, min_interval_ticks=1, max_calls_per_task=1, max_messages=1
         )
+
+
+def test_unknown_facts_are_rendered_as_unknown_and_never_as_a_default() -> None:
+    facts = TrustedFacts(
+        **{
+            **FACTS.__dict__,
+            "task_step": None,
+            "occluded": None,
+            "geofences": None,
+            "lease_holders": None,
+        }
+    )
+    out, _ = _build([], facts=facts)
+    prompt = out.prompt  # type: ignore[attr-defined]
+    assert "step=unknown" in prompt
+    assert "occluded=unknown" in prompt
+    assert "geofences=unknown" in prompt
+    assert "lease_holders=unknown" in prompt
+    assert "occluded=False" not in prompt
+
+
+def test_known_empty_facts_are_not_rendered_as_unknown() -> None:
+    facts = TrustedFacts(
+        **{**FACTS.__dict__, "occluded": False, "geofences": (), "lease_holders": ()}
+    )
+    out, _ = _build([], facts=facts)
+    prompt = out.prompt  # type: ignore[attr-defined]
+    assert "occluded=False" in prompt
+    assert "geofences=\n" in prompt and "geofences=unknown" not in prompt
+    assert "lease_holders=unknown" not in prompt

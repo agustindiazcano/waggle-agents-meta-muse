@@ -21,6 +21,7 @@ from waggle.governance.sanitizers import SanitizeError, UntrustedSource, fence, 
 
 InputCode = Literal["bad_facts", "prompt_too_large", "bad_input"]
 UNSCORED: Final = "unscored_input"
+UNKNOWN: Final = "unknown"
 _TOKEN = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _INSTRUCTIONS: Final = (
     "Reply with one JSON object with exactly the fields action, speed_cap, duration_ticks and "
@@ -69,18 +70,22 @@ class AdvisorInputLimits:
 
 @dataclass(frozen=True)
 class TrustedFacts:
-    """Structured facts derived by code from simulator, control and database state."""
+    """Structured facts derived by code from simulator, control and database state.
+
+    ``None`` means the state does not expose the value. It is rendered as ``unknown``: a missing
+    fact is never replaced by a default, because "no geofence" and "geofences not known" differ.
+    """
 
     robot_id: str
     chassis: str
     speed: float
     active_reasons: tuple[str, ...]
     zone: str
-    task_step: str
+    task_step: str | None
     nearest_distance: float
-    occluded: bool
-    geofences: tuple[str, ...]
-    lease_holders: tuple[tuple[str, str], ...]
+    occluded: bool | None
+    geofences: tuple[str, ...] | None
+    lease_holders: tuple[tuple[str, str], ...] | None
 
 
 @dataclass(frozen=True)
@@ -129,13 +134,20 @@ def _number(value: float) -> str:
 
 
 def _facts_block(facts: TrustedFacts) -> str:
-    leases = ",".join(f"{_token(c)}:{_token(h)}" for c, h in facts.lease_holders)
+    step = UNKNOWN if facts.task_step is None else _token(facts.task_step)
+    occluded = UNKNOWN if facts.occluded is None else str(bool(facts.occluded))
+    geofences = UNKNOWN if facts.geofences is None else ",".join(_token(g) for g in facts.geofences)
+    leases = (
+        UNKNOWN
+        if facts.lease_holders is None
+        else ",".join(f"{_token(c)}:{_token(h)}" for c, h in facts.lease_holders)
+    )
     lines = [
         f"robot={_token(facts.robot_id)} chassis={_token(facts.chassis)}",
-        f"speed={_number(facts.speed)} zone={_token(facts.zone)} step={_token(facts.task_step)}",
-        f"nearest_distance={_number(facts.nearest_distance)} occluded={bool(facts.occluded)}",
+        f"speed={_number(facts.speed)} zone={_token(facts.zone)} step={step}",
+        f"nearest_distance={_number(facts.nearest_distance)} occluded={occluded}",
         "active_reasons=" + ",".join(_token(r) for r in facts.active_reasons),
-        "geofences=" + ",".join(_token(g) for g in facts.geofences),
+        "geofences=" + geofences,
         f"lease_holders={leases}",
     ]
     return "\n".join(lines)

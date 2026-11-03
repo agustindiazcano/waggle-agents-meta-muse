@@ -13,7 +13,10 @@ from pathlib import Path
 from waggle.llm.budget import BudgetGuard
 from waggle.llm.call_log import CallLog
 from waggle.llm.client import LlmClient
+from waggle.llm.errors import ConfigError
+from waggle.llm.provider_config import select_mode
 from waggle.llm.provider_factory import build_providers
+from waggle.llm.providers import Provider
 from waggle.llm.routing import load_routes
 from waggle.llm.task_caps import TaskCaps
 
@@ -27,13 +30,19 @@ def build_client(
     routes_path: Path | None = None,
     task_caps: TaskCaps | None = None,
     timeout_s: float | None = None,
+    providers: Mapping[str, Provider] | None = None,
 ) -> LlmClient:
     """Return a client over the providers of the selected mode and the given call log.
 
-    ``fallbacks_enabled`` has no default: held-out runs pass False (AGENTS.md 6.9).
+    ``fallbacks_enabled`` has no default: held-out runs pass False (AGENTS.md 6.9). ``providers``
+    replaces the built map for tests and scripted runs, and only in mock mode: an override with
+    real routes selected raises ConfigError.
     """
+    if providers is not None and select_mode(environ) != "mock":
+        raise ConfigError("a provider override is allowed only in mock mode")
+    built = build_providers(environ, prices_path) if providers is None else dict(providers)
     return LlmClient(
-        providers=build_providers(environ, prices_path),
+        providers=built,
         table=load_routes(routes_path),
         guard=BudgetGuard(environ, log),
         log=log,

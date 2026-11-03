@@ -53,6 +53,7 @@ def _make_runner(
         timeout_s=timeout_s,
         rate_limit_ticks=rate_limit_ticks,
         max_response_chars=max_response_chars,
+        near_threshold_m=3.0,
         classifier=CLASSIFIER,
         base_config=BY_NAME["envelope_oracle"],
     )
@@ -257,6 +258,7 @@ def test_module_level_run_one_executes() -> None:
         timeout_s=2.0,
         rate_limit_ticks=5,
         max_response_chars=1024,
+        near_threshold_m=3.0,
         classifier=CLASSIFIER,
         base_config=BY_NAME["envelope_oracle"],
     )
