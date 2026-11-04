@@ -1,10 +1,14 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
-margin about 4 points, retained from the main implementation audit at 7b99bbf.
-The rollout robot-pair separation fix (ADR-095) is merged in PR 176, task
-code 100%. The README task and PR 178 conflict resolution add no
-product code and do not change the main audit estimate.
+Code progress of the project (estimate by eye, code only): 95% on 2026-11-04,
+margin about 2 points, recomputed bottom-up after PRs 180 to 185 merged
+(30,664 source lines, 35,595 test lines measured on main). Scope decisions
+of 2026-11-04 (maintainer, ADR-097): the Muse family is sufficient for the
+court, Vertex is discarded and configuration D cross-family is out of
+scope; voice and vision are deferred; the E9 mutation arm is a nice-to-have
+whose code is already merged. On the delivery scope without those items
+the estimate is 98%, margin about 1 point. The MCP official SDK client
+check passed on main (2 tests, production LineServer, fake dispatcher).
 Code percentages are judgments, not coverage or experimental results.
 Experiments, calibration, documents, delivery and G-GLOBAL are excluded.
 
@@ -25,17 +29,17 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Review the E8 reporting PR and cloud benchmark artifacts | A, M | - | Main includes PR 163; maintainer merges E8 after green checks |
 | P1 | Verify balances, expiry, rate limits, model ids, console caps and cloud secrets; verify Baseten/Modal prices | M | - | Rows 4, 5, 7, 10, 11, 12, 32; no secret inspection in this audit |
 | P1 | Review E3/E4/E5 labels, attack fixtures, real catalog, zones, machine data and recordings | M | - | Rows 54, 87, 94, 98; a pending label is not a result |
-| P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 95% | Live E4 runner implemented with unit tests in ADR-094; configuration D and real cloud runs pending |
-| P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (PR 165 merged in main); E10 harness and production crisis caller remain |
-| P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 95% | C0/C1/C1_REPLAY/C2/C3/C3_REPLAY exist (ADR-091); C4 and production DB call-log wiring remain |
-| P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
-| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 95% | Implemented on feat/viewer-overlays (ADR-093); maintainer visual review remains |
-| P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 80% | Revision 14, loader, diagnosis/sheet/tool port and mock runner exist |
-| P2 | Add Vertex and real transcription/vision integration and UI | A, M | 75% | Voice-intent and mock E7 exist; provider/logging block separately about 93% |
-| P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 75% | Package registry and forwarder check already exist; future migration needs review |
-| P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 30% | Rows 37 and 39; no new experiment evidence in this audit |
+| P1 | Add production E4/court route; preserve false-approval reporting | A | 95% | Live E4 runner merged in PR 180 (ADR-096); configuration D out of scope by ADR-097 (Muse family is sufficient, Vertex discarded); real cloud runs pending |
+| P1 | Complete E10 proposer adapter and production crisis integration | A | 100% | Adapter ADR-090, E10 harness and production caller merged in PR 182; real evaluation remains |
+| P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 100% | C0 to C4 exist (ADR-091, PR 184); production advisor assembly with Postgres call log merged in PR 187 |
+| P2 | Validate MCP with a real SDK client | A, M | 100% | Official SDK client passed on main 2026-11-04 (2 tests, production LineServer, fake dispatcher, no database); no broader conformity claim |
+| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 100% | Overlays now fed from simulator state in PR 189 (ADR-093 contract); maintainer visual review remains |
+| P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 100% | Production assembly merged in PR 181; real PostgreSQL run remains |
+| P3 | Add real transcription/vision integration and UI (Vertex discarded, ADR-097) | A, M | 75% | Deferred by maintainer decision 2026-11-04; voice-intent and mock E7 exist; vision is the first nice-to-have after the global demo |
+| P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 100% | Revision 15 FK and packages_match equality merged in PR 188; heavy PostgreSQL tests run in the cloud workflow |
+| P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 100% | Diagnosed 2026-11-04 with fresh per-tick traces: S03 is head-on deadlock (corridor locking), S06/S11 are a human stopped on the only route (safe stop, E10 recovery); one ghost estop episode remains and needs a maintainer ADR decision (static-structure filter outside occlusion, human-at-rack test first). No limit was changed |
 | P2 | Complete E8 production collection and calibration | A, M | 75% | Report runner, cloud control benchmark and extrapolation implemented; database export automation remains; measurements pending |
-| P2 | Implement E9 mutation/regression campaign | A | 40% | Planted-defect arm done in ADR-092 (branch exp/e9-planted-defects), 4 of 4 killed; cloud mutation-tool arm remains |
+| P3 | Implement E9 mutation/regression campaign | A | 100% | Planted arm ADR-092 (4 of 4 killed) and cloud mutation arm merged in PR 183; running the campaign is a nice-to-have (ADR-097) |
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |

@@ -1155,3 +1155,20 @@ recorded as a substantive failure rather than rerouted. Results are labeled with
 `provider_mode: "live"`, live warning text, realized model IDs, and any fallback
 labels. The CLI flag `--live` in `waggle.experiments.e4_run` enables this mode.
 No change to unanimity, the court prompt, or safety thresholds was made.
+
+## ADR-097: Muse family is sufficient for the court; Vertex discarded
+
+Status: maintainer decision, 2026-11-04.
+
+Decision: The court composition is final with the Muse family only:
+Muse Spark and Muse Wonder on the Meta Model API, Muse Spark Open on
+Baseten and Muse Glimmer on Modal. The Vertex AI (Gemini) route, planned
+as a secondary backup for the third court member, is discarded. No Vertex
+provider, URL or OAuth integration will be built. Configuration D
+(cross-family) of E4 is out of scope and stays refused with
+`LiveConfigurationError`; its refusal is final, not a pending gap.
+
+Consequences: No code is removed. Voice and vision integrations are
+deferred, with vision as the first nice-to-have after the global demo.
+Running the E9 mutation campaign is a nice-to-have; its code is merged.
+The production court needs no further provider work to be complete.
