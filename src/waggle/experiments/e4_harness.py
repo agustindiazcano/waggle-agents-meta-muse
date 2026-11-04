@@ -1,9 +1,17 @@
-"""E4 harness on the scripted provider (COURT_DESIGN sections 8 and 10, branch 7).
+"""E4 harness, scripted and live (COURT_DESIGN sections 8 and 10, branch 7).
 
-Every reviewer is a ``ScriptedProvider``: no network, no spend, no secrets, no live mode. A run
-checks the harness arithmetic and the court plumbing. It is never a model result, and the result
-file says so. Each configuration runs on identical cases. The baseline "no court" lets the code
-checks decide alone, so the court's contribution is an ablation.
+Scripted mode: every reviewer is a ``ScriptedProvider``: no network, no spend, no secrets. A
+run checks the harness arithmetic and the court plumbing. It is never a model result, and the
+result file says so.
+
+Live mode (``run_e4_live``): reviewers are real provider calls through the production client
+built from the environment, with fallbacks disabled. Only configurations A, B and C run live:
+the baseline makes no court calls and the cross-family configuration D needs a non-Muse
+``court_3`` route, which is a maintainer configuration change (Vertex is secondary). A missing
+cap or model id for a used route is a real error before any call, never an empty pass.
+
+Each configuration runs on identical cases. The baseline "no court" lets the code checks
+decide alone, so the court's contribution is an ablation.
 
 A held-out run needs the explicit ``held_out_authorized`` argument and never overwrites an
 existing result. Fallbacks are always off. Repeats of a case use ``-r<n>`` request ids so each is
@@ -18,6 +26,7 @@ from waggle.experiments.e4_cases import SEED_SETS, EvalCase
 from waggle.experiments.e4_configs import Configuration
 from waggle.experiments.e4_metrics import RunRecord, Summary, VoteRecord
 from waggle.experiments.e4_result import (
+    LIVE_PROVIDER_MODE,
     ResultExistsError,
     build_record,
     result_path,
@@ -30,11 +39,13 @@ from waggle.governance.court_round import (
     RoundResult,
     run_round,
 )
-from waggle.llm.budget import PROVIDERS, BudgetGuard
+from waggle.llm.budget import PROVIDERS, BudgetGuard, parse_cap
 from waggle.llm.call_log import InMemoryCallLog
 from waggle.llm.client import LlmClient
+from waggle.llm.client_factory import build_client
 from waggle.llm.court_adapter import COURT_PROMPT_HASH, COURT_PROMPT_VERSION, CourtReviewer
-from waggle.llm.providers import Entry, ScriptedProvider, ScriptMissingError
+from waggle.llm.errors import ConfigError
+from waggle.llm.providers import Entry, Provider, ScriptedProvider, ScriptMissingError
 from waggle.llm.routing import load_routes
 
 Scripts = Mapping[str, Mapping[str, Entry]]
@@ -52,6 +63,21 @@ _ENV: Final = {
 
 class HeldOutNotAuthorizedError(PermissionError):
     """A held-out run was requested without the explicit authorization argument."""
+
+
+class LiveConfigurationError(ValueError):
+    """A configuration that live mode refuses: baseline or cross-family D."""
+
+
+LIVE_CONFIGURATIONS: Final = frozenset({"A_single", "B_two", "C_three"})
+
+
+def _pre_checks(case: EvalCase) -> tuple[PreCheck, ...]:
+    if case.code_check == "deny":
+        return (lambda: PreCheckFailure("deny", "code_check"),)
+    if case.code_check == "escalate":
+        return (lambda: PreCheckFailure("escalate", "code_check"),)
+    return ()
 
 
 def _baseline_run(case: EvalCase, repeat: int) -> RunRecord:
@@ -107,11 +133,6 @@ def run_case(
         environ=_ENV,
         fallbacks_enabled=False,
     )
-    pre_checks: tuple[PreCheck, ...] = ()
-    if case.code_check == "deny":
-        pre_checks = (lambda: PreCheckFailure("deny", "code_check"),)
-    elif case.code_check == "escalate":
-        pre_checks = (lambda: PreCheckFailure("escalate", "code_check"),)
     result = run_round(
         case.review_request(),
         CourtReviewer(client),
@@ -121,7 +142,7 @@ def run_case(
         task_id=f"{case.id}-r{repeat}",
         held_out=held_out,
         deadline_s=deadline_s,
-        pre_checks=pre_checks,
+        pre_checks=_pre_checks(case),
         repeat=repeat,
     )
     return RunRecord(
@@ -133,6 +154,31 @@ def run_case(
         _votes(result),
         tuple(log.records()),
     )
+
+
+def _prepare(
+    config: Configuration,
+    cases: Sequence[EvalCase],
+    *,
+    repeats: int,
+    held_out: bool,
+    held_out_authorized: bool,
+    out_dir: Path,
+) -> tuple[str, Path]:
+    """Validate a run before any call and return its seed set and result path."""
+    seed_set = SEED_SETS[1] if held_out else SEED_SETS[0]
+    if held_out and not held_out_authorized:
+        raise HeldOutNotAuthorizedError("a held-out run needs the explicit authorization argument")
+    if repeats < 1:
+        raise ValueError("repeats must be >= 1")
+    if not cases:
+        raise ValueError("no cases to run")
+    if any(case.split != seed_set for case in cases):
+        raise ValueError(f"every case must be in the {seed_set} split")
+    path = result_path(out_dir, config.name, seed_set)
+    if path.exists():
+        raise ResultExistsError(f"{path.name} exists and is not overwritten")
+    return seed_set, path
 
 
 def run_e4(
@@ -155,18 +201,14 @@ def run_e4(
     seed set, no cases, a bad repeat count, and an existing result file for the same
     configuration and seed set. Returns the path of the new file.
     """
-    seed_set = SEED_SETS[1] if held_out else SEED_SETS[0]
-    if held_out and not held_out_authorized:
-        raise HeldOutNotAuthorizedError("a held-out run needs the explicit authorization argument")
-    if repeats < 1:
-        raise ValueError("repeats must be >= 1")
-    if not cases:
-        raise ValueError("no cases to run")
-    if any(case.split != seed_set for case in cases):
-        raise ValueError(f"every case must be in the {seed_set} split")
-    path = result_path(out_dir, config.name, seed_set)
-    if path.exists():
-        raise ResultExistsError(f"{path.name} exists and is not overwritten")
+    seed_set, path = _prepare(
+        config,
+        cases,
+        repeats=repeats,
+        held_out=held_out,
+        held_out_authorized=held_out_authorized,
+        out_dir=out_dir,
+    )
     runs = [
         run_case(
             config,
@@ -189,6 +231,119 @@ def run_e4(
         runs=runs,
         prompt_version=COURT_PROMPT_VERSION,
         prompt_hash=COURT_PROMPT_HASH,
+    )
+    write_result(path, record)
+    return path
+
+
+def _check_live_config(config: Configuration) -> None:
+    if config.name not in LIVE_CONFIGURATIONS:
+        raise LiveConfigurationError(
+            f"{config.name} does not run live: the baseline makes no court calls and "
+            "cross-family D needs a non-Muse court_3 route (maintainer configuration)"
+        )
+
+
+def _check_live_environ(config: Configuration, environ: Mapping[str, str]) -> None:
+    """Refuse before any call when a used route lacks its cap or model id."""
+    table = load_routes()
+    for role in config.roles:
+        route = table.get(role).primary
+        parse_cap(route.provider, environ)
+        if not environ.get(route.model_env, "").strip():
+            raise ConfigError(f"{route.model_env} is missing")
+
+
+def run_case_live(
+    config: Configuration,
+    case: EvalCase,
+    *,
+    repeat: int,
+    held_out: bool,
+    environ: Mapping[str, str],
+    providers: Mapping[str, Provider] | None = None,
+    deadline_s: float = DEFAULT_DEADLINE_S,
+) -> RunRecord:
+    """Run one case once live through the production client, fallbacks disabled."""
+    _check_live_config(config)
+    log = InMemoryCallLog()
+    client = build_client(environ, log, fallbacks_enabled=False, providers=providers)
+    result = run_round(
+        case.review_request(),
+        CourtReviewer(client),
+        config.roles,
+        store=InMemoryRoundStore(),
+        call_log=log,
+        task_id=f"{case.id}-r{repeat}",
+        held_out=held_out,
+        deadline_s=deadline_s,
+        pre_checks=_pre_checks(case),
+        repeat=repeat,
+    )
+    return RunRecord(
+        case.id,
+        case.label,
+        repeat,
+        result.action,
+        result.record.reason,
+        _votes(result),
+        tuple(log.records()),
+    )
+
+
+def run_e4_live(
+    config: Configuration,
+    cases: Sequence[EvalCase],
+    *,
+    repeats: int,
+    held_out: bool,
+    commit: str,
+    run_date: str,
+    out_dir: Path,
+    environ: Mapping[str, str],
+    providers: Mapping[str, Provider] | None = None,
+    held_out_authorized: bool = False,
+    deadline_s: float = DEFAULT_DEADLINE_S,
+) -> Path:
+    """Run one live configuration over every case and repeat, then write its result.
+
+    Refuses before any call: a configuration live mode does not support, a held-out
+    run without authorization, cases from the wrong seed set, no cases, a bad repeat
+    count, an existing result file, and a missing cap or model id for a used route.
+    """
+    _check_live_config(config)
+    seed_set, path = _prepare(
+        config,
+        cases,
+        repeats=repeats,
+        held_out=held_out,
+        held_out_authorized=held_out_authorized,
+        out_dir=out_dir,
+    )
+    _check_live_environ(config, environ)
+    runs = [
+        run_case_live(
+            config,
+            case,
+            repeat=n,
+            held_out=held_out,
+            environ=environ,
+            providers=providers,
+            deadline_s=deadline_s,
+        )
+        for case in sorted(cases, key=lambda c: c.id)
+        for n in range(repeats)
+    ]
+    record: Summary = build_record(
+        config=config,
+        seed_set=seed_set,
+        held_out=held_out,
+        commit=commit,
+        run_date=run_date,
+        runs=runs,
+        prompt_version=COURT_PROMPT_VERSION,
+        prompt_hash=COURT_PROMPT_HASH,
+        provider_mode=LIVE_PROVIDER_MODE,
     )
     write_result(path, record)
     return path

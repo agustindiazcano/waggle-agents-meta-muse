@@ -132,3 +132,22 @@ def test_main_has_no_held_out_selection(tmp_path: Path) -> None:
                 str(tmp_path / "results"),
             ]
         )
+
+
+def test_main_rejects_both_scripts_and_live(tmp_path: Path) -> None:
+    cases = _cases_file(tmp_path)
+    scripts = _scripts_file(tmp_path, {"b1": {"court_1": APPROVE}})
+    with pytest.raises(SystemExit):
+        main(
+            [
+                "--config",
+                "A_single",
+                "--cases",
+                str(cases),
+                "--scripts",
+                str(scripts),
+                "--live",
+                "--out-dir",
+                str(tmp_path / "results"),
+            ]
+        )

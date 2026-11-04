@@ -1,9 +1,10 @@
 """E4 result record and its exclusive file (AGENTS.md 9.2 and 9.6, COURT_DESIGN section 8).
 
 The record holds commit, seed set, realized model ids, prompt version and hash, date, realized
-composition, fallback labels and ``held_out``. Every record built here comes from the scripted
-harness and carries a fixed warning: it checks arithmetic, it is not a model result. The file
-is created exclusively and an existing result for the same configuration is never overwritten.
+composition, fallback labels and ``held_out``. A scripted record carries the fixed scripted
+warning: it checks arithmetic, it is not a model result. A live record carries the live
+warning and its realized model ids. The file is created exclusively and an existing result
+for the same configuration is never overwritten.
 """
 
 import json
@@ -32,6 +33,11 @@ WARNING: Final = (
     "It is not a model result and must never be reported as one."
 )
 PROVIDER_MODE: Final = "scripted"
+LIVE_PROVIDER_MODE: Final = "live"
+LIVE_WARNING: Final = (
+    "LIVE RUN. Real provider calls on the declared routes with fallbacks disabled. "
+    "Realized model ids and fallback labels are recorded per case."
+)
 _REPEAT_NOTE: Final = (
     "Repeats of one case are repeats, not independent samples. Case level counts are the "
     "independent unit."
@@ -85,8 +91,11 @@ def build_record(
     runs: Sequence[RunRecord],
     prompt_version: str,
     prompt_hash: str,
+    provider_mode: str = PROVIDER_MODE,
 ) -> Summary:
     """Assemble the result record. Metrics follow the order of COURT_DESIGN section 8."""
+    if provider_mode not in (PROVIDER_MODE, LIVE_PROVIDER_MODE):
+        raise ValueError(f"unknown provider mode {provider_mode!r}")
     if seed_set not in SEED_SETS or held_out != (seed_set == "held_out"):
         raise ValueError("held_out must be true exactly for the held_out seed set")
     if not commit.strip() or not run_date.strip():
@@ -94,8 +103,8 @@ def build_record(
     approvals, blocks = false_approvals(runs), false_blocks(runs)
     return {
         "schema_version": SCHEMA_VERSION,
-        "warning": WARNING,
-        "provider_mode": PROVIDER_MODE,
+        "warning": WARNING if provider_mode == PROVIDER_MODE else LIVE_WARNING,
+        "provider_mode": provider_mode,
         "configuration": {
             "name": config.name,
             "label": config.label,

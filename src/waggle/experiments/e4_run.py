@@ -1,28 +1,34 @@
-"""E4 runner CLI: scripted court configurations on the development review set.
+"""E4 runner CLI: scripted and live court configurations on the development set.
 
-Run with ``uv run python -m waggle.experiments.e4_run --help``. This is the
-harness entry point of COURT_DESIGN branch 8 in scripted mode: reviewers are
+Run with ``uv run python -m waggle.experiments.e4_run --help``. Scripted mode
+is the harness entry point of COURT_DESIGN branch 8: reviewers are
 ``ScriptedProvider`` answers from a strict scripts file, so no network, no
-spend and no provider call happens. The result file is the E4 harness record
-and carries its scripted-mode warning; it is never a model result.
+spend and no provider call happens. The result file carries its scripted-mode
+warning; it is never a model result.
+
+Live mode (``--live``) calls the real providers configured in the environment
+through the production client, with fallbacks disabled. It runs only
+configurations A, B and C; cross-family D and the baseline are refused. Caps
+and model ids come from the environment and fail closed when missing.
 
 The CLI has no held-out selection on purpose. It always loads the
 ``development`` split through ``load_for_evaluation``, which refuses pending
-cases and the synthetic placeholder file. A live or held-out run needs the
-maintainer's reviewed set, caps and authorization, and is out of scope here.
+cases and the synthetic placeholder file. A held-out run needs the
+maintainer's reviewed set and explicit authorization, and is out of scope here.
 """
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
 from waggle.experiments.e4_cases import EvalCase, load_for_evaluation
 from waggle.experiments.e4_configs import CONFIGURATIONS, Configuration
-from waggle.experiments.e4_harness import Scripts, run_e4
+from waggle.experiments.e4_harness import Scripts, run_e4, run_e4_live
 from waggle.llm.court_adapter import COURT_ROLES
 
 
@@ -90,15 +96,48 @@ def run(
     )
 
 
+def run_live(
+    config: Configuration,
+    cases_path: Path,
+    *,
+    repeats: int,
+    out_dir: Path,
+    environ: Mapping[str, str],
+) -> Path:
+    """Run one live development configuration and write its result file."""
+    cases = load_for_evaluation(cases_path, "development")
+    return run_e4_live(
+        config,
+        cases,
+        repeats=repeats,
+        held_out=False,
+        commit=_commit(),
+        run_date=datetime.now(UTC).date().isoformat(),
+        out_dir=out_dir,
+        environ=environ,
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run one configuration; existing result files are never overwritten."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", choices=sorted(CONFIGURATIONS), required=True)
     parser.add_argument("--cases", type=Path, required=True)
-    parser.add_argument("--scripts", type=Path)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--scripts", type=Path)
+    mode.add_argument("--live", action="store_true")
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--out-dir", type=Path, required=True)
     args = parser.parse_args(argv)
+    if args.live:
+        run_live(
+            CONFIGURATIONS[args.config],
+            args.cases,
+            repeats=args.repeats,
+            out_dir=args.out_dir,
+            environ=os.environ,
+        )
+        return 0
     run(
         CONFIGURATIONS[args.config],
         args.cases,

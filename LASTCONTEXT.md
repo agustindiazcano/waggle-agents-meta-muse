@@ -1,29 +1,50 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. PR 177 (`docs/readme-project`) incorporates origin/main
-`a264b5b`, including PR 175 and PR 176. Resolved conflicts in LASTCONTEXT.md,
-PENDING.md and docs/GOTCHAS.md by retaining the newer main audit, both task
-records and both gotchas. Only documentation conflicts were edited. The
-maintainer reviews and merges PRs.
+Updated: 2026-11-04. PR 178 (`exp/e4-live-runner`, ADR-096) incorporates
+main 54aa19e, including merged PRs 175, 176 and 177. Resolved documentation
+conflicts, preserving the main audit, live E4 status, README and rollout task
+records, and both warning entries. The maintainer reviews and merges PRs.
 
 Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
-margin about 4 points, as reviewed in the previous main audit. This bounded
-correctness fix is 100% written with tests; it does not justify a whole-point
-increase. Experiments, calibration, documents and delivery are excluded.
+margin about 4 points, as reviewed in the previous main audit. Live E4 code
+is estimated at 95% on PR 178;
+real evaluation remains pending. This documentation resolution adds no code
+and does not change the project estimate; task Code % is -. Experiments,
+calibration, documents and delivery are excluded.
 G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Current state
 
+- PR 178 implements live E4 A/B/C through build_client with fallbacks disabled
+  (ADR-096). Live mode refuses baseline and D until a verified non-Muse route
+  exists. Caps/model IDs are checked before calls. Results record provider mode,
+  realized model IDs and fallback labels. Local tests use mocks with no spend.
+
 - Main includes PRs 163 to 174: viewer gallery and overlays, CourtRuntime and
   CrisisRuntime, organizer E5 C2/C3, SDK fake-backed client test, E8 export,
   E1 diagnosis, scripted E4 CLI and Meta Wonder planning-role routes.
-- This branch corrects a false acceptance in validation/plan_rollout.py:
+- Merged PR 176 corrects a false acceptance in validation/plan_rollout.py:
   robot contact flags do not include robot-pair separation. The rollout now
   reuses the independent detector's swept robot_robot_gap and existing margin,
   reporting SEPARATION_VIOLATION once per pair. No simulator experiment counters,
   fast-layer threshold, fencing, audit, MCP rule or trajectory was modified.
 
 ## Done last
+
+- Reproduced PR 178 push CI failure in test_agents_section_3_is_cloud_first:
+  AGENTS.md section 3 omitted dev seeds and the exact pre-push check wording.
+  Restored the explicit cloud-only development sweep rule and pre-push wording;
+  the existing regression test is unchanged. Session brief, style and docs
+  consistency checks passed: 48 tests in 3.41s. Cloud CI remains pending.
+  This documentation task adds no code; project estimate remains 88% +/-4.
+
+- Resolved PR 178 conflicts against main 54aa19e. Only documentation was edited.
+  Focused E4, CLI, style and documentation consistency checks passed: 55 tests
+  in 8.91s using the existing environment after a new environment hit disk
+  capacity. No paid call or result change. Full regression runs in cloud CI.
+- PR 178 previously reported 36 focused E4/CLI/style tests passing, with failure
+  coverage for missing caps/model IDs, provider outages, rejected configurations,
+  held-out refusal, escalation and result labels. This is mock-backed evidence.
 
 - Rewrote README in PR 177 with the project workflow, implementation status,
   model roles, development results and hackathon requirement/evidence matrix.
@@ -61,14 +82,15 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
-status, branches and worktrees, and fetch origin. PR 177 (`docs/readme-project`)
-now incorporates main a264b5b and resolves all three documentation conflicts.
-Check its mergeability and cloud CI before the maintainer merges. Do not run
-more tests for the README task; the maintainer explicitly stopped that work.
-Project code remains about 88% plus/minus 4 points from the main audit; this
-README task adds no product code. Preserve ADR-095 rollout separation semantics,
-all pending tasks, both gotchas and all unmerged worktrees/assets. Do not duplicate
-merged CourtRuntime, CrisisRuntime, SDK fake-backed test, E8 export or scripted
-E4 runner. The example replay is historical and not a current resimulation pass.
-Never merge docs/context-wave3. No paid call, held-out run, migration, secret access
-or safety-threshold change is authorized by this handoff. Agents never merge PRs.
+status, branches and worktrees, and fetch origin. PR 178 (`exp/e4-live-runner`)
+incorporates main 54aa19e, including merged PR 177, with documentation conflicts
+resolved. The cloud-first documentation regression was reproduced and fixed;
+check the latest cloud CI before maintainer review. Live E4
+A/B/C exists (ADR-096); D needs a verified non-Muse route. Real E4 evaluation,
+E10 harness and production crisis wiring remain pending. Project code remains
+about 88% plus/minus 4 points; court/E4 about 95%, estimated by eye. Preserve
+ADR-095 rollout semantics, all pending tasks, warnings and unmerged worktrees.
+Do not resume the stopped README tests. The replay fixture is historical and
+not a current resimulation pass. Never merge docs/context-wave3. No paid call,
+held-out run, migration, secret access or safety threshold change is authorized
+by this handoff. Agents never merge PRs.

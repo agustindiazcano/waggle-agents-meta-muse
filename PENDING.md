@@ -3,7 +3,7 @@
 Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
 margin about 4 points, retained from the main implementation audit at 7b99bbf.
 The rollout robot-pair separation fix (ADR-095) is merged in PR 176, task
-code 100%. The README documentation task and its conflict resolution add no
+code 100%. The README task and PR 178 conflict resolution add no
 product code and do not change the main audit estimate.
 Code percentages are judgments, not coverage or experimental results.
 Experiments, calibration, documents, delivery and G-GLOBAL are excluded.
@@ -25,7 +25,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Review the E8 reporting PR and cloud benchmark artifacts | A, M | - | Main includes PR 163; maintainer merges E8 after green checks |
 | P1 | Verify balances, expiry, rate limits, model ids, console caps and cloud secrets; verify Baseten/Modal prices | M | - | Rows 4, 5, 7, 10, 11, 12, 32; no secret inspection in this audit |
 | P1 | Review E3/E4/E5 labels, attack fixtures, real catalog, zones, machine data and recordings | M | - | Rows 54, 87, 94, 98; a pending label is not a result |
-| P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 50% | E4 harness remains scripted-only; no paid call authorized here |
+| P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 95% | Live E4 runner implemented with unit tests in ADR-094; configuration D and real cloud runs pending |
 | P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (PR 165 merged in main); E10 harness and production crisis caller remain |
 | P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 95% | C0/C1/C1_REPLAY/C2/C3/C3_REPLAY exist (ADR-091); C4 and production DB call-log wiring remain |
 | P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
@@ -39,6 +39,10 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |
+
+PR 178 implements live E4 A/B/C with fallbacks disabled (ADR-096). Court/E4
+code is estimated by eye at 95%; real evaluation remains pending. No project
+percentage change is justified by this documentation conflict resolution.
 
 ## Current branch update (supersedes stale implementation text above)
 
@@ -188,3 +192,5 @@ runner are merged. Production integration and experiment gaps remain.
 
 | 130 | P1 | Reject robot-pair separation false accepts in Stage C/D rollouts (ADR-095) | A | implemented on fix/rollout-separation-check; see PR test plan for full gates | 100% |
 | 131 | P2 | Rewrite README around project behavior, current implementation, measured evidence and hackathon requirements | A | PR 177 updated with main a264b5b; conflicts resolved preserving the main audit and both gotchas; 181 documentation/style checks pass; digest-only replay passes; full resimulation differs at tick 4; local full CI stopped at maintainer request; cloud CI and maintainer PR review remain | - |
+| 132 | P2 | Resolve PR 178 documentation conflicts against main 54aa19e | A | resolved: retain main audit, live E4 status, README and rollout tasks, and both warning entries; 55 focused E4/CLI/style/docs checks passed; cloud CI and maintainer review remain | - |
+| 133 | P2 | Fix PR 178 cloud-first documentation regression | A | reproduced missing dev seeds wording; restored explicit cloud sweep and pre-push wording without changing the test; 48 session-brief/style/docs tests passed in 3.41s; cloud CI pending | - |
