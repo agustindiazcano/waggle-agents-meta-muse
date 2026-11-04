@@ -1,60 +1,93 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-02, end of session. `main` is at `c315b7c`: PRs 142, 143, 144, 145 (its stranded commit came through PR 150), 149 and 150 are merged, schema revision 13. PRs 146, 147 and 148 were replaced by the integration PR 150. No PR is open.
+Updated: 2026-11-04. PR 163 (chore/merge-wave-5 to main) contains the viewer
+gallery and offline asset import. This task merges origin/main at 9cfb142 into
+its head 10010cc and resolves LASTCONTEXT.md and PENDING.md by retaining current
+main tasks plus the viewer handoff. The maintainer merges the PR, not the agent.
+Main remains clean at 9cfb142 with green cloud CI (run 41777534335). PR 156 was
+already merged before this task. The user supplied an older 75% analysis; it is
+superseded by this code/PR audit and PENDING.md active priorities.
 
-Code progress of the project (estimate by eye, code only): 80% on 2026-11-02, all of it on `main`. It was 75% at the start of the session. Experiments and runs are not code and do not count. A judgment with a margin of about 3 points, not a result, and never for the README.
-
-| Block | Code % | What is missing |
-|---|---|---|
-| E2 chaos harness, incl. handoff chaos S31 to S35 | ~97 | running it as an experiment (the maintainer dispatches `e2_chaos.yml`) |
-| LLM HTTP providers (Meta, Baseten, Modal), call log, client factory | ~92 | Vertex, the voice endpoint, verified prices, the first real smoke run, and passing `build_client` and `PostgresCallLog` into a harness (the harnesses still build their own scripted clients) |
-| Court and E4 | ~50 | live mode, real providers, the review set (labels are the maintainer's) |
-| Voice path (voice-intent, E7 voice mock runner) | ~75 | real transcription provider, vision pipeline, UI |
-| Package model | ~75 | foreign key from `motion_orders.package_id` (a later migration), a check that the registry equals the simulator package set |
-| Catalog compatibility and technician lease | ~75 | the MCP tools for the lease (`technician` on `dispatch_tech`, `close_ticket`, consume, release), the E2 technician crash case |
-| Advisors | ~80 | E5 runner, persistence of the caution log, a caller for the runtime |
-| Predictive maintenance | ~60 | `failure_history` table, manual sheet, E6 runner, a port backed by the MCP tools |
-| Rollout validator (E10) | ~45 | belief state, human prior sampler, K = 5 variants and aggregation, planner loop |
-| Viewer | ~50 | map and zone drawing (needs geometry in the replay file, a decision), overlays, GLB models, live connection, a browser test |
-| Replay generator | 100 | none |
-
-What is left is mostly the MCP wiring of what the repositories already do, the human variants of the validator, the E5 and E6 runners, the viewer, and the real providers and maintainer data.
-
-## Done last
-- Schema revisions 11 to 13, each approved by ADR-062: technician zone lease at dispatch, ticket close and reservation settlement (ADR-074); package id registry and its forwarder check (ADR-075); `llm_calls`, `PostgresCallLog` and `build_client` (ADR-077). Cloud `postgres.yml` passed 172 tests on the integration.
-- The maintenance alert loop (ADR-076), validator stage C with one deterministic rollout (ADR-078), the synthetic failure log generator (ADR-079) and the advisor runtime on the scripted provider (ADR-080). ADRs now run 062 to 065 and 070 to 080.
-- Stranded commit: PR 145 had been merged into its base branch after that base was already in `main`, so `main` had revision 12 and not 13. PR 150 integrated it with PRs 146 to 148 in one branch, so `docs/DECISIONS.md` was resolved once. Rule, unchanged: after every merge `git rev-list --count origin/main..origin/<branch>` must be 0.
-- Antigravity delegation was used for two implementation tasks and audited by the main agent. `ANTIGRAVITY.md` and the `delegate-antigravity` skill now hold the procedure: one worktree per task, a session-only settings file with `permissions.allow` and exact `command(<line>)` rules (matching is exact), the prompt contents and the audit list. The audit found six defects in the two drafts (a timeout that did not bound the wait, a default classifier that labeled everything benign, a private attribute read, a typo that returned an empty result, a cwd dependent test, invented defaults); each is in ADR-079 or ADR-080.
-- Estimate asked by the maintainer: adding the G-GLOBAL network (`docs/MULTI_WAREHOUSE_PLAN.md`) would add about 22 to 23% of the current project size (range 20 to 28%), so overall progress would read about 65% over the larger total. Four cells instead of three add about 1 point. Nothing global was started or authorized.
-
-## Where each agent left off
-- Main agent: this context. Next: the MCP wiring of the lease tools, then `failure_history` and E6, then validator stage D, then E5.
-- Lease and settlement (ADR-074): `TicketRepository.dispatch` and the `dispatch_tech` tool are unchanged, so a dispatch through MCP still takes no lease. `TicketLeaseRepository` and `SettlementRepository` are repository level only. Observations passed to them must cover every zone with an expired lease or the pure model marks it faulted. The sweeper holder name is `sweeper`.
-- Package registry (ADR-075): an empty registry denies every package order until a spec lists packages. A forwarder built without the port still queues any well formed id; only `build_forwarder` closes that.
-- Alert loop (ADR-076): `persistence` and `lead_target_ticks` have no defaults and are tuned on development seeds only. Nothing calls `reset` after a repair.
-- `llm_calls` (ADR-077): `mode` is a promise of the caller. `BudgetGuard.spent` reads every row on each check. Prices stay unverified, so an http client refuses any call.
-- Validator stage C (ADR-078): no human variants, no reflex layer in the rollout (stricter than the design), no lease or deadlock check, `wait_for` not applied.
-- Failure log (ADR-079): the part numbers are placeholders in no catalog; the log is not evidence about real failures.
-- Advisor runtime (ADR-080): `build_advisor_input` is a coroutine run with `asyncio.run`; the rate limit counts failed attempts; an abandoned call after a timeout still runs to the end.
-- Providers (PR 133): standard library only, fail closed on a missing or invalid cap, key or URL. Not confirmed in the vendor documentation: Meta base URL and usage field names, Baseten auth header on the direct endpoint (if the first smoke test returns 401 check this first), Modal endpoint shape, the Vertex URL and OAuth, the voice batch endpoint. `LlmClient` retry stays 0 in `build_client` because the HTTP provider retries 429 and 5xx: never set both.
-- Handoff chaos (PR 135): kills are in-process exceptions, not operating system kills; never run as an experiment.
-- Voice (PR 138): confidence threshold 0.6 and the attachment limits are its own assumptions; all E7 cases are pending review.
-
-## What only the maintainer can do
-Verify balances, expiry and limits in the provider consoles and set the caps (PENDING rows 4, 5, 10); verify model ids (row 7); fill `prices.toml`; add the provider keys as GitHub Actions secrets (row 11); dispatch `e2_chaos.yml` (start with 3 seeds); open the viewer (`cd web && npm ci && npm run dev`, open `?demo=1`; nobody has seen it in a browser) and decide whether the replay file carries the map geometry; supply the real parts, machines, zones, compatibility rows and recordings; label the E4 and E5 cases; review the fixtures below; define held-out seeds for the chaos harness; delete the merged remote branches (AGENTS.md: the maintainer deletes remote refs); decide on G-GLOBAL (PENDING row 118).
+Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points.
+This replaces the stale November 2 estimate of 80%: main now includes technician
+MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D.
+Viewer code is about 68% including the pending gallery, whose task code is 100%.
+The pending gallery adds less than one project point at this precision. Runs,
+results, documentation and delivery do not count. These are judgments, not results.
 
 ## Current state
-- Worktrees: `main` and two old ones with their own commits (`../waggle-e3-approval` on `test/e3-reviewed-labels`, `../waggle-worker-daemon` on `docs/session-handoff-current`); do not remove them without asking. The local branch `feat/rollout-validator-stage` was kept on purpose: it holds one unpushed merge commit (`c1e7603`) that PR 150 superseded; deleting it needs `git branch -D`, so ask first. Merged remote branches left for the maintainer: `feat/technician-lease-settlement`, `feat/package-registry`, `feat/llm-call-log`, `feat/maintenance-alert-loop`, `feat/rollout-validator-stage`, `feat/failure-log-generator`, `feat/advisor-runtime`, `chore/merge-wave-3`, `docs/antigravity-delegation` and the older merged ones.
-- Fixtures the maintainer has not reviewed: `ATTEMPTS` in `e3_mcp_layers.py` and `e3_readback.py`, `PART_FOR_CASE`, `SOURCES` in `e3_boundary.py`, `BASE_PLAN` and `CONTEXT` in `e3_plan.py`, `PLANS` in `e3_plan_validator.py`, `HAZARD_READING`, `ODOMETRY`, `REQUEST` in `e3_fast_layer.py`, `SCRIPTS` in `e3_court.py`, and the voice cases.
-- Untuned or assumed values: predictor parameters (PR 128 values were adjusted on simulator seeds that are no longer clean for E6), package pick radius and capacities, E2 tick rate (1000 per second), lease (400 ticks) and timings, voice confidence 0.6, the `LOG_` parameters of the failure log, the 45 s horizon of the rollout.
-- Configuration D of E4 has no real cross-family route in `routes.toml`.
-- The MCP server is not claimed conformant; no real client has run (PENDING row 81). `tools/list` is filtered by chassis.
-- The viewer dev server may still be running on port 5174 (port 5173 belongs to another project of the maintainer).
-- `uv run ci` takes 4 to 20 minutes. Never pipe it through `tail`: the exit code you see is the one of `tail`. Use `uv run ci > file 2>&1; echo EXIT=$?`, run it alone and one branch after another (two suites at once can fail `test_markers.py` on a shared temporary directory), and treat GitHub as the authority. Database tests run only in the cloud: `gh workflow run postgres.yml --ref <branch>`. The pre-push hook needs a green `uv run ci` for the exact HEAD.
-- Heredocs with several files fail here; use the Write tool, and `gh pr create --body-file`. For a long Python patch write the script with the Write tool and run it.
-- `docs/DECISIONS.md`: each branch appends an ADR at the end, so parallel branches conflict there. The next ADR number is 081.
+
+- Main contains ADRs 081 to 088: MCP technician lease/settlement tools, validator
+  stage D, E5 runner, failure_history revision 14, E6 mock chain, unified rollout,
+  belief builder and crisis loop, E5 caller/persistence/client wiring and history loader.
+- E5 C0/C1/replay and the E6 mock runner are implemented, not evaluated by this task.
+  E5 C2/C3/C4 are refused because the organizer is absent; its production role remains.
+  E4 is scripted-only; E3 includes court_unanimity but live evaluation remains.
+  E8 extension and the E9 mutation campaign remain pending. E6 diagnosis
+  still reads synthetic in-memory cases; production database-backed retrieval and
+  orchestration remain. Crisis planning still needs its LLM proposer adapter.
+- LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
+  model 75%; catalog/technician lease 90%; advisors/E5 85%; maintenance/E6 80%;
+  rollout/crisis 80%; E2 harness 97%; replay generator 100%. Estimates by eye only.
+- Vertex, real transcription, production integration, the real MCP SDK client
+  check, maintainer labels/data and reviewed fixtures remain. MCP is not claimed
+  conformant. No paid calls, experiments, migrations or held-out runs occurred here.
+- Meta Standard prices remain verified at 1.25 input / 4.25 output USD per million
+  tokens. PR 156 preserved all five intended price/documentation/test files.
+
+## Viewer handoff
+
+- The gallery has 20 entries: 17 GLBs and three procedural previews. It includes
+  revised workers, five robots, industrial equipment, modular rack/conveyor/dock
+  and a gallery-only pickup prop. Replay does not invent human action or role state.
+- Camera orbit, pan, zoom, focus and fit are implemented. ADR-089 describes the
+  asset importer and gallery. Map geometry, overlays, live mode and simulator-owned
+  role/action fields remain separate viewer work. Visual review is the maintainer's.
+- GLBs are excluded from Git. web/models.json pins hashes, sizes, clips and
+  provenance. Import extracted files with npm run models:sync -- --source DIRECTORY
+  from web/. Preserve the ignored local assets and the separate binary pack:
+  C:/Users/agusd/.codex/artifacts/waggle-viewer-models-20261104.zip.
+- Viewer development server is on port 5174; port 5173 belongs to another project.
+  Open ?gallery=1. Do not replace dirty Meshy or original GLB worktrees.
+
+## Done last
+
+- The first local resolution CI found two document-format defects: required
+  headings and the exact percentage prefix were missing. They were corrected
+  in the documents without changing tests. Final validation is reported in the PR.
+- Before resolving conflicts, PR 163 remote checks and viewer jobs were green,
+  but GitHub reported CONFLICTING in the two context files. The three-dot diff
+  also includes .gitignore, docs/DECISIONS.md and docs/GOTCHAS.md; no backend code.
+- Earlier local validation on 10010cc: 91 viewer unit tests and build passed.
+  Browser tests failed at launch because Playwright Chromium headless shell 1248
+  was absent. No browser installation or retry was attempted after that red check;
+  earlier CI was interrupted. This context resolution does not claim that local
+  browser validation passed. The updated PR checks report the merged head's state.
+- PR 156 local minimum validation passed: 85 targeted LLM tests, Ruff, format and
+  mypy. Its remote checks passed; it is already merged, not awaiting another merge.
+- Main repair was explicitly authorized: mixed files matched origin/main, then
+  git reset --hard origin/main restored it. Eight clean merged worktrees were
+  removed. Dirty global-custody, meshy-assets, viewer-glb, unmerged old E3/session
+  worktrees and the pending viewer worktree were preserved. Another owner's sandbox
+  worktree was preserved after Git refused ownership; no trust exception was added.
+- docs/context-wave3 must never be merged. Its endpoint diff against main shows
+  72 files, 253 insertions and 6325 deletions. Remote deletion is the maintainer's.
+- Ticket race fix d11c7c5 is present as identical patch 8ae51e3 on main. Bare
+  ON CONFLICT DO NOTHING remains. feat/maintenance-tickets needs no PR.
+- Earlier uncommitted validation notes remain in chore/validation-156-163 in
+  C:/projects/projects-github-agustindiazcano/waggle-validation-156-163.
 
 ## Prompt for the next session
-```
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md. First inspect the remote (git fetch --prune, gh pr list, git worktree list) and see what the maintainer did since main was at c315b7c (PRs 142 to 145, 149 and 150 merged, schema revision 13, no PR open). Code progress is about 80% and all of it is on main; the table in LASTCONTEXT.md says what each block still needs. Do not rebuild what is already there: read the code first. Work from main. The local cleanup is done except the branch feat/rollout-validator-stage (one unpushed superseded commit: ask before git branch -D) and two old worktrees with their own commits (test/e3-reviewed-labels, docs/session-handoff-current: do not remove them without asking). Deleting remote branches is the maintainer's job (AGENTS.md). Stacking rule: a PR stacked on another branch must be retargeted to main with gh pr edit <n> --base main as soon as its base merges, and after every merge run git rev-list --count origin/main..origin/<branch> to confirm nothing was left out (PR 145 was stranded that way). Each branch appends an ADR to docs/DECISIONS.md, so when several branches would conflict integrate them in one branch from main, resolve once and open one PR; the next ADR number is 081. Work that needs no new maintainer decision, in this order: (1) wire the technician lease and the settlement to the MCP tools: a technician argument on dispatch_tech that takes the zone lease through TicketLeaseRepository, plus close_ticket, consume_reservation and release_reservation with allowlist entries, strict schemas with bounds, forwarder code, tests first and one denial text per tool (ADR-074 gap; the MCP boundary change is approved by ADR-062; do not touch ACK, retry, fencing or audit logic); (2) failure_history: a schema revision 14 (check the installed revision first, never drop anything), a repository, diagnosis retrieval over the generator and similar_cases of ADR-079, then the manual sheet and the E6 runner on the mock (docs/PREDICTIVE_MAINTENANCE_DESIGN.md branches 6 to 8), with a ToolPort backed by the MCP tools for the alert loop of ADR-076; (3) rollout validator stage D: belief state, the human prior sampler, K = 5 variants, all-pass aggregation with mutant tests, then the crisis planner loop on the mock provider (docs/ROLLOUT_VALIDATOR_DESIGN.md, ADR-078 gaps); (4) the E5 runner and persistence of the caution log, and pass build_client and PostgresCallLog (ADR-077) into the harnesses in mock mode (ADR-080 gaps); (5) the Python SDK client test of the MCP server (docs/MCP_CLIENT_TEST_DESIGN.md, a dev dependency stated in the PR). Revisions touch src/waggle/db/schema.py: one after the other, never in parallel. Delegating a new self-contained module of 300 to 700 lines to Antigravity is allowed only after you ask the maintainer; follow ANTIGRAVITY.md (one worktree per task, session-only settings with exact command rules, never --dangerously-skip-permissions) and audit every draft yourself: read all of it, run the checks, and break each new guard test on purpose. Parallel work only on areas that do not share files, up to 3 agents each in its own worktree and branch, tests first. For every branch: uv run ruff check . and uv run ruff format --check ., the full CI alone with its real exit code, push, open the PR with a short body (gh pr create --body-file) and check gh pr checks: GitHub is the authority, fix a red check before reporting. Database tests are cloud-only: gh workflow run postgres.yml --ref <branch> and read the result. No paid call, no real provider call, no held-out seeds, no global implementation (G-GLOBAL is not authorized: PENDING row 118), do not dispatch e2_chaos.yml, and do not call the MCP server conformant. Ask the maintainer to label the E4 and E5 cases, review the unreviewed fixtures listed in LASTCONTEXT.md, define held-out seeds for the chaos harness and dispatch e2_chaos.yml (start with 3 seeds). At the end estimate code progress by eye per block and for the project (code only; running experiments does not count), record it in PENDING.md and LASTCONTEXT.md in one docs PR, and give the next prompt. Write files with the Write tool, not multi-file heredocs.
-```
+
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md, fetch the
+remote, inspect PR 163 and worktrees. The conflict-resolution task merges main
+9cfb142 into chore/merge-wave-5 without rewriting history. Review its latest CI
+and mergeability before the maintainer merges; agents never merge. Project code
+is about 83% plus/minus 3 points, viewer 68% and gallery task 100%, judgments only.
+Preserve dirty global, Meshy, GLB and all unmerged worktrees and the binary model
+pack. Review all gallery entries visually. Local browser validation previously
+failed because Chromium 1248 was absent; do not call it passed. Production E5/E6
+integration, the LLM crisis proposer, MCP SDK validation, viewer overlays/map/live
+mode and maintainer labels/data remain. Never merge docs/context-wave3; its remote
+deletion belongs to the maintainer. Ticket race patch is already in main. No paid
+call, held-out run, migration or safety change is authorized by this handoff.

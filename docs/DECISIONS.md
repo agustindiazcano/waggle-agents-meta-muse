@@ -982,3 +982,33 @@ Decision: `waggle.experiments.failure_history_loader.load_failure_history` takes
 The CLI `load-failure-history SEED COUNT SOURCE` matches `provisioning.main(argv, environ, stderr) -> int`. `DATABASE_URL` comes from the environment. Argv is checked before a database is constructed. Exit 2 on bad arguments, a missing or unusable database setting, or a refused row. Usage and errors go to stderr as a usage line or `load-failure-history failed: <ErrorType>`. One result line goes to stdout: `inserted=<n> skipped=<n>`. Environment values, URLs and secrets are never printed or logged.
 
 Gaps, stated plainly: the synthetic rows are still not evidence about real failures. PART-BRG-01, PART-LUB-01 and PART-ALN-01 are still placeholders and are not catalog parts; any caller must check part numbers against the catalog before an order. Diagnose and the E6 runner still read the in-memory log. No PostgreSQL load was run here.
+
+## ADR-089: Generated models, modular previews and offline asset import
+
+Status: implemented, not evaluated. Continues the unfinished GLB viewer on a separate
+branch. The maintainer requested completion and owns visual review.
+
+Decision: the model gallery is separate from replay state and offers all current
+models plus original modular rack, conveyor and dock previews. GLBs stay outside
+Git history in a separate archive. `web/models.json` pins each file's SHA-256,
+byte count, authored animation names and generation provenance. The offline
+importer validates all sources before copying, rejects external resource
+references, and refuses to replace a different existing destination file.
+No API key is needed for import. Meshy generation checkpoints retain task ids
+and consumed credits; monthly credits fund the five additional models, with no
+permanent-credit purchase or consumption requested.
+
+The revised worker replaces the old replay worker. A replay without chassis or
+human roles still uses one model per kind. Gallery pickup uses an independent
+visual box following the hand midpoint during an authored fraction of the clip;
+it is hidden if the clip, hand nodes or timing are unavailable. No human pickup
+or package pose is invented in the replay. Procedural dimensions never define
+simulator geometry. No control, fencing, audit, retry or simulator contract changes.
+
+Verification: viewer unit and browser contract tests cover camera pan without a
+recorded-state change, malformed replays, missing models, invalid rack settings,
+pickup prop ownership and offline import failures. A separate model browser check
+requires the binary pack and checks decoding and clip names. Playwright 1.64.1 is
+development only (ADR-029). `viewer.yml` runs checks without the binary pack.
+Artistic quality, map geometry, overlays, live mode and role/action replay fields
+remain outside this gallery change.
