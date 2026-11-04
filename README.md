@@ -14,14 +14,14 @@ Built by Agustin Diaz Cano for the **Meta Global AI Developer Hackathon 2026**,
 **Indie Developer** track, **Push the Frontier** theme. Built with Muse Spark Open.
 
 Status as of November 4, 2026: implemented components and development experiments,
-with production integration and live model evaluations still pending. The recorded
+with live model evaluations and deployment validation still pending. The recorded
 viewer demo runs without provider credentials. It does not demonstrate the complete
 voice-to-robot workflow.
 
 [Try the viewer locally](#run-the-viewer) |
 [Architecture](docs/ARCHITECTURE.md) |
 [Measured results](#measured-results) |
-[Hackathon requirements](#hackathon-requirements-and-evidence) |
+[Hackathon](#hackathon) |
 [Submission checklist](SUBMISSION.md)
 
 ## The problem and the approach
@@ -76,11 +76,11 @@ claim that every arrow is wired into one deployed service.
 | Fast control | Stopping-distance envelopes, separation checks, occlusion caps, CPA restriction, geofences, watchdog and e-stop | E1 development results expose remaining collisions and throughput loss; limits are not calibrated |
 | Coordination | Aisle routing, atomic corridor reservations, leases, fencing, task dependencies, crash recovery and handoff records | Full E2 chaos campaign and trusted physical handoff integration |
 | MCP boundary | Token-derived chassis identity, tool allowlists, strict physical bounds, persistent rate limits, audit and tool backends | SDK interoperability test uses a fake dispatcher; production deployment validation remains |
-| Guard and court | Sanitizers, fail-closed classifier adapter, strict review schemas, unanimous court, role checklists and E3/E4 harnesses | Reviewed labels, live provider evaluation and production court integration |
-| Robot advisors and organizer | Caution-only advisor, structured organizer, bounded runtime adapters and E5 configurations through C3/replay | Production service/call-log wiring and C4 fleet planner |
-| Crisis replanning | Belief state, human variants, rollout aggregation, bounded counterexample loop and LLM proposer adapter | E10 harness, production caller and live evaluation |
-| Predictive maintenance | Degradation/telemetry, alert loop, failure-history generator/loader, diagnosis sheet, parts/catalog checks and mock E6 chain | Database-backed production diagnosis, real catalog review and evaluation |
-| Voice and vision | Typed intent/read-back and visual verification contracts, mock E7 paths and configured model roles | Real transcription/image provider integration, recordings and operator UI |
+| Guard and court | Sanitizers, fail-closed classifier adapter, strict review schemas, unanimous court, production runtime and scripted/live E4 harnesses | Reviewed labels and live provider evaluation |
+| Robot advisors and organizer | Caution-only advisor, structured organizer, E5 configurations C0 to C4, production advisor assembly and PostgreSQL call log | Live provider evaluation and deployment validation |
+| Crisis replanning | Belief state, human variants, rollout aggregation, bounded counterexample loop, LLM proposer adapter, E10 harness and production caller | Live evaluation |
+| Predictive maintenance | Degradation/telemetry, alert loop, failure-history generator/loader, diagnosis sheet, parts/catalog checks, mock E6 chain and database-backed production assembly | Real PostgreSQL validation, catalog review and evaluation |
+| Voice and vision | Typed intent/read-back and visual verification contracts, mock E7 paths and configured model roles | Real provider integration and operator UI deferred under ADR-097 |
 | Viewer | Replay playback, camera controls, map geometry, envelopes, lidar shadows, ghost paths, live WebSocket client and model gallery | Visual review and complete operator workflow; GLBs are distributed separately |
 
 Implementation status is based on the source in [src/waggle](src/waggle),
@@ -96,12 +96,18 @@ configured design; it is not evidence that every provider has been exercised.
 
 | Route | Roles | Current boundary |
 |---|---|---|
-| Meta Model API, Muse Wonder (`META_WONDER_MODEL_ID`) | Director, crisis planner and diagnosis | Produces proposals; production callers are incomplete |
+| Meta Model API, Muse Wonder (`META_WONDER_MODEL_ID`) | Director, crisis planner and diagnosis | Produces proposals checked by deterministic code; live evaluation pending |
 | Meta Model API, Muse Spark (`META_MODEL_ID`) | Court member 1 and vision | Strict review/vision contracts; live evaluation pending |
 | Baseten, Muse Spark Open (`BASETEN_MODEL_ID`) | Court member 2, robot advisors and organizer | Bounded adapters; evaluated flows currently use mocks/scripted outputs |
 | Modal, Muse Glimmer (`MODAL_GLIMMER_MODEL_ID`) | Guard and court member 3 | Classifier/reviewer roles; live evaluation pending |
-| Meta Model API, Muse Voice Transcribe (`META_VOICE_MODEL_ID`) | Voice transcription | Provider integration and recordings pending |
-| Modal Spark Open / Vertex AI | Explicit fallback routes; Vertex is also planned for the cross-family E4 comparison | Vertex integration and cross-family evaluation pending |
+| Meta Model API, Muse Voice Transcribe (`META_VOICE_MODEL_ID`) | Voice transcription | Integration deferred |
+| Modal, Muse Spark Open (`MODAL_SPARK_OPEN_MODEL_ID`) | Declared fallback host for Muse Spark Open | Fallback use must be logged; disabled during held-out evaluations |
+
+A [Meta-only routing profile](src/waggle/llm/routes_meta.toml) is also available
+for callers that explicitly select it. [ADR-097](docs/DECISIONS.md#adr-097-muse-family-is-sufficient-for-the-court-vertex-discarded)
+discards Vertex integration and the cross-family E4 configuration D. Legacy
+Vertex entries remain in the original routing table; they are not an implemented
+provider or a supported deployment route.
 
 The three primary court members are related Meta models. Unanimity does not imply
 independent errors. E4 must report false approvals first and reviewer correlation.
@@ -158,45 +164,27 @@ are code speed on this machine, not a hardware performance claim.
 |---|---|
 | E2 full chaos | Harness/workflow implemented, no full campaign result committed |
 | E3 injection matrix | Layer runners implemented; no live-model result committed |
-| E4 court | Scripted evaluation paths; no live court or cross-family result committed |
+| E4 court | Scripted and live harnesses implemented; no live court result committed; cross-family configuration D excluded by ADR-097 |
 | E5 advisors/organizer | Mock/replay harnesses; no live benefit measurement committed |
-| E6 maintenance | Mock chain; no measured predictive benefit committed |
+| E6 maintenance | Mock chain and production assembly implemented; no measured predictive benefit committed |
 | E7 multimodal | Mock contracts; no transcription/vision accuracy result committed |
 | E8 provider cost and latency | Report/extrapolation tooling implemented; production collection/calibration pending |
 | E9 mutation-tool campaign | Pending cloud execution |
-| E10 crisis replanning | Loop/proposer implemented; harness and evaluation pending |
+| E10 crisis replanning | Loop, proposer, harness and production caller implemented; evaluation pending |
 
 The [E8 runner](docs/E8_RUNNER.md) separates measured control code latency,
 metadata-only model call summaries and assumed fleet extrapolation. Thousands of
 agents would be an extrapolation, never a measured real-fleet claim.
 
-## Hackathon requirements and evidence
+## Hackathon
 
-The [official event page](https://dev.meta.ai/events/global-hackathon) identifies
-Indie Developer and Push the Frontier, describes Meta API/open-weight use, and
-lists creativity, technical ambition and working behavior for the Indie track.
-It lists submission on November 4 at 9 PM ET. These public descriptions are distinct
-from the accepted participant rules. The linked rules/waiver page could not be
-read during this audit; final eligibility and delivery checks remain with the
-maintainer. Checked November 4, 2026.
+Waggle Hive is a solo entry for the Meta Global AI Developer Hackathon 2026,
+Indie Developer track, Push the Frontier theme. The project combines warehouse
+simulation, constrained model actions, fault recovery and measured ablations.
 
-| Requirement or delivery check | Status | Evidence and remaining action |
-|---|---|---|
-| Indie Developer track | Declared fit | Solo project by Agustin Diaz Cano; participant registration/acceptance is an organizer-side check |
-| Push the Frontier theme | Demonstrated scope fit | Robotics/manufacturing simulation, constrained model actions, fault recovery and measurable ablations |
-| Use Meta models | Integrated in code; live evidence pending | Meta routes, prompts and adapters exist. Mock tests do not establish successful real-model use; record an authorized cloud run before marking this complete |
-| Creativity and technical ambition | Evidence available for judges | Simulation forks, counterexample replanning, restrictive advisors and transactional tool execution; judging outcome is not claimed |
-| Working behavior | Partial, reproducible evidence | Recorded viewer demo, tests and development results above; full live operator workflow remains incomplete |
-| Work built during the hackathon | Declared and traceable | [PRIOR_WORK.md](PRIOR_WORK.md) declares a new repository from October 27 and no copied prior code; Git history provides reviewable provenance |
-| Public source and reproduction | Source/instructions present; logged-out access check pending | Verify repository visibility and a fresh clone using the submission checklist |
-| AI tools, dependencies and prior work disclosed | Documented | Disclosure below, pinned dependencies and prior-work declaration |
-| Asset rights and model attribution | Partial | Attribution notice present. [ASSETS.md](ASSETS.md) still has missing provenance fields; confirm license wording and video attribution |
-| Demo video, live link and submission form | Pending delivery | [SUBMISSION.md](SUBMISSION.md) tracks the video, live product, contributor list, access checks and final submission |
-
-This table distinguishes source-backed project evidence from participant and
-submission checks. It does not assert complete hackathon compliance. The public
-page does not provide final rubric weights; the application scoring weights are
-not the final project judging rubric.
+[PRIOR_WORK.md](PRIOR_WORK.md) records project provenance,
+[ASSETS.md](ASSETS.md) tracks asset attribution, and
+[SUBMISSION.md](SUBMISSION.md) holds delivery and submission checks.
 
 ## Repository safeguards
 
@@ -241,9 +229,6 @@ and binds to localhost by default; this is a local development viewer setup.
 
 ```powershell
 uv run pytest tests/unit/test_docs_content.py tests/unit/test_docs_consistency.py tests/unit/test_style.py -q
-uv run lint
-uv run type
-uv run ci
 ```
 
 `uv run ci` runs Ruff, strict mypy, the light pytest suite with coverage and import
@@ -259,8 +244,9 @@ Development sweeps run in [.github/workflows/e1.yml](.github/workflows/e1.yml);
 PostgreSQL correctness checks run in [postgres.yml](.github/workflows/postgres.yml),
 and long/paid tests in [heavy.yml](.github/workflows/heavy.yml).
 See [docs/E8_RUNNER.md](docs/E8_RUNNER.md) for latency/report commands.
-Only the maintainer commits cloud result artifacts. `uv run experiments-test` is
-still a placeholder and must not be treated as a held-out evaluation.
+Only the maintainer commits cloud result artifacts. Use the experiment-specific
+workflows for evaluations; the generic `experiments-test` entry point does not
+run an evaluation.
 
 ## Persistent services and configuration
 
@@ -271,13 +257,12 @@ not a one-command demonstration of the complete product.
 
 Migrations never run on service startup. Inspect the target database with
 `uv run python -m waggle.db.schema` before an approved migration. The current
-schema is revision 14; do not follow old revision-2 setup instructions.
-Provision sample data separately with `uv run provision SPEC TOKENS_OUT`, using
-[data/provision/example.json](data/provision/example.json) as a format reference.
-Tokens are written to a new file rather than printed.
+schema is revision 15. Provisioning uses a JSON specification and a new token
+output file, with [data/provision/example.json](data/provision/example.json) as
+the documented sample format. Keep token files outside the repository. Tokens
+are written to a new file rather than printed.
 
 ## Environment variables
-
 
 Names only live in `.env.example`. Values go in `.env`, which git ignores.
 
@@ -290,8 +275,7 @@ Names only live in `.env.example`. Values go in `.env`, which git ignores.
 | `BASETEN_API_KEY`, `BASETEN_MODEL_ID` | Baseten access and the Muse Spark Open 1026 id | none |
 | `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`, `MODAL_ENDPOINT_URL` | Modal access and endpoint | none |
 | `MODAL_GLIMMER_MODEL_ID`, `MODAL_SPARK_OPEN_MODEL_ID` | Model ids served on Modal (guard and court member 3; fallback host for Muse Spark Open) | none |
-| `VERTEX_PROJECT_ID`, `VERTEX_LOCATION`, `VERTEX_MODEL_ID`, `GOOGLE_APPLICATION_CREDENTIALS` | Vertex AI backup, service account file | none |
-| `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD`, `VERTEX_SPEND_CAP_USD` | Hard cap per provider in USD. A missing or invalid value blocks calls | none |
+| `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD` | Hard cap per supported provider in USD. A missing or invalid value blocks calls | none |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL` | Database | none |
 | `WAGGLE_MCP_TOKEN` | MCP server: chassis token, at least 32 characters | none, required |
 | `WAGGLE_MCP_EXTENT` | MCP server: map rectangle `x_min,y_min,x_max,y_max` in meters | none, required |
@@ -331,8 +315,8 @@ Model binaries and generated visuals have separate provenance; see
 - Simulation validation and unanimous model review are not formal verification or safety proofs.
   The stopping/separation approach does not imply standards compliance or certification.
 - Control timings are code latencies inside a simulator, not hardware real-time guarantees.
-- Remaining integration includes production court/advisor/diagnosis services,
-  multimodal providers, the fleet planner, package consistency checks and E10 evaluation.
+- Live provider evaluations, PostgreSQL deployment validation and E10 evaluation
+  remain. Voice and vision integration is deferred under ADR-097.
 - [Multi-warehouse logistics](docs/MULTI_WAREHOUSE_PLAN.md) is a planned extension,
   not implemented or evaluated as part of the local system described here.
 
@@ -356,16 +340,15 @@ Model binaries and generated visuals have separate provenance; see
 |---|---|
 | Author | Agustin Diaz Cano, solo maintainer |
 | AI development tools | Claude Code, Codex and Antigravity assisted with code, tests, research and documentation under maintainer review |
-| Product models | Configured Meta Muse Wonder, Muse Spark, Muse Spark Open, Muse Glimmer and Muse Voice Transcribe roles; Vertex is a declared backup/comparison route. Integration status is listed above |
+| Product models | Configured Meta Muse Wonder, Muse Spark, Muse Spark Open and Muse Glimmer roles; Muse Voice Transcribe integration is deferred. Integration status is listed above |
 | Prior code and ideas | No prior code copied or adapted, as declared in [PRIOR_WORK.md](PRIOR_WORK.md); earlier related ideas are disclosed there |
 | Assets | Generated assets and synthetic source documents; provenance and outstanding rights records in [ASSETS.md](ASSETS.md) |
 | Measurements | Only committed result files support the numbers in this README; mocks and example replays are labeled |
 
 ## Model license notice
 
-Built with Muse Spark Open. The project retains this attribution notice in the
-README and viewer. Exact model-license wording and the video end card still need
-maintainer verification; the notice alone is not a license-compliance assessment.
+Built with Muse Spark Open. Model licenses apply separately from the project
+code license; see [ASSETS.md](ASSETS.md) for attribution records.
 
 ## License
 
