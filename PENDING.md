@@ -1,5 +1,9 @@
 # Waggle Hive: Pending
 
+README banner task (2026-11-04): HTML source and 1600 by 500 Chrome capture added
+on docs/readme-brand-header. Project code estimate remains 95% plus/minus 2 points
+by eye, code only; this presentation asset does not change it.
+
 Code progress of the project (estimate by eye, code only): 95% on 2026-11-04,
 margin about 2 points, recomputed bottom-up after PRs 180 to 185 merged
 (30,664 source lines, 35,595 test lines measured on main). Scope decisions
@@ -201,3 +205,4 @@ runner are merged. Production integration and experiment gaps remain.
 
 | 134 | P2 | Produce a three-minute finished-product demo with real scenes and mocks for pending behavior | A, M | handoff in ../waggle-video-demo-plan on docs/video-demo-plan, docs/VIDEO_DEMO_PLAN.md; full 3D global scene required (three cells, thirty robots, trucks, coordinator and reassignment); small persistent banner with Powered by Meta Muse, Agustin Diaz Cano and MS Candidate, Systems Engineering; official Meta floor decals; verify final attribution; five-second MP4 export proof first; all presentation implementation and render still pending; no core code change, estimate retained at 88% +/-4 on 2026-11-04 | - |
 | 135 | P1 | Publish video-plan docs PR against main | A, M | maintainer explicitly requested PR publication with no further tests for this documentation task; earlier 51 docs/style tests passed and plan commit secret scan found no leaks; publication in progress; maintainer reviews and merges | - |
+| 136 | P2 | Add Waggle Hive HTML banner, Meta symbol and rectangular screenshot to README | A, M | implemented on docs/readme-brand-header; visual inspection passed at 1600 by 500; publication and maintainer review remain | - |
