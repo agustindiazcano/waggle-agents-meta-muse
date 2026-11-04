@@ -362,3 +362,8 @@ def test_a_run_without_packages_has_the_hash_it_had_before() -> None:
 
 def test_status_codes_are_stable() -> None:
     assert [int(s) for s in Status] == [0, 1, 2, 3]
+
+
+def test_package_ids_expose_the_simulator_ids_in_spec_order() -> None:
+    _, model = _rig()
+    assert model.package_ids == ("pk-1", "pk-2", "pk-3")

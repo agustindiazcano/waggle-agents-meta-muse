@@ -235,3 +235,21 @@ def test_without_a_package_model_package_orders_still_fail_at_once() -> None:
     sim, _ = _rig(queue)
     sim.run(2)
     assert [(r[0], r[1]) for r in queue.resolved] == [(9, "failed")]
+
+
+class _FakeRegistry:
+    def __init__(self, ids: tuple[str, ...]) -> None:
+        self._ids = ids
+
+    def ids(self) -> tuple[str, ...]:
+        return self._ids
+
+
+def test_registry_and_simulator_package_ids_must_match() -> None:
+    from waggle.experiments.sim_motion import packages_match
+
+    _, model, _ = _pkg_rig(FakeQueue())
+    assert packages_match(_FakeRegistry(("pk-1",)), model) is True
+    assert packages_match(_FakeRegistry(("pk-1", "pk-2")), model) is False
+    assert packages_match(_FakeRegistry(()), model) is False
+    assert packages_match(_FakeRegistry(("pk-9",)), model) is False

@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 14
+LATEST_REVISION = 15
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -318,6 +318,12 @@ _FAILURE_HISTORY_DDL: tuple[LiteralString, ...] = (
     """CREATE INDEX failure_history_mode ON failure_history (mode)""",
 )
 
+_PACKAGE_FK_DDL: tuple[LiteralString, ...] = (
+    """ALTER TABLE motion_orders
+        ADD CONSTRAINT motion_orders_package_id_fkey
+        FOREIGN KEY (package_id) REFERENCES packages(package_id)""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -333,6 +339,7 @@ _MIGRATIONS = {
     12: _PACKAGE_DDL,
     13: _LLM_CALLS_DDL,
     14: _FAILURE_HISTORY_DDL,
+    15: _PACKAGE_FK_DDL,
 }
 
 

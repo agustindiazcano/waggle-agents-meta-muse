@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import cast
 
+import psycopg.errors
 import pytest
 
 from waggle.coordination.corridors import CorridorRequest, Direction, ZoneObservation
@@ -10,6 +11,7 @@ from waggle.coordination.task_model import TaskDefinition, TaskState
 from waggle.db.connection import Database
 from waggle.db.corridors import CorridorRepository
 from waggle.db.motion import MotionOrderRepository, MotionRefused, NewOrder
+from waggle.db.packages import PackageRegistry
 from waggle.db.tasks import TaskRepository
 
 pytestmark = pytest.mark.heavy
@@ -71,6 +73,7 @@ def test_the_same_order_replays_and_a_different_one_is_busy(database: Database) 
 
 def test_resolving_frees_the_robot_and_is_not_repeatable(database: Database) -> None:
     _task(database)
+    PackageRegistry(database).add("pk-1")
     repo = MotionOrderRepository(database)
     first = repo.enqueue("robot", MOVE, 1)
     assert first.order_id is not None
@@ -114,6 +117,7 @@ def test_delivery_needs_a_live_lease_on_the_zone(database: Database) -> None:
 
 def test_delivery_into_a_held_zone_queues_and_an_expired_lease_does_not(database: Database) -> None:
     _task(database, lease_ticks=10_000)
+    PackageRegistry(database).add("pk-1")
     _hold(database, "dock")
     repo = MotionOrderRepository(database)
     deliver = NewOrder("deliver_package", "job", package_id="pk-1", zone_id="dock")
@@ -124,3 +128,25 @@ def test_delivery_into_a_held_zone_queues_and_an_expired_lease_does_not(database
     expired = cast(int, row[0])
     repo.resolve(repo.pending()[0].order_id, "done", 2)
     assert _refused(repo, "robot", deliver, tick=expired) == "zone_not_held"
+
+
+def test_a_motion_order_for_an_unknown_package_fails_the_foreign_key(database: Database) -> None:
+    _task(database)
+    repo = MotionOrderRepository(database)
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        repo.enqueue("robot", PICK, 1)
+
+
+def test_a_motion_order_for_a_registered_package_queues(database: Database) -> None:
+    _task(database)
+    PackageRegistry(database).add("pk-1")
+    assert MotionOrderRepository(database).enqueue("robot", PICK, 1).reason == "queued"
+
+
+def test_revision_fifteen_upgrade_adds_the_package_foreign_key(database: Database) -> None:
+    # The fixture database is already at the latest revision; the FK must be present.
+    with database.transaction() as connection:
+        row = connection.execute(
+            "SELECT 1 FROM pg_constraint WHERE conname='motion_orders_package_id_fkey'"
+        ).fetchone()
+    assert row is not None
