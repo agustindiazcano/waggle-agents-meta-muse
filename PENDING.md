@@ -1,6 +1,6 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D, replacing the stale November 2 estimate of 80%. The merged viewer gallery contributes less than one project point at this precision; viewer code is about 68% including PR 163. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. PR 163 is merged in main 8cfb8fb. E8 reporting is implemented in an isolated branch; its broader collection block is about 75% and E9 remains 0%. The bounded E8 reporting task is 100%. This addition is below one project point at the current precision, so the project judgment remains 83%. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D, replacing the stale November 2 estimate of 80%. The merged viewer gallery contributes less than one project point at this precision; viewer code is about 68% including PR 163. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. PR 163 is merged in main 8cfb8fb. E8 reporting is implemented in an isolated branch; its broader collection block is about 75% and the E9 planted-defect arm is done on exp/e9-planted-defects (ADR-091). The bounded E8 reporting task is 100%. This addition is below one project point at the current precision, so the project judgment remains 83%. See LASTCONTEXT.md.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -29,7 +29,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 75% | Package registry and forwarder check already exist; future migration needs review |
 | P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 30% | Rows 37 and 39; no new experiment evidence in this audit |
 | P2 | Complete E8 production collection and calibration | A, M | 75% | Report runner, cloud control benchmark and extrapolation implemented; database export automation remains; measurements pending |
-| P2 | Implement E9 mutation/regression campaign | A | 0% | Experiment definitions alone do not count as runner implementation |
+| P2 | Implement E9 mutation/regression campaign | A | 40% | Planted-defect arm done in ADR-091 (branch exp/e9-planted-defects), 4 of 4 killed; cloud mutation-tool arm remains |
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |
@@ -165,3 +165,4 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 123 | P2 | Delete obsolete docs/context-wave3 remotely, never merge (endpoint diff removes 6325 lines). Ticket race patch is already in main as 8ae51e3; feat/maintenance-tickets needs no PR | M | remote cleanup pending; preserve all worktrees with unmerged work | - |
 
 | 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | code complete in exp/e8-latency-runner; exact validation and PR in task chat; broader production exports and calibration remain | 100% |
+| 125 | P2 | E9 planted-defect campaign (ADR-091): registry of 4 defects, copy-only runner, baseline check, result writer; first run 4 of 4 killed on dev code | A | done on branch exp/e9-planted-defects; maintainer merges the PR; cloud mutation-tool arm remains | 100% |

@@ -7,6 +7,11 @@ this task did not switch its branch or edit its files. Two requested subagents
 implemented call metrics and extrapolation in their own worktrees; their files
 were reviewed and copied into the E8 integration branch, with no shared edits.
 
+E9 update (2026-11-04): branch exp/e9-planted-defects in worktree
+../waggle-e9-planted-defects adds the planted-defect campaign (ADR-091):
+4 defects, copy-only runner, baseline check, result writer; first run
+4 of 4 killed, in results/e9/dev/planted.json. Cloud mutation arm remains.
+
 Code progress of the project (estimate by eye, code only): 83% on 2026-11-04,
 margin about 3 points. This judgment stays at the same rounded value: the bounded
 E8 reporting task is 100% written with tests, while the broader E8 collection

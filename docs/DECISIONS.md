@@ -1012,3 +1012,22 @@ requires the binary pack and checks decoding and clip names. Playwright 1.64.1 i
 development only (ADR-029). `viewer.yml` runs checks without the binary pack.
 Artistic quality, map geometry, overlays, live mode and role/action replay fields
 remain outside this gallery change.
+
+## ADR-091: E9 planted-defect campaign
+
+Status: implemented with unit tests (9 in the E9 test file); first campaign run
+locally on development code, 4 of 4 planted defects killed. No held-out seeds,
+no paid call. The mutation-tool arm of E9 (cloud only) remains unimplemented.
+
+Decision: `waggle.experiments.e9_defects` holds the hand-written defect list of
+EXPERIMENTS.md E9 as exact source replacements (margin lowered, arbiter taking
+the largest cap, stale scan accepted, lease token comparison inverted), each
+declaring its expected detector test nodes before the run.
+`waggle.experiments.e9_run` copies src, tests and pyproject.toml to a temporary
+directory, applies one defect to the copy only, and runs the detectors there.
+A defect is killed only when a detector fails on the mutated copy and passes
+on an unmutated copy; a failing baseline is reported as detector_broken, never
+as a kill. Survivors and broken detectors are listed in the result JSON in
+full. Production source is never patched, so no safety check, fencing
+comparison or threshold changes in the real tree.
+
