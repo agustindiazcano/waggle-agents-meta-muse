@@ -41,6 +41,11 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Done last
 
+- The maintainer requested publication of the docs PR and explicitly instructed
+  no further tests for this documentation task. Publish docs/video-demo-plan
+  against main; the maintainer reviews and merges. Earlier focused docs/style
+  checks passed 51 tests and the plan commit secret scan found no leaks.
+  No local full suite was run and no CI stamp was fabricated.
 - Planned a three-minute finished-product demo in docs/VIDEO_DEMO_PLAN.md.
   The maintainer explicitly wants mocks for missing behavior while code work
   continues. Main ae83dab includes PR 178. Preserve dirty capture and global
@@ -101,6 +106,9 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first.
+The maintainer requested the docs PR and explicitly said to run no further tests
+for this documentation task. Check publication status of docs/video-demo-plan;
+the maintainer reviews and merges. Do not restart local tests for these docs.
 For video work, use C:/projects/projects-github-agustindiazcano/waggle-video-demo-plan,
 branch docs/video-demo-plan, and read docs/VIDEO_DEMO_PLAN.md. The maintainer wants
 a three-minute finished-product experience using mocks while code work continues.
