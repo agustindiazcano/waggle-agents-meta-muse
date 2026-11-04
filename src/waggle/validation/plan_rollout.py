@@ -1,12 +1,13 @@
 """Stage C of the plan validator: one deterministic rollout of the compiled plan (ADR-023, 078).
 
 After the schema, the geofence check and the static geometry stage pass, the compiled paths are
-driven in the simulator dynamics with no humans, over the horizon H (45 s, the ADR-025 design
-basis). The rollout reports robot-robot collisions, hazard zone entries along the real path,
-and robots that made no progress. It is a pure function of its inputs: the same plan, map and
+driven in the simulator dynamics over the horizon H (45 s, the ADR-025 design basis), with no
+humans or with the walkers the caller passes (stage D). The rollout reports robot-robot and
+robot-human contacts, separation violations, hazard zone entries along the real path, and
+robots that made no progress. It is a pure function of its inputs: the same plan, map and
 config give the same counterexamples and state hash.
 
-Not in this stage, stated plainly: human variants (stage D), the reflex layer inside the rollout
+Not in this stage, stated plainly: the reflex layer inside the rollout
 (a plan that only survives because the reflex layer would brake is rejected here, which is
 stricter than the design), lease and deadlock checks, the recoverable terminal state check, and
 ``wait_for`` ordering between robots (every robot starts at tick 0). Bad input raises
@@ -20,6 +21,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from waggle.sim import detector, engine, humans, params, robots, scripted
+from waggle.validation.belief import HumanState
 from waggle.validation.counterexample import Counterexample, CounterexampleCode, Rule
 from waggle.validation.geofence import check_geofence
 from waggle.validation.geometry import polygon_box, segment_box_distance
@@ -27,7 +29,8 @@ from waggle.validation.path_compiler import CompiledPath, StaticMap, compile_pla
 from waggle.validation.plan import Plan
 
 _SEVERITY = {code: index for index, code in enumerate(CounterexampleCode)}
-_CONTACT = 0
+_CONTACT, _VIOLATION = 0, 1
+_NEVER = 999_999_999
 
 
 @dataclass(frozen=True)
@@ -108,13 +111,33 @@ def _hazard_boxes(static: StaticMap, hazard: frozenset[str]) -> dict[str, tuple[
     return {z: zones[z] for z in sorted(hazard)}
 
 
+def _walker_plans(walkers: Sequence[HumanState]) -> list[humans.HumanPlan]:
+    plans: list[humans.HumanPlan] = []
+    for h in walkers:
+        speed = math.hypot(h.velocity[0], h.velocity[1])
+        if speed > 0.0:
+            plans.append(humans.HumanPlan.walker(speed, turn_sigma=0.0))
+        else:
+            plans.append(
+                humans.HumanPlan(
+                    kind="scripted", speed=1.0, path=(h.position, h.position), start_tick=_NEVER
+                )
+            )
+    return plans
+
+
 def run_plan_rollout(
-    paths: Sequence[CompiledPath], static: StaticMap, config: RolloutConfig
+    paths: Sequence[CompiledPath],
+    static: StaticMap,
+    config: RolloutConfig,
+    walkers: Sequence[HumanState] = (),
 ) -> RolloutOutcome:
     """Drive the compiled paths over the horizon and collect counterexamples.
 
     Every robot in ``static.robot_start`` is simulated; one with no path stands still, so it
-    can be hit. Raises ValueError for a robot with no kind or no start, or an unknown hazard.
+    can be hit. ``walkers`` are humans at t = 0 (position and velocity): one with speed walks
+    straight at that speed with no turning, one with zero speed stands still. The default is
+    no humans. Raises ValueError for a robot with no kind or no start, or an unknown hazard.
     """
     ids = sorted(static.robot_start)
     missing = [rid for rid in ids if rid not in config.robot_kinds]
@@ -124,25 +147,31 @@ def run_plan_rollout(
     routes = _routes(paths, ids)
     pose = _poses(ids, routes, static)
     fleet = robots.RobotFleet([config.robot_kinds[rid] for rid in ids])
-    crowd = humans.Crowd([], static.world)
+    count = len(walkers)
+    crowd = humans.Crowd(_walker_plans(walkers), static.world)
     driver = scripted.WaypointDriver(fleet, routes, loop=False)
     det = detector.Detector(
         fleet.params,
         separation_margin=config.separation_margin_m,
         near_miss_margin=config.separation_margin_m,
     )
-    no_humans = np.zeros((0, 2), dtype=np.float64)
+    starts = np.array([h.position for h in walkers], dtype=np.float64).reshape(count, 2)
     arrays = {
         **fleet.initial_arrays(pose, np.zeros(len(ids))),
-        **crowd.initial_arrays(no_humans),
+        **crowd.initial_arrays(starts),
         **driver.initial_arrays(),
-        **det.initial_arrays(pose, no_humans),
+        **det.initial_arrays(pose, starts),
     }
+    if count:
+        arrays["human_heading"] = np.array(
+            [math.atan2(h.velocity[1], h.velocity[0]) for h in walkers], dtype=np.float64
+        )
     systems = [driver.system(), fleet.system(), crowd.system(), det.system()]
-    sim = engine.Engine(config.seed, arrays, systems, {"humans": 0})
+    sim = engine.Engine(config.seed, arrays, systems, {"humans": count})
     found: list[Counterexample] = []
     hit_zones: set[tuple[str, str]] = set()
     reported: set[tuple[int, int]] = set()
+    reported_human: set[tuple[int, int, int]] = set()
     half_width = [p.width / 2.0 for p in fleet.params]
     ticks = params.ticks_for(config.horizon_s)
 
@@ -167,17 +196,40 @@ def run_plan_rollout(
                         )
                     )
 
+    def scan_human_flags(flags: np.ndarray, now: float) -> None:
+        h_pos = np.asarray(sim.state.arrays["human_pos"], dtype=np.float64)
+        for i in range(len(ids)):
+            for h in range(count):
+                for index, code, rule in (
+                    (_CONTACT, CounterexampleCode.COLLISION, Rule.COLLISION_FREE),
+                    (_VIOLATION, CounterexampleCode.SEPARATION_VIOLATION, Rule.SEPARATION_MIN),
+                ):
+                    if flags[i, h, index] and (i, h, index) not in reported_human:
+                        reported_human.add((i, h, index))
+                        found.append(
+                            Counterexample(
+                                code,
+                                time_s=now,
+                                entities=(ids[i], "human"),
+                                place_xy_m=(float(h_pos[h, 0]), float(h_pos[h, 1])),
+                                min_clearance_m=0.0 if index == _VIOLATION else None,
+                                rule=rule,
+                            )
+                        )
+
     def scan_contacts() -> None:
+        now = sim.state.tick * params.DT
         flags = np.asarray(sim.state.arrays["det_flags"], dtype=np.int64)
         poses = np.asarray(sim.state.arrays["robot_pose"], dtype=np.float64)
+        scan_human_flags(flags, now)
         for i in range(len(ids)):
             for k in range(i + 1, len(ids)):
-                if flags[i, k, _CONTACT] and (i, k) not in reported:
+                if flags[i, count + k, _CONTACT] and (i, k) not in reported:
                     reported.add((i, k))
                     found.append(
                         Counterexample(
                             CounterexampleCode.COLLISION,
-                            time_s=sim.state.tick * params.DT,
+                            time_s=now,
                             entities=(ids[i], ids[k]),
                             place_xy_m=(
                                 float((poses[i, 0] + poses[k, 0]) / 2),
