@@ -144,10 +144,16 @@ def classify_record_with_facts(
 ) -> Diagnosis:
     """Classify one run record against precomputed scenario geometry."""
     counts = _counts(record)
-    stops_raw = record.get("stop_episodes") or {}
-    stops = sum(int(v) for v in stops_raw.values()) if isinstance(stops_raw, dict) else 0
-    false_stops = int(record.get("false_stops") or 0)
-    tasks = int(record.get("tasks_completed") or 0)
+    stops_raw = record.get("stop_episodes")
+    if not isinstance(stops_raw, dict):
+        raise ValueError("run record has no stop_episodes mapping")
+    stops = sum(int(v) for v in stops_raw.values())
+    if not isinstance(record.get("false_stops"), int) or not isinstance(
+        record.get("tasks_completed"), int
+    ):
+        raise ValueError("run record has no false_stops or tasks_completed count")
+    false_stops = int(record["false_stops"])
+    tasks = int(record["tasks_completed"])
     human_hits = counts.get("human_collisions", 0)
     robot_hits = counts.get("robot_collisions", 0)
     detail = (
@@ -203,12 +209,12 @@ def classify_record_with_facts(
 def classify_run(
     configuration: str,
     record: dict[str, Any],
-    allowed_seeds: dict[str, list[int]] | None = None,
+    allowed_seeds: dict[str, list[int]],
 ) -> Diagnosis:
-    """Classify one record, optionally refusing seeds outside the development set."""
+    """Classify one record, refusing seeds outside the development set."""
     scenario_id = str(record.get("scenario", ""))
     seed = int(record.get("seed", -1))
-    if allowed_seeds is not None and seed not in allowed_seeds.get(scenario_id, []):
+    if seed not in allowed_seeds.get(scenario_id, []):
         raise ValueError(f"seed {seed} for {scenario_id} is not in the development seed set")
     return classify_record_with_facts(configuration, record, scenario_facts(scenario_id, seed))
 

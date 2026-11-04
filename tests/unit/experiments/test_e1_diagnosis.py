@@ -59,6 +59,7 @@ def test_a_stopped_run_in_s03_is_a_head_on_stop_not_a_mystery() -> None:
     got = e1_diagnosis.classify_run(
         "envelope_oracle",
         _record(scenario="S03", stop_episodes={"envelope": 92}, false_stops=92),
+        {"S03": [1]},
     )
     assert got.cause is Cause.HEAD_ON_ONE_LANE
     assert "one-lane" in got.evidence
@@ -68,6 +69,7 @@ def test_a_stopped_run_behind_the_s06_human_is_a_legitimate_stop() -> None:
     got = e1_diagnosis.classify_run(
         "envelope_oracle",
         _record(stop_episodes={"envelope": 53, "estop": 1}, false_stops=2),
+        {"S06": [1]},
     )
     assert got.cause is Cause.HUMAN_STOPPED_ON_ROUTE
     assert got.tasks_completed == 0
@@ -76,19 +78,19 @@ def test_a_stopped_run_behind_the_s06_human_is_a_legitimate_stop() -> None:
 def test_a_robot_collision_without_control_is_a_head_on_collision() -> None:
     record = _record(scenario="S03")
     record["counts"] = dict(record["counts"], robot_collisions=1)
-    got = e1_diagnosis.classify_run("no_control", record)
+    got = e1_diagnosis.classify_run("no_control", record, _dev_seeds() | {"S03": [1]})
     assert got.cause is Cause.ROBOT_ROBOT_COLLISION_HEAD_ON
 
 
 def test_a_human_collision_is_split_by_the_adversarial_fraction() -> None:
     record = _record(seed=_dev_seeds()["S06"][3])  # fraction 0.597, inside stopping distance
     record["counts"] = dict(record["counts"], human_collisions=1)
-    got = e1_diagnosis.classify_run("no_control", record)
+    got = e1_diagnosis.classify_run("no_control", record, _dev_seeds() | {"S03": [1]})
     assert got.cause is Cause.HUMAN_COLLISION_INSIDE_STOPPING_DISTANCE
 
     record = _record(seed=_dev_seeds()["S06"][1])  # fraction 1.476, outside stopping distance
     record["counts"] = dict(record["counts"], human_collisions=1)
-    got = e1_diagnosis.classify_run("no_control", record)
+    got = e1_diagnosis.classify_run("no_control", record, _dev_seeds() | {"S03": [1]})
     assert got.cause is Cause.HUMAN_COLLISION_OUTSIDE_STOPPING_DISTANCE
 
 
@@ -113,13 +115,13 @@ def test_an_unexplained_false_stop_is_not_silently_passed() -> None:
 
 
 def test_a_clean_run_is_reported_as_clean() -> None:
-    got = e1_diagnosis.classify_run("envelope_oracle", _record())
+    got = e1_diagnosis.classify_run("envelope_oracle", _record(), {"S06": [1]})
     assert got.cause is Cause.NO_STOP_OR_COLLISION
 
 
 def test_missing_counts_are_an_error_not_an_empty_pass() -> None:
     with pytest.raises(ValueError, match="counts"):
-        e1_diagnosis.classify_run("envelope_oracle", {"scenario": "S06", "seed": 1})
+        e1_diagnosis.classify_run("envelope_oracle", {"scenario": "S06", "seed": 1}, {"S06": [1]})
 
 
 def test_a_seed_outside_the_development_set_is_refused() -> None:
