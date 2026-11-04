@@ -5,6 +5,8 @@ caller supplies topology and rollout policy explicitly. Accepted routes replace 
 scripted driver's routes; the original dynamics and fast layer still run. Non-MOVE
 actions, wait_for dependencies and capacity-one corridors are refused. Production
 dispatch, online replanning and general fleet scheduling are outside this adapter.
+Original work destinations must remain in order and the terminal must match. Only
+original destinations count as work; intermediate navigation nodes do not.
 """
 
 import json
@@ -14,12 +16,14 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
 from dataclasses import asdict
 
+import numpy as np
+
 from waggle.governance.organizer_fleet import FleetPlanResult, validate_fleet_plan
 from waggle.llm.client import LlmClient
 from waggle.llm.crisis_adapter import PLANNER_PROMPT_HASH, PLANNER_PROMPT_VERSION, LlmPlanProposer
 from waggle.llm.errors import LlmError
-from waggle.sim import engine, robots, scenarios, scripted
-from waggle.validation.path_compiler import StaticMap
+from waggle.sim import engine, robots, scenarios, scripted, state
+from waggle.validation.path_compiler import CompiledPath, StaticMap
 from waggle.validation.plan import PlanContext
 from waggle.validation.plan_rollout import RolloutConfig
 
@@ -45,6 +49,15 @@ def fleet_record(
         ),
         "fleet_planner_reason": None if result is None else result.reason,
         "fleet_routes": routes,
+        "fleet_execution": "one_shot" if result is not None and result.plan is not None else None,
+        "fleet_evaluation_note": (
+            None
+            if result is None
+            else "Implemented, not evaluated. Accepted C4 plans execute one-shot; "
+            "the baseline loops. "
+            "Tasks completed and throughput are not directly comparable after the terminal "
+            "without an aligned evaluation protocol. Rejected plans retain the baseline driver."
+        ),
     }
 
 
@@ -119,7 +132,7 @@ def propose_fleet_plan(
         return FleetPlanResult(None, reason="planner_error")
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
-    return validate_fleet_plan(
+    result = validate_fleet_plan(
         raw,
         mission_id=mission_id,
         context=context,
@@ -127,6 +140,43 @@ def propose_fleet_plan(
         config=config,
         max_response_chars=max_response_chars,
     )
+    if result.plan is not None and _mission_work_indices(result.paths, scenario) is None:
+        return FleetPlanResult(None, reason="mission_mismatch")
+    return result
+
+
+def _same_point(a: tuple[float, float], b: tuple[float, float]) -> bool:
+    return all(math.isclose(x, y, abs_tol=1e-9) for x, y in zip(a, b, strict=True))
+
+
+def _mission_work_indices(
+    paths: tuple[CompiledPath, ...], scenario: scenarios.Scenario
+) -> tuple[frozenset[int], ...] | None:
+    """Require all original work destinations in order, with the same terminal."""
+    work: list[frozenset[int]] = []
+    for i, robot in enumerate(scenario.robots):
+        route = [
+            point for path in paths if path.robot_id == f"robot-{i}" for point in path.waypoints
+        ]
+        if not robot.route:
+            if route:
+                return None
+            work.append(frozenset())
+            continue
+        if not route or not _same_point(route[-1], robot.route[-1]):
+            return None
+        indices: list[int] = []
+        cursor = 0
+        for destination in robot.route:
+            match = next(
+                (j for j in range(cursor, len(route)) if _same_point(route[j], destination)), None
+            )
+            if match is None:
+                return None
+            indices.append(match)
+            cursor = match + 1
+        work.append(frozenset(indices))
+    return tuple(work)
 
 
 def apply_fleet_plan(
@@ -134,6 +184,8 @@ def apply_fleet_plan(
 ) -> dict[str, list[list[float]]]:
     """Replace only the driver's route system before tick zero, after full acceptance.
 
+    Each robot preserves its original ordered work destinations and terminal. Only
+    those destinations count as completed tasks; navigation nodes do not count.
     Each robot uses the minimum of its node speed caps for the entire one-shot route.
     The driver's private fleet is separate from both the dynamics and the control rig,
     so this cap can only reduce requested speed and cannot change physical limits.
@@ -142,6 +194,9 @@ def apply_fleet_plan(
         return {}
     if sim.state.tick != 0:
         raise ValueError("fleet plan must be applied before the first tick")
+    work_indices = _mission_work_indices(result.paths, scenario)
+    if work_indices is None:
+        raise ValueError("fleet plan changes the original mission")
     ids = tuple(f"robot-{i}" for i in range(len(scenario.robots)))
     routes: dict[str, list[tuple[float, float]]] = {rid: [] for rid in ids}
     for path in result.paths:
@@ -156,6 +211,24 @@ def apply_fleet_plan(
             if n.robot_id == rid and n.speed_cap_mps is not None
         ]
         driver_fleet.max_speed[i] = min([float(driver_fleet.max_speed[i]), *caps])
-    driver = scripted.WaypointDriver(driver_fleet, [routes[rid] for rid in ids], loop=False)
-    sim.systems[0] = driver.system()
+    # The existing loop=False driver stops after its first waypoint. Use its sequential
+    # loop=True transition, then stop explicitly at the terminal without restarting.
+    driver = scripted.WaypointDriver(driver_fleet, [routes[rid] for rid in ids], loop=True)
+    drive = driver.system()
+
+    def step(sim_state: state.SimState, rngs: dict[str, np.random.Generator]) -> None:
+        waypoint = np.asarray(sim_state.arrays["script_wp"], dtype=np.int64)
+        tasks = np.asarray(sim_state.arrays["script_tasks"], dtype=np.int64)
+        before_wp, before_tasks = waypoint.copy(), tasks.copy()
+        drive(sim_state, rngs)
+        arrived = tasks > before_tasks
+        tasks[:] = before_tasks
+        for i, rid in enumerate(ids):
+            if arrived[i]:
+                if int(before_wp[i]) in work_indices[i]:
+                    tasks[i] += 1
+                if before_wp[i] == len(routes[rid]) - 1:
+                    waypoint[i] = len(routes[rid])
+
+    sim.systems[0] = step
     return {rid: [[float(x), float(y)] for x, y in route] for rid, route in routes.items()}

@@ -1,6 +1,7 @@
 """C4 executes validated MOVE routes offline while preserving deterministic control."""
 
 import json
+import math
 from dataclasses import replace
 
 import pytest
@@ -19,7 +20,8 @@ SEED = 419688070
 STATIC = StaticMap(
     load_map("A"),
     AisleGraph(
-        (AisleNode("start", 2, 3), AisleNode("goal", 4, 3)), (AisleEdge("start", "goal", 2),)
+        (AisleNode("start", 2, 3), AisleNode("via", 4, 2), AisleNode("goal", 38, 3)),
+        (AisleEdge("start", "via", math.hypot(2, 1)), AisleEdge("via", "goal", math.hypot(34, 1))),
     ),
     {"corridor_s": "goal"},
     {"robot-0": "start"},
@@ -78,8 +80,10 @@ def test_c4_applies_route_and_speed_cap_and_keeps_both_robot_roles() -> None:
     uncapped = runner.run_one(_spec(plan=_plan(speed_cap_mps=None)))
     assert capped["fleet_planner_status"] == "accepted"
     assert capped["fleet_planner_calls"] == 1
+    assert capped["fleet_execution"] == "one_shot"
+    assert "not directly comparable" in capped["fleet_evaluation_note"]
     assert capped["advisor_calls"] > 0 and capped["organizer_calls"] > 0
-    assert capped["fleet_routes"] == {"robot-0": [[4.0, 3.0]]}
+    assert capped["fleet_routes"] == {"robot-0": [[4.0, 2.0], [38.0, 3.0]]}
     assert capped["final_hash"] != baseline["final_hash"]
     assert capped["distance_m"] < uncapped["distance_m"]
     assert capped["widening_ticks"] == 0
@@ -87,14 +91,85 @@ def test_c4_applies_route_and_speed_cap_and_keeps_both_robot_roles() -> None:
     assert capped["final_hash"] == runner.run_one(_spec())["final_hash"]
 
 
-def test_c4_completes_the_new_route_instead_of_following_the_original_destination() -> None:
+def test_c4_preserves_the_original_mission_and_does_not_count_navigation_as_work() -> None:
     runner = _runner()
     baseline = runner.run_one(replace(_spec("C3"), ticks=100))
     planned = runner.run_one(replace(_spec(plan=_plan(speed_cap_mps=None)), ticks=100))
     assert baseline["tasks_completed"] == 0
-    assert planned["tasks_completed"] == 1
-    assert planned["distance_m"] < baseline["distance_m"]
+    assert planned["tasks_completed"] == 0
+    assert planned["final_hash"] != baseline["final_hash"]
     assert planned["widening_ticks"] == 0
+
+
+def test_shortened_mission_is_rejected_without_changing_c3() -> None:
+    runner = _runner(static=replace(STATIC, zone_anchor={"corridor_s": "via"}))
+    baseline = runner.run_one(_spec("C3"))
+    result = runner.run_one(_spec())
+    assert result["fleet_planner_status"] == "rejected"
+    assert result["fleet_planner_reason"] == "mission_mismatch"
+    assert result["fleet_routes"] == {}
+    assert result["final_hash"] == baseline["final_hash"]
+
+
+def test_empty_plan_cannot_discard_original_work() -> None:
+    runner = _runner()
+    empty = json.dumps(
+        {"nodes": [], "rationale": "empty", "escalate": False, "escalation_reason": None}
+    )
+    baseline = runner.run_one(_spec("C3"))
+    result = runner.run_one(_spec(plan=empty))
+    assert result["fleet_planner_reason"] == "mission_mismatch"
+    assert result["final_hash"] == baseline["final_hash"]
+
+
+def test_multiwaypoint_execution_reaches_the_original_terminal_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from waggle.sim import scenarios
+
+    original = scenarios.generate("S01", SEED)
+    scenario = replace(
+        original,
+        robots=(
+            replace(
+                original.robots[0], pose=(2.0, 2.0, 0.0), initial_speed=0.0, route=((6.0, 2.0),)
+            ),
+        ),
+    )
+    monkeypatch.setattr(scenarios, "generate", lambda _id, _seed: scenario)
+    static = replace(
+        STATIC,
+        graph=AisleGraph(
+            (AisleNode("start", 2, 2), AisleNode("via", 4, 2), AisleNode("goal", 6, 2)),
+            (
+                AisleEdge("start", "via", 2),
+                AisleEdge("via", "goal", 2),
+            ),
+        ),
+    )
+    runner = _runner(static=static)
+    early = runner.run_one(replace(_spec(plan=_plan(speed_cap_mps=None)), ticks=100))
+    done = runner.run_one(replace(_spec(plan=_plan(speed_cap_mps=None)), ticks=300))
+    assert early["tasks_completed"] == 0
+    assert done["tasks_completed"] == 1
+    assert done["fleet_routes"] == {"robot-0": [[4.0, 2.0], [6.0, 2.0]]}
+
+
+def test_plan_cannot_skip_an_original_work_destination(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from waggle.sim import scenarios
+
+    original = scenarios.generate("S01", SEED)
+    scenario = replace(
+        original, robots=(replace(original.robots[0], route=((10.0, 3.0), (38.0, 3.0))),)
+    )
+    monkeypatch.setattr(scenarios, "generate", lambda _id, _seed: scenario)
+    runner = _runner()
+    baseline = runner.run_one(_spec("C3"))
+    result = runner.run_one(_spec())
+    assert result["fleet_planner_reason"] == "mission_mismatch"
+    assert result["final_hash"] == baseline["final_hash"]
 
 
 @pytest.mark.parametrize(
