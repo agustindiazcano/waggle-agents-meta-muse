@@ -1,113 +1,58 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. PR 163 (8cfb8fb), PR 164 (ba2abcf, E8 reporting), PR 165
-(c7098a7, crisis planner adapter ADR-090), PR 166 (d18991a, organizer E5 ADR-091),
-PR 167 (21e1b54, E9 planted defects ADR-092), PR 169 (5b9a19d, viewer overlays
-ADR-093) and PR 170 (e47a5b6) are merged in main. This branch
-(feat/meta-wonder-routing, ADR-094) routes the planning-tier orchestrator roles
-(`director`, `planner`, `diagnosis`) to `META_WONDER_MODEL_ID` on the `meta`
-provider while keeping `META_MODEL_ID` for `court_1` and `vision`, and exposes
-`META_WONDER_MODEL_ID` in `.env.example` and `.github/workflows/heavy.yml`. The
-maintainer merges the PR, not the agent.
-
-E9 update (2026-11-04): branch exp/e9-planted-defects (PR 167, ADR-092) adds the
-planted-defect campaign: 4 defects, copy-only runner, baseline check, result
-writer; first run 4 of 4 killed, in results/e9/dev/planted.json. Cloud mutation
-arm remains.
+Updated: 2026-11-04. README task on `docs/readme-project`, based on main
+`7b99bbf` (PR 174, Meta Wonder routing merged). Other agents continue in separate
+worktrees; preserve their work. The maintainer reviews and merges every PR.
 
 Code progress of the project (estimate by eye, code only): 87% on 2026-11-04,
-margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164
-(E8 reporting, ba2abcf), PR 165 (crisis planner adapter, ADR-090, c7098a7),
-PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091, d18991a) and PR 167 (E9 planted
-defects, ADR-092, 21e1b54), and this branch (`feat/viewer-overlays`, ADR-093)
-implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`,
-`ghost_paths`) and `/ws/live` client, raising viewer code from 68% to about 95%.
-Measurements, calibration, documents and delivery do not count. No new published
-number or README result changed.
-
-## Current state
-
-- Main includes the viewer gallery (20 entries, 17 GLBs and three procedural
-  previews), offline importer, camera controls and ADR-089. Gallery task code is
-  100%, viewer overall about 68%; visual review, map, overlays and live mode remain.
-- E8 adds production control_step timing through the existing E1 ControlRig,
-  strict metadata-only llm_calls export summaries and a seeded finite-burst
-  extrapolator. The workflow produces three separate cloud benchmark artifacts.
-  Provider/role measurements, production exports and calibration remain pending.
-- Error latency in the current LLM client is unmeasured and stored as zero.
-  E8 never treats those placeholders as measured durations. Extrapolation uses
-  successful-call latency and the observed error-row fraction, explicitly labeled
-  as an assumption. Cached and denied rows are counted separately.
-- The crisis LLM proposer adapter is merged in main (`c7098a7`, PR 165, ADR-090);
-  its E10 harness and production caller remain. This branch (`feat/organizer-e5`,
-  ADR-091) adds `waggle.governance.organizer`, `waggle.llm.organizer_runtime`
-  (`organizer-v1`) and E5 `C2`, `C3` and `C3_REPLAY`. E5 `C4` remains refused
-  until the fleet planner exists. E4 production court/cross-family routes, E6
-  database-backed diagnosis, MCP SDK validation, real multimodal providers,
-  package integrity and E9 remain. No paid call, migration, held-out run or
-  safety change was performed in this task.
-- LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
-  model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
-  rollout/crisis 90%; E2 harness 97%; replay generator 100%. Estimates by eye only.
-- GitHub Actions secrets (`META_API_KEY`, `BASETEN_API_KEY`, `MODAL_TOKEN_ID`,
-  `MODAL_TOKEN_SECRET`) and repository variables (`META_API_BASE_URL=https://api.meta.ai/v1`,
-  `META_MODEL_ID=muse-spark-1.3`, `META_WONDER_MODEL_ID=muse-wonder-1.0`,
-  `BASETEN_MODEL_ID=meta-models/muse-spark-open`,
-  `MODAL_ENDPOINT_URL=https://inference.us-west.modal.direct/v1`,
-  `MODAL_GLIMMER_MODEL_ID=meta-models/Muse-Glimmer-30B`,
-  `MODAL_SPARK_OPEN_MODEL_ID=meta-models/Muse-Spark-Open-816B-A42B`,
-  `META_SPEND_CAP_USD=135.0`, `BASETEN_SPEND_CAP_USD=90.0`,
-  `MODAL_SPEND_CAP_USD=90.9`, Modal workspace `ac-BQSGYNtST9xpA7WA5Cef1y`) are
-  now configured. Baseten and Modal `verified = true` price entries in
-  `src/waggle/llm/prices.toml`, `META_VOICE_MODEL_ID`, Vertex backup variables,
-  and maintainer-reviewed labels/catalog/zones/recordings still remain.
-  G-GLOBAL remains unauthorized, outside the denominator.
+margin about 3 points. Unchanged: this task updates documentation and its checks,
+not product code. Existing per-task estimates remain in PENDING.md.
 
 ## Done last
 
-- Crisis planner adapter (ADR-090, this branch): failing test first
-  (ModuleNotFoundError for waggle.llm.crisis_adapter), then planner_v1.txt and
-  crisis_adapter.py. Local run: 214 passed (adapter, full validation suite and
-  court adapter) with the sandbox workarounds below. The guard adapter tests
-  fail locally because the sandbox blocks the asyncio localhost socketpair;
-  that file is untouched by this branch.
-- Merged origin/main at ba2abcf (PR 164, E8 reporting) into feat/crisis-planner-adapter
-  without rewriting history, retaining both the E8 handoff and ADR-090 context.
-- E8 reporting (PR 164): both subagents and the runner initially failed with missing
-  modules. The review regressions reproduced unmeasured error latency being sampled
-  as zero and prompt metadata failing to cover measured roles; both were corrected.
-  See docs/E8_RUNNER.md for commands, strict input schema, measurement scope,
-  provenance limits, assumptions and remaining work. No new dependencies.
+- Rewrote README: warehouse problem, task flow, architecture, implementation versus
+  pending integration, configured model roles, E1/E2/E8/E9 evidence, E3 to E10 gaps,
+  hackathon requirement/evidence matrix, viewer setup, configuration and disclosure.
+- Verified the official Meta event page for Indie Developer, Push the Frontier
+  and public judging descriptions. Antigravity web search timed out; direct web
+  access worked. The linked rules/waiver returned only a loading page. Full
+  eligibility, live Meta use, asset rights, video/live links and submission remain
+  explicit checks, not claims of complete compliance.
+- Updated two old documentation tests that required implemented layers to remain
+  labeled as unimplemented. Targeted documentation/provider/style suite: 181 passed.
+  Changed-test Ruff check and formatting pass. No product behavior changed.
+- `uv run replay-verify web/public/demo.jsonl` fails at tick 4 against current code;
+  `--digest-only` passes. README distinguishes playback/integrity from resimulation;
+  the fixture is unchanged. Final full CI/pre-push verification remains to run.
 
-## Preserved work and assets
+## Current state
 
-- Preserve dirty global-custody, Meshy and GLB worktrees and all unmerged work.
-  Preserve C:/Users/agusd/.codex/artifacts/waggle-viewer-models-20261104.zip;
-  binaries are ignored and imported using web/models.json. Viewer port is 5174,
-  gallery URL uses ?gallery=1. Port 5173 belongs to another project.
-- Never merge docs/context-wave3: its endpoint diff deletes thousands of lines.
-  Remote branch deletion is the maintainer's. Ticket race patch d11c7c5 is
-  already represented by 8ae51e3 on main; feat/maintenance-tickets needs no PR.
-- Earlier viewer local browser validation lacked Chromium 1248; do not describe
-  that local run as passed. Earlier validation notes remain in
-  ../waggle-validation-156-163. No asset worktree or unmerged branch was removed.
+- Main at task start contains PRs 163 to 170 and 174, including viewer overlays,
+  E8 reporting, crisis proposer, organizer E5 and E9 planted defects. Fetch origin
+  before continuing: other agents are merging newer work.
+- Remaining integration includes production E4/court, E5 service/call logging,
+  database-backed E6 diagnosis, E10 harness/caller, multimodal providers, fleet
+  planner and package consistency checks. Inspect newer branches before duplicating.
+- README uses historical committed development results, not measurements of HEAD.
+  E1 still has human collisions and substantial throughput loss; E2 is a five-seed
+  admission comparison, not full chaos; E9 covers four declared planted defects.
+- Console balances/caps/prices, reviewed data/labels, asset provenance and final
+  delivery checks remain in PENDING.md and SUBMISSION.md. No paid call, migration,
+  held-out run, safety change or result-file edit occurred in the README task.
+- Preserve dirty asset/global-custody worktrees and the separate viewer asset pack.
+  Never merge `docs/context-wave3`; remote branch cleanup belongs to the maintainer.
+  Viewer port is 5174; port 5173 belongs to another project.
 
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
-git status, branches and worktrees, and fetch origin. PR 163 (8cfb8fb) and PR 164
-(ba2abcf, E8 reporting) are merged in main. Review the PR of
-feat/crisis-planner-adapter (ADR-090, crisis LLM proposer, mock only) and its CI
-before the maintainer merges; agents never merge. Review docs/E8_RUNNER.md for
-commands, metadata schema and explicit extrapolation limits; do not treat
-unmeasured error latency zeros as measurements. Local Python note: the machine
-Python 3.12.4 was removed, so .venv/pyvenv.cfg in this worktree points at a
-uv-downloaded 3.12.16 under the session sandbox; mypy cannot load _ctypes there
-and the sandbox blocks the asyncio socketpair (guard tests) and the uv cache
-lock. Use cloud CI for the full gates. Project code remains about 83% plus/minus
-3 points, bounded E8 reporting task 100%, broader E8 collection 75%, viewer 68%,
-all judgments. Production E4/E5/E6, the E10 harness and crisis caller, MCP SDK
-validation, viewer map/overlays/live and E9 remain; first check other agents'
-branches to avoid duplication. No paid call, held-out run, migration or safety
-change is authorized by this handoff. Never merge docs/context-wave3 or delete
-another agent's work.
+status, branches and worktrees, and fetch origin. Review docs/readme-project and
+its PR/CI before the maintainer merges. The README now explains implemented scope,
+measured development evidence and hackathon checks with explicit pending items.
+Confirm the current branch and cloud results before changing those statuses.
+Project code remains about 87% plus/minus 3 points by eye; this documentation task
+adds no product code. The example replay passes digest checks but resimulation
+against current code differs at tick 4; do not call it a current regression pass.
+Inspect other agents' work before starting production court, maintenance, crisis
+or viewer tasks. Preserve all unmerged work. No paid call, held-out run, migration,
+secret access or safety change is authorized by this handoff. Agents never merge.

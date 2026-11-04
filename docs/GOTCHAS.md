@@ -126,3 +126,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### The model gallery needs the separate asset pack
 - Symptom: a new checkout shows primitives in replay and a model-unavailable message in the gallery.
 - What to do: extract the matching model archive outside `web/public/models`, then run `npm run models:sync -- --source DIRECTORY` from `web/`. The importer checks hashes and refuses a different existing destination file. Preserve that file and inspect the mismatch; do not overwrite it blindly. GLBs are intentionally excluded from Git. Use `npm run test:models` to check decoding after import. The gallery pickup prop is a visual preview; the current replay has no human pickup action.
+
+### An example replay can pass integrity checks and fail resimulation
+- Symptom: `uv run replay-verify web/public/demo.jsonl` reports a frame mismatch at tick 4, while `--digest-only` passes.
+- What to do: distinguish recorded playback and file integrity from equivalence to the current simulator. The `fixture0` demo is historical; show the digest-only command for playback setup and disclose the resimulation mismatch. Do not regenerate the fixture or relabel it as a measured experiment to hide the mismatch.
