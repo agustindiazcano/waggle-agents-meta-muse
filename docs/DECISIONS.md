@@ -1097,3 +1097,17 @@ frame and error messages without computing state, and `scene.ts` renders the
 map polygons and the three overlay groups (`envelopeGroup`, `shadowGroup`,
 `ghostGroup`) directly from the validated simulator coordinates. No safety
 threshold, fencing check, MCP boundary or retry rule is modified.
+
+## ADR-094: Dedicated META_WONDER_MODEL_ID route for planning-tier orchestrator roles
+
+Status: implemented with unit tests (`tests/unit/llm/test_routing.py`,
+`tests/unit/test_providers_docs.py`), not evaluated on paid calls.
+
+Decision: In `src/waggle/llm/routes.toml`, the planning-tier orchestrator and
+reasoning roles (`director`, `planner`, `diagnosis`) read their model identifier
+from `META_WONDER_MODEL_ID` on the `meta` provider route, while `court_1` and
+`vision` continue to read `META_MODEL_ID` and `voice` reads
+`META_VOICE_MODEL_ID`. Model identifiers remain strictly externalized to
+environment variables and GitHub Actions repository variables (never hardcoded
+in `routes.toml`), and no safety threshold, fencing check, court rule or spend
+cap is modified.

@@ -58,7 +58,7 @@ Names only. Values are never printed, logged, repr'd or placed in an exception m
 | `MODAL_TOKEN_SECRET` | modal | Sent as `Modal-Secret` | none, required |
 | `MODAL_ENDPOINT_URL` | modal | Base URL, must be `https` | none, required |
 | `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD` | budget guard | Hard cap in USD. Missing or invalid raises `InvalidCapError` before any call. | none, required |
-| `META_MODEL_ID`, `BASETEN_MODEL_ID`, `MODAL_GLIMMER_MODEL_ID`, `MODAL_SPARK_OPEN_MODEL_ID` | routing | Model ids, read by the existing client | none, required |
+| `META_MODEL_ID`, `META_WONDER_MODEL_ID`, `BASETEN_MODEL_ID`, `MODAL_GLIMMER_MODEL_ID`, `MODAL_SPARK_OPEN_MODEL_ID` | routing | Model ids, read by the existing client | none, required |
 
 The Baseten base URL is fixed in code to the documented `https://inference.baseten.co/v1`. A plain `http` URL is accepted only when a test builds the settings with the loopback switch, which the environment cannot turn on.
 

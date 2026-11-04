@@ -171,7 +171,7 @@ Names only live in `.env.example`. Values go in `.env`, which git ignores.
 | Variable | Description | Default |
 |---|---|---|
 | `META_API_KEY`, `META_API_BASE_URL` | Meta Model API access | none |
-| `META_MODEL_ID`, `META_VOICE_MODEL_ID` | Model ids, read from the API model list (`GET /v1/models`) | none |
+| `META_MODEL_ID`, `META_WONDER_MODEL_ID`, `META_VOICE_MODEL_ID` | Model ids, read from the API model list (`GET /v1/models`) | none |
 | `META_USE_CONTRIBUTOR_TIER` | Use the cheaper contributor tier. Allowed only because all data is synthetic | false |
 | `BASETEN_API_KEY`, `BASETEN_MODEL_ID` | Baseten access and the Muse Spark Open 1026 id | none |
 | `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`, `MODAL_ENDPOINT_URL` | Modal access and endpoint | none |

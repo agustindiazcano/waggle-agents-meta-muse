@@ -1,14 +1,14 @@
 # Waggle Hive: Last context
 
 Updated: 2026-11-04. PR 163 (8cfb8fb), PR 164 (ba2abcf, E8 reporting), PR 165
-(c7098a7, crisis planner adapter ADR-090), PR 166 (d18991a, organizer E5 ADR-091)
-and PR 167 (21e1b54, E9 planted defects ADR-092) are merged in main. This branch
-(feat/viewer-overlays, ADR-093) adds the simulator-supplied safety overlays
-contract (`envelopes`, `lidar_shadows`, `ghost_paths`, `extra`) to
-`waggle.sim.frame` and `web/src/frame_schema.ts`, static map geometry validation
-and rendering (`world_schema.ts`, `scene.ts`), pure overlay provenance and
-visibility toggles (`overlays.ts`), and the `/ws/live` stream parser and client
-(`live_client.ts`, `main.ts`). The maintainer merges the PR, not the agent.
+(c7098a7, crisis planner adapter ADR-090), PR 166 (d18991a, organizer E5 ADR-091),
+PR 167 (21e1b54, E9 planted defects ADR-092), PR 169 (5b9a19d, viewer overlays
+ADR-093) and PR 170 (e47a5b6) are merged in main. This branch
+(feat/meta-wonder-routing, ADR-094) routes the planning-tier orchestrator roles
+(`director`, `planner`, `diagnosis`) to `META_WONDER_MODEL_ID` on the `meta`
+provider while keeping `META_MODEL_ID` for `court_1` and `vision`, and exposes
+`META_WONDER_MODEL_ID` in `.env.example` and `.github/workflows/heavy.yml`. The
+maintainer merges the PR, not the agent.
 
 E9 update (2026-11-04): branch exp/e9-planted-defects (PR 167, ADR-092) adds the
 planted-defect campaign: 4 defects, copy-only runner, baseline check, result
