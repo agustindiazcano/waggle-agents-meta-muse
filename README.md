@@ -63,6 +63,7 @@ It is implemented, not evaluated for provider latency, provider cost or real fle
 
 - numpy 2.5.4 (pinned): the only runtime dependency of the simulator and control, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
 - fastapi 0.162.0 and uvicorn[standard] 0.54.0 (pinned): runtime dependencies of `waggle.api` only, which streams simulator frames over a read-only WebSocket. Import contracts forbid `waggle.sim`, `waggle.control` and `waggle.validation` from importing them. Approved by the maintainer (ADR-029). httpx is a dev dependency, used only by the Starlette test client.
+- mcp 2.3.0 (pinned): dev dependency only, the official MCP Python SDK client used by `tests/unit/mcp_server/test_mcp_sdk_client.py` to run the line transport against a real client. Never imported by runtime code.
 
 ## Scope and limits
 
