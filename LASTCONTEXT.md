@@ -15,6 +15,16 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Current state
 
+- Video handoff is in ../waggle-video-demo-plan, branch docs/video-demo-plan.
+  Read docs/VIDEO_DEMO_PLAN.md there. The maintainer wants a three-minute
+  finished-product experience with mocks while implementation continues.
+  Required: full 3D global scene (three cells, ten robots each, trucks, packages,
+  coordinator, delay/reassignment/delivery), about fifty seconds across the film.
+  Small lower banner: left "Powered by Meta Muse" (working brand wording), right
+  "Agustin Diaz Cano" above "MS Candidate, Systems Engineering". One official Meta
+  floor-logo decal per warehouse. Final attribution wording still needs checking.
+  All are planned, not built. MP4 encoding and synthetic voice remain unverified.
+
 - PR 178 implements live E4 A/B/C through build_client with fallbacks disabled
   (ADR-096). Live mode refuses baseline and D until a verified non-Muse route
   exists. Caps/model IDs are checked before calls. Results record provider mode,
@@ -30,6 +40,15 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
   fast-layer threshold, fencing, audit, MCP rule or trajectory was modified.
 
 ## Done last
+
+- Planned a three-minute finished-product demo in docs/VIDEO_DEMO_PLAN.md.
+  The maintainer explicitly wants mocks for missing behavior while code work
+  continues. Main ae83dab includes PR 178. Preserve dirty capture and global
+  worktrees. Encoding and narration remain unverified; no video was produced.
+  No product code added; project remains 88% +/-4 by eye on 2026-11-04.
+- Updated the video plan with the required global action, persistent banner,
+  author credit, floor decals and explicit successor-agent steps. Prior focused
+  documentation/style checks passed 51 tests; this update adds documentation only.
 
 - Reproduced PR 178 push CI failure in test_agents_section_3_is_cloud_first:
   AGENTS.md section 3 omitted dev seeds and the exact pre-push check wording.
@@ -81,7 +100,17 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Prompt for the next session
 
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first.
+For video work, use C:/projects/projects-github-agustindiazcano/waggle-video-demo-plan,
+branch docs/video-demo-plan, and read docs/VIDEO_DEMO_PLAN.md. The maintainer wants
+a three-minute finished-product experience using mocks while code work continues.
+Include the full 3D global scene (three cells, thirty robots, trucks, packages,
+coordinator, delay and reassignment), the small persistent lower banner with
+"Powered by Meta Muse" on the left and "Agustin Diaz Cano" above
+"MS Candidate, Systems Engineering" on the right, and official Meta floor decals.
+Verify final attribution copy. These are planned, not built. Start with a
+five-second MP4 export proof; encoding and synthetic narration are unverified.
+Main ae83dab includes PR 178. Preserve dirty capture/global worktrees. Inspect
 status, branches and worktrees, and fetch origin. PR 178 (`exp/e4-live-runner`)
 incorporates main 54aa19e, including merged PR 177, with documentation conflicts
 resolved. The cloud-first documentation regression was reproduced and fixed;
