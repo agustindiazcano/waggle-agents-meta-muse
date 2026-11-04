@@ -55,6 +55,10 @@ All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](do
 
 Scaling to thousands of agents is reported as an extrapolation from a stub calibrated on measured latency distributions. It is not a claim about real fleets.
 
+The [E8 report runner](docs/E8_RUNNER.md) adds production control code latency,
+metadata-only call-log summaries and a reproducible finite-burst extrapolation.
+It is implemented, not evaluated for provider latency, provider cost or real fleets.
+
 ## Third-party libraries
 
 - numpy 2.5.4 (pinned): the only runtime dependency of the simulator and control, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.

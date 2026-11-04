@@ -1,91 +1,76 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. PR 163 (chore/merge-wave-5 to main) contains the viewer
-gallery and offline asset import. This task merges origin/main at 9cfb142 into
-its head 10010cc and resolves LASTCONTEXT.md and PENDING.md by retaining current
-main tasks plus the viewer handoff. The maintainer merges the PR, not the agent.
-Main remains clean at 9cfb142 with green cloud CI (run 41777534335). PR 156 was
-already merged before this task. The user supplied an older 75% analysis; it is
-superseded by this code/PR audit and PENDING.md active priorities.
+Updated: 2026-11-04. E8 reporting work is isolated in exp/e8-latency-runner,
+worktree ../waggle-e8-runner, based on main 8cfb8fb (PR 163 merged).
+The shared root is on feat/crisis-planner-adapter with another agent's test;
+this task did not switch its branch or edit its files. Two requested subagents
+implemented call metrics and extrapolation in their own worktrees; their files
+were reviewed and copied into the E8 integration branch, with no shared edits.
 
-Code progress of the project (estimate by eye, code only): 84% on 2026-11-04, margin about 3 points.
-This updates the 83% estimate from earlier on 2026-11-04 after adding the per-robot
-organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY wiring
-(ADR-090). Advisors/E5 code is now about 95%. Runs, results, documentation and
-delivery do not count. These are judgments, not results.
+Code progress of the project (estimate by eye, code only): 85% on 2026-11-04,
+margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089) and
+PR 164 (E8 reporting at ba2abcf), and this branch adds the per-robot organizer
+schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY wiring (ADR-090),
+raising advisors/E5 code from 85% to 95%. Measurements, calibration, documents
+and delivery do not count. No new published number or README result changed.
 
 ## Current state
 
-- Main contains ADRs 081 to 089; this branch adds ADR-090 (`waggle.governance.organizer`,
-  `waggle.llm.organizer_runtime` and E5 `C2`, `C3` and `C3_REPLAY`).
-- E5 C0, C1, C1_REPLAY, C2, C3 and C3_REPLAY and the E6 mock runner are implemented,
-  not evaluated by this task. E5 C4 is refused because the fleet planner is absent.
-  E4 is scripted-only; E3 includes court_unanimity but live evaluation remains.
-  E8 extension and the E9 mutation campaign remain pending. E6 diagnosis
-  still reads synthetic in-memory cases; production database-backed retrieval and
-  orchestration remain. Crisis planning still needs its LLM proposer adapter.
-- LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
-  model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
-  rollout/crisis 80%; E2 harness 97%; replay generator 100%. Estimates by eye only.
-- Vertex, real transcription, production integration, the real MCP SDK client
-  check, maintainer labels/data and reviewed fixtures remain. MCP is not claimed
-  conformant. No paid calls, experiments, migrations or held-out runs occurred here.
-- Meta Standard prices remain verified at 1.25 input / 4.25 output USD per million
-  tokens. PR 156 preserved all five intended price/documentation/test files.
-
-## Viewer handoff
-
-- The gallery has 20 entries: 17 GLBs and three procedural previews. It includes
-  revised workers, five robots, industrial equipment, modular rack/conveyor/dock
-  and a gallery-only pickup prop. Replay does not invent human action or role state.
-- Camera orbit, pan, zoom, focus and fit are implemented. ADR-089 describes the
-  asset importer and gallery. Map geometry, overlays, live mode and simulator-owned
-  role/action fields remain separate viewer work. Visual review is the maintainer's.
-- GLBs are excluded from Git. web/models.json pins hashes, sizes, clips and
-  provenance. Import extracted files with npm run models:sync -- --source DIRECTORY
-  from web/. Preserve the ignored local assets and the separate binary pack:
-  C:/Users/agusd/.codex/artifacts/waggle-viewer-models-20261104.zip.
-- Viewer development server is on port 5174; port 5173 belongs to another project.
-  Open ?gallery=1. Do not replace dirty Meshy or original GLB worktrees.
+- Main includes the viewer gallery (20 entries, 17 GLBs and three procedural
+  previews), offline importer, camera controls and ADR-089. Gallery task code is
+  100%, viewer overall about 68%; visual review, map, overlays and live mode remain.
+- E8 adds production control_step timing through the existing E1 ControlRig,
+  strict metadata-only llm_calls export summaries and a seeded finite-burst
+  extrapolator. The workflow produces three separate cloud benchmark artifacts.
+  Provider/role measurements, production exports and calibration remain pending.
+- Error latency in the current LLM client is unmeasured and stored as zero.
+  E8 never treats those placeholders as measured durations. Extrapolation uses
+  successful-call latency and the observed error-row fraction, explicitly labeled
+  as an assumption. Cached and denied rows are counted separately.
+- This branch (`feat/organizer-e5`, ADR-090) adds `waggle.governance.organizer`,
+  `waggle.llm.organizer_runtime` (`organizer-v1`) and E5 `C2`, `C3` and `C3_REPLAY`.
+  E5 `C4` remains refused until the fleet planner exists. E4 production
+  court/cross-family routes, E6 database-backed diagnosis, E10 harness, MCP SDK
+  validation, real multimodal providers, package integrity and E9 remain. No paid
+  call, migration, held-out run or safety change was performed in this task.
+- Provider balances, caps, secrets, labels, catalog, zones and recordings still
+  require the maintainer. G-GLOBAL remains unauthorized, outside the denominator.
 
 ## Done last
 
-- The first local resolution CI found two document-format defects: required
-  headings and the exact percentage prefix were missing. They were corrected
-  in the documents without changing tests. Final validation is reported in the PR.
-- Before resolving conflicts, PR 163 remote checks and viewer jobs were green,
-  but GitHub reported CONFLICTING in the two context files. The three-dot diff
-  also includes .gitignore, docs/DECISIONS.md and docs/GOTCHAS.md; no backend code.
-- Earlier local validation on 10010cc: 91 viewer unit tests and build passed.
-  Browser tests failed at launch because Playwright Chromium headless shell 1248
-  was absent. No browser installation or retry was attempted after that red check;
-  earlier CI was interrupted. This context resolution does not claim that local
-  browser validation passed. The updated PR checks report the merged head's state.
-- PR 156 local minimum validation passed: 85 targeted LLM tests, Ruff, format and
-  mypy. Its remote checks passed; it is already merged, not awaiting another merge.
-- Main repair was explicitly authorized: mixed files matched origin/main, then
-  git reset --hard origin/main restored it. Eight clean merged worktrees were
-  removed. Dirty global-custody, meshy-assets, viewer-glb, unmerged old E3/session
-  worktrees and the pending viewer worktree were preserved. Another owner's sandbox
-  worktree was preserved after Git refused ownership; no trust exception was added.
-- docs/context-wave3 must never be merged. Its endpoint diff against main shows
-  72 files, 253 insertions and 6325 deletions. Remote deletion is the maintainer's.
-- Ticket race fix d11c7c5 is present as identical patch 8ae51e3 on main. Bare
-  ON CONFLICT DO NOTHING remains. feat/maintenance-tickets needs no PR.
-- Earlier uncommitted validation notes remain in chore/validation-156-163 in
-  C:/projects/projects-github-agustindiazcano/waggle-validation-156-163.
+- Tests first: both subagents and the runner initially failed with missing modules.
+  The review regressions reproduced unmeasured error latency being sampled as zero
+  and prompt metadata failing to cover measured roles; both were corrected.
+- Full local CI is required by the current pre-push gate. Exact final command
+  results, commit and PR are reported in the task chat and PR, not inferred here.
+- See docs/E8_RUNNER.md for commands, strict input schema, measurement scope,
+  provenance limits, assumptions and remaining work. No new dependencies.
+
+## Preserved work and assets
+
+- Preserve dirty global-custody, Meshy and GLB worktrees and all unmerged work.
+  Preserve C:/Users/agusd/.codex/artifacts/waggle-viewer-models-20261104.zip;
+  binaries are ignored and imported using web/models.json. Viewer port is 5174,
+  gallery URL uses ?gallery=1. Port 5173 belongs to another project.
+- Never merge docs/context-wave3: its endpoint diff deletes thousands of lines.
+  Remote branch deletion is the maintainer's. Ticket race patch d11c7c5 is
+  already represented by 8ae51e3 on main; feat/maintenance-tickets needs no PR.
+- Earlier viewer local browser validation lacked Chromium 1248; do not describe
+  that local run as passed. Earlier validation notes remain in
+  ../waggle-validation-156-163. No asset worktree or unmerged branch was removed.
 
 ## Prompt for the next session
 
-Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md, fetch the
-remote, inspect PR 163 and worktrees. The conflict-resolution task merges main
-9cfb142 into chore/merge-wave-5 without rewriting history. Review its latest CI
-and mergeability before the maintainer merges; agents never merge. Project code
-is about 83% plus/minus 3 points, viewer 68% and gallery task 100%, judgments only.
-Preserve dirty global, Meshy, GLB and all unmerged worktrees and the binary model
-pack. Review all gallery entries visually. Local browser validation previously
-failed because Chromium 1248 was absent; do not call it passed. Production E5/E6
-integration, the LLM crisis proposer, MCP SDK validation, viewer overlays/map/live
-mode and maintainer labels/data remain. Never merge docs/context-wave3; its remote
-deletion belongs to the maintainer. Ticket race patch is already in main. No paid
-call, held-out run, migration or safety change is authorized by this handoff.
+Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
+git status, branches and worktrees, and fetch origin. E8 reporting is isolated in
+exp/e8-latency-runner at ../waggle-e8-runner, based on main 8cfb8fb with PR 163
+already merged. Inspect its PR and checks; only the maintainer merges. Review
+docs/E8_RUNNER.md for commands, metadata schema and explicit extrapolation limits.
+Do not treat unmeasured error latency zeros as measurements. E8 production
+exports and calibration and E9 remain. Preserve the crisis adapter agent's root
+work, dirty asset/global worktrees and binary pack. Project code remains about
+83% plus/minus 3 points, bounded E8 reporting task 100%, broader E8 collection
+75%, viewer 68%, all judgments. Production E4/E5/E6, MCP SDK validation and
+viewer map/overlays/live remain; first check other agents' branches to avoid
+duplication. No paid call, held-out run, migration or safety change is authorized
+by this handoff. Never merge docs/context-wave3 or delete another agent's work.
