@@ -5,6 +5,7 @@ Run with ``uv run python -m waggle.experiments.e8_run --help``. No provider is c
 
 import argparse
 import json
+import os
 import platform
 import shutil
 import subprocess
@@ -15,6 +16,7 @@ from typing import cast
 
 from waggle.experiments.e1_config import BY_NAME
 from waggle.experiments.e1_rig import ControlRig, streams_for
+from waggle.experiments.e8_export import CallDatabase, export_calls
 from waggle.experiments.e8_extrapolation import extrapolate
 from waggle.experiments.e8_metrics import latency_summary, summarize_calls
 from waggle.llm.models import CallRecord, CallStatus
@@ -150,6 +152,23 @@ def load_calls(path: Path) -> tuple[list[CallRecord], dict[str, object]]:
     }
 
 
+def _database_from_environ() -> CallDatabase:
+    """Build the production database handle from DATABASE_URL, without logging it."""
+    from waggle.db.connection import Database
+
+    return Database.from_environ(os.environ)
+
+
+def _prompt_versions(values: Sequence[str]) -> dict[str, str]:
+    versions: dict[str, str] = {}
+    for value in values:
+        role, separator, version = value.partition("=")
+        if not separator or not role.strip() or not version.strip() or role in versions:
+            raise ValueError("prompt versions must use ROLE=VERSION once per role")
+        versions[role] = version
+    return versions
+
+
 def _commit() -> str:
     git = shutil.which("git")
     if git is None:
@@ -170,17 +189,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     fast = commands.add_parser("fast", help="measure the existing production control rig")
     fast.add_argument("--ticks", type=int, default=200)
     fast.add_argument("--warmup-ticks", type=int, default=20)
+    export = commands.add_parser("export", help="export llm_calls metadata from the database")
+    export.add_argument("--mode", choices=("mock", "http"), required=True)
+    export.add_argument("--commit", required=True)
+    export.add_argument("--prompt-version", action="append", required=True)
     calls = commands.add_parser("calls", help="report a metadata-only llm_calls export")
     calls.add_argument("--input", type=Path, required=True)
     calls.add_argument("--fleet-size", type=int)
     calls.add_argument("--calls-per-robot", type=int, default=1)
     calls.add_argument("--concurrency", type=int, default=10)
     calls.add_argument("--seed", type=int, default=0)
-    for command in (fast, calls):
+    for command in (fast, calls, export):
         command.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.output.exists():
         raise FileExistsError(args.output)
+    if args.command == "export":
+        export_calls(
+            _database_from_environ(),
+            mode=args.mode,
+            commit=args.commit,
+            prompt_versions=_prompt_versions(args.prompt_version),
+            output=args.output,
+        )
+        return 0
     report: dict[str, object] = {
         "experiment": "e8",
         "seed_set": "benchmark",
