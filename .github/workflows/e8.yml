@@ -1,0 +1,53 @@
+name: Waggle Hive E8 code latency benchmark
+
+on:
+  pull_request:
+    paths:
+      - "src/waggle/experiments/e8_*.py"
+      - "src/waggle/experiments/e1_rig.py"
+      - "src/waggle/control/**"
+      - "src/waggle/sim/**"
+      - "tests/unit/experiments/test_e8_*.py"
+      - ".github/workflows/e8.yml"
+  workflow_dispatch:
+    inputs:
+      ticks:
+        description: Measured ticks per repeat (1 to 100000)
+        type: number
+        default: 200
+      warmup_ticks:
+        description: Discarded warmup ticks per repeat (0 to 100000)
+        type: number
+        default: 20
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        repeat: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Measure production control_step code latency
+        env:
+          TICKS: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.ticks) || '200' }}
+          WARMUP_TICKS: ${{ github.event_name == 'workflow_dispatch' && format('{0}', inputs.warmup_ticks) || '20' }}
+          REPEAT: ${{ matrix.repeat }}
+        run: >-
+          uv run python -m waggle.experiments.e8_run fast
+          --ticks "$TICKS" --warmup-ticks "$WARMUP_TICKS"
+          --output "results/e8/dev/control-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${REPEAT}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e8-control-repeat-${{ matrix.repeat }}
+          path: results/e8/dev/*.json
+          if-no-files-found: error

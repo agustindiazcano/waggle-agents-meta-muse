@@ -135,6 +135,10 @@ The design of the full chaos harness (faults, oracle, baseline, build order) is 
 
 ## E8: Latency and cost
 
+Implementation: [E8 report runner](E8_RUNNER.md), including a cloud control-step
+benchmark, call-log metadata summaries and a deterministic finite-burst stub.
+Provider measurements and representative workload calibration remain pending.
+
 - Fast loop latency (percentiles, as code latency).
 - LLM latency distributions per model and role.
 - Cost per task, by role, from the `llm_calls` table.
