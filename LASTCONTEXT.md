@@ -1,22 +1,29 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. PR 163 (8cfb8fb), PR 164 (ba2abcf, E8 reporting) and PR 165
-(c7098a7, crisis planner adapter ADR-090) are merged in main. This branch
-(feat/viewer-overlays, ADR-092) adds the simulator-supplied safety overlays
+Updated: 2026-11-04. PR 163 (8cfb8fb), PR 164 (ba2abcf, E8 reporting), PR 165
+(c7098a7, crisis planner adapter ADR-090), PR 166 (d18991a, organizer E5 ADR-091)
+and PR 167 (21e1b54, E9 planted defects ADR-092) are merged in main. This branch
+(feat/viewer-overlays, ADR-093) adds the simulator-supplied safety overlays
 contract (`envelopes`, `lidar_shadows`, `ghost_paths`, `extra`) to
 `waggle.sim.frame` and `web/src/frame_schema.ts`, static map geometry validation
 and rendering (`world_schema.ts`, `scene.ts`), pure overlay provenance and
 visibility toggles (`overlays.ts`), and the `/ws/live` stream parser and client
 (`live_client.ts`, `main.ts`). The maintainer merges the PR, not the agent.
 
+E9 update (2026-11-04): branch exp/e9-planted-defects (PR 167, ADR-092) adds the
+planted-defect campaign: 4 defects, copy-only runner, baseline check, result
+writer; first run 4 of 4 killed, in results/e9/dev/planted.json. Cloud mutation
+arm remains.
+
 Code progress of the project (estimate by eye, code only): 87% on 2026-11-04,
 margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164
-(E8 reporting, ba2abcf), PR 165 (crisis planner adapter, ADR-090, c7098a7) and
-PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091, d18991a), and this branch
-(`feat/viewer-overlays`, ADR-092) implements the viewer map geometry, safety
-overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client,
-raising viewer code from 68% to about 95%. Measurements, calibration, documents
-and delivery do not count. No new published number or README result changed.
+(E8 reporting, ba2abcf), PR 165 (crisis planner adapter, ADR-090, c7098a7),
+PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091, d18991a) and PR 167 (E9 planted
+defects, ADR-092, 21e1b54), and this branch (`feat/viewer-overlays`, ADR-093)
+implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`,
+`ghost_paths`) and `/ws/live` client, raising viewer code from 68% to about 95%.
+Measurements, calibration, documents and delivery do not count. No new published
+number or README result changed.
 
 ## Current state
 
