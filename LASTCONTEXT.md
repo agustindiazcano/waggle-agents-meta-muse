@@ -8,26 +8,24 @@ Main remains clean at 9cfb142 with green cloud CI (run 41777534335). PR 156 was
 already merged before this task. The user supplied an older 75% analysis; it is
 superseded by this code/PR audit and PENDING.md active priorities.
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points.
-This replaces the stale November 2 estimate of 80%: main now includes technician
-MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D.
-Viewer code is about 68% including the pending gallery, whose task code is 100%.
-The pending gallery adds less than one project point at this precision. Runs,
-results, documentation and delivery do not count. These are judgments, not results.
+Code progress of the project (estimate by eye, code only): 84% on 2026-11-04, margin about 3 points.
+This updates the 83% estimate from earlier on 2026-11-04 after adding the per-robot
+organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY wiring
+(ADR-090). Advisors/E5 code is now about 95%. Runs, results, documentation and
+delivery do not count. These are judgments, not results.
 
 ## Current state
 
-- Main contains ADRs 081 to 088: MCP technician lease/settlement tools, validator
-  stage D, E5 runner, failure_history revision 14, E6 mock chain, unified rollout,
-  belief builder and crisis loop, E5 caller/persistence/client wiring and history loader.
-- E5 C0/C1/replay and the E6 mock runner are implemented, not evaluated by this task.
-  E5 C2/C3/C4 are refused because the organizer is absent; its production role remains.
+- Main contains ADRs 081 to 089; this branch adds ADR-090 (`waggle.governance.organizer`,
+  `waggle.llm.organizer_runtime` and E5 `C2`, `C3` and `C3_REPLAY`).
+- E5 C0, C1, C1_REPLAY, C2, C3 and C3_REPLAY and the E6 mock runner are implemented,
+  not evaluated by this task. E5 C4 is refused because the fleet planner is absent.
   E4 is scripted-only; E3 includes court_unanimity but live evaluation remains.
   E8 extension and the E9 mutation campaign remain pending. E6 diagnosis
   still reads synthetic in-memory cases; production database-backed retrieval and
   orchestration remain. Crisis planning still needs its LLM proposer adapter.
 - LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
-  model 75%; catalog/technician lease 90%; advisors/E5 85%; maintenance/E6 80%;
+  model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
   rollout/crisis 80%; E2 harness 97%; replay generator 100%. Estimates by eye only.
 - Vertex, real transcription, production integration, the real MCP SDK client
   check, maintainer labels/data and reviewed fixtures remain. MCP is not claimed
