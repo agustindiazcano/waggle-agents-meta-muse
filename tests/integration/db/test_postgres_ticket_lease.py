@@ -284,3 +284,14 @@ def test_concurrent_consumes_change_stock_once(database: Database) -> None:
         results = list(pool.map(lambda _i: settle.consume("k-1"), range(8)))
     assert sum(r.changed for r in results) == 1
     assert _stock(database) == (3, 0)
+
+
+def test_zone_of_reports_the_zone_of_a_dispatched_ticket_and_none_before(
+    database: Database,
+) -> None:
+    ticket = _setup(database)
+    leases = TicketLeaseRepository(database)
+    assert leases.zone_of(ticket) is None
+    assert leases.zone_of("tkt-0000000000000099") is None
+    leases.dispatch(ticket, ZONE, "maint-0", "tech-1", 10, _clear(10))
+    assert leases.zone_of(ticket) == ZONE

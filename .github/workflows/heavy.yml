@@ -43,6 +43,17 @@ jobs:
       BASETEN_API_KEY: ${{ secrets.BASETEN_API_KEY }}
       MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
       MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      # Non secret settings are repository variables (Settings, Secrets and variables, Variables).
+      # The mode is http only for the llm marker, so heavy runs never reach a provider.
+      WAGGLE_LLM_PROVIDER: ${{ inputs.marker == 'llm' && 'http' || 'mock' }}
+      META_API_BASE_URL: ${{ vars.META_API_BASE_URL }}
+      META_MODEL_ID: ${{ vars.META_MODEL_ID }}
+      BASETEN_MODEL_ID: ${{ vars.BASETEN_MODEL_ID }}
+      MODAL_ENDPOINT_URL: ${{ vars.MODAL_ENDPOINT_URL }}
+      MODAL_GLIMMER_MODEL_ID: ${{ vars.MODAL_GLIMMER_MODEL_ID }}
+      META_SPEND_CAP_USD: ${{ vars.META_SPEND_CAP_USD }}
+      BASETEN_SPEND_CAP_USD: ${{ vars.BASETEN_SPEND_CAP_USD }}
+      MODAL_SPEND_CAP_USD: ${{ vars.MODAL_SPEND_CAP_USD }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

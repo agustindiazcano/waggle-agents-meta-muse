@@ -60,3 +60,22 @@ def test_http_mode_without_keys_fails_closed_when_the_client_is_built() -> None:
 def test_the_client_does_not_retry_on_top_of_the_http_provider() -> None:
     client = build_client(_env(), InMemoryCallLog(), fallbacks_enabled=False)
     assert client.max_retries == 0
+
+
+def test_a_provider_override_is_served_in_mock_mode() -> None:
+    from waggle.llm.budget import PROVIDERS
+    from waggle.llm.providers import MockProvider, ScriptedProvider
+
+    scripted = ScriptedProvider("baseten", by_role={"advisor": "scripted-text"})
+    override = {p: scripted if p == "baseten" else MockProvider(p) for p in PROVIDERS}
+    client = build_client(_env(), InMemoryCallLog(), fallbacks_enabled=False, providers=override)
+    assert client.call(LlmRequest("r-9", "advisor", "x")).text == "scripted-text"
+
+
+def test_a_provider_override_is_refused_outside_mock_mode() -> None:
+    from waggle.llm.budget import PROVIDERS
+    from waggle.llm.providers import MockProvider
+
+    override = {p: MockProvider(p) for p in PROVIDERS}
+    with pytest.raises(ConfigError):
+        build_client(_env("http"), InMemoryCallLog(), fallbacks_enabled=False, providers=override)

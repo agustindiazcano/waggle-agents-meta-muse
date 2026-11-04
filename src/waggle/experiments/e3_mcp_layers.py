@@ -49,7 +49,10 @@ ATTEMPTS: Mapping[str, Attempt] = {
         },
     ),
     "E3-T1-02": Attempt(
-        "carrier", "C1", "dispatch_tech", {"ticket_id": "tkt-0000000000000001", "zone_id": "Z1"}
+        "carrier",
+        "C1",
+        "dispatch_tech",
+        {"ticket_id": "tkt-0000000000000001", "zone_id": "Z1", "technician": "tech-0"},
     ),
     "E3-T1-03": Attempt("carrier", "C1", "get_task", _TASK),
     "E3-T5-01": Attempt(

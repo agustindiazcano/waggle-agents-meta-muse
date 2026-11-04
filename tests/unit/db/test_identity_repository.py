@@ -39,3 +39,10 @@ def test_malformed_digest_revoke_does_not_connect() -> None:
     with pytest.raises(ValueError):
         PostgresIdentityStore(database).revoke("nope")
     database.transaction.assert_not_called()
+
+
+@pytest.mark.parametrize("robot_id", ["", "bad id", "r" * 65])
+def test_a_malformed_robot_id_is_not_a_technician_and_does_not_connect(robot_id: str) -> None:
+    database = MagicMock(spec=Database)
+    assert not PostgresIdentityStore(database).is_technician(robot_id)
+    database.transaction.assert_not_called()

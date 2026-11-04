@@ -11,9 +11,14 @@ class FakeCursor:
 
     def __init__(self, row: tuple[object, ...] | None) -> None:
         self._row = row
+        self.rowcount = 1
 
     def fetchone(self) -> tuple[object, ...] | None:
         return self._row
+
+    def fetchall(self) -> list[tuple[object, ...]]:
+        """No rows for a statement the handler did not answer, else the one canned row."""
+        return [] if self._row is None else [self._row]
 
 
 class FakeConnection:

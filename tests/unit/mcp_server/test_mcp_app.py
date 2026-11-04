@@ -142,7 +142,13 @@ def test_main_serves_lines_when_the_revision_matches() -> None:
             {"part_number": "P-1", "quantity": 1, "idempotency_key": "k", "ticket_id": "tkt-1"},
         ),
         ("open_ticket", {"machine_id": "M-1", "idempotency_key": "k", "summary": "s"}),
-        ("dispatch_tech", {"ticket_id": "tkt-0123456789abcdef", "zone_id": "z"}),
+        (
+            "dispatch_tech",
+            {"ticket_id": "tkt-0123456789abcdef", "zone_id": "z", "technician": "tech-0"},
+        ),
+        ("close_ticket", {"ticket_id": "tkt-0123456789abcdef"}),
+        ("consume_reservation", {"idempotency_key": "k"}),
+        ("release_reservation", {"idempotency_key": "k"}),
         (
             "create_purchase_order",
             {"part_number": "P-1", "quantity": 1, "idempotency_key": "k", "ticket_id": "tkt-1"},
