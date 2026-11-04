@@ -49,8 +49,19 @@ number or README result changed.
 - LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
   model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
   rollout/crisis 90%; E2 harness 97%; replay generator 100%. Estimates by eye only.
-- Provider balances, caps, secrets, labels, catalog, zones and recordings still
-  require the maintainer. G-GLOBAL remains unauthorized, outside the denominator.
+- GitHub Actions secrets (`META_API_KEY`, `BASETEN_API_KEY`, `MODAL_TOKEN_ID`,
+  `MODAL_TOKEN_SECRET`) and repository variables (`META_API_BASE_URL=https://api.meta.ai/v1`,
+  `META_MODEL_ID=muse-spark-1.3`, `META_WONDER_MODEL_ID=muse-wonder-1.0`,
+  `BASETEN_MODEL_ID=meta-models/muse-spark-open`,
+  `MODAL_ENDPOINT_URL=https://inference.us-west.modal.direct/v1`,
+  `MODAL_GLIMMER_MODEL_ID=meta-models/Muse-Glimmer-30B`,
+  `MODAL_SPARK_OPEN_MODEL_ID=meta-models/Muse-Spark-Open-816B-A42B`,
+  `META_SPEND_CAP_USD=135.0`, `BASETEN_SPEND_CAP_USD=90.0`,
+  `MODAL_SPEND_CAP_USD=90.9`, Modal workspace `ac-BQSGYNtST9xpA7WA5Cef1y`) are
+  now configured. Baseten and Modal `verified = true` price entries in
+  `src/waggle/llm/prices.toml`, `META_VOICE_MODEL_ID`, Vertex backup variables,
+  and maintainer-reviewed labels/catalog/zones/recordings still remain.
+  G-GLOBAL remains unauthorized, outside the denominator.
 
 ## Done last
 

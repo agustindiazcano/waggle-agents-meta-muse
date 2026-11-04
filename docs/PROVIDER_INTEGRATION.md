@@ -57,10 +57,10 @@ Names only. Values are never printed, logged, repr'd or placed in an exception m
 | `MODAL_TOKEN_ID` | modal | Sent as `Modal-Key` | none, required |
 | `MODAL_TOKEN_SECRET` | modal | Sent as `Modal-Secret` | none, required |
 | `MODAL_ENDPOINT_URL` | modal | Base URL, must be `https` | none, required |
-| `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD` | budget guard | Hard cap in USD. Missing or invalid raises `InvalidCapError` before any call. | none, required |
-| `META_MODEL_ID`, `META_WONDER_MODEL_ID`, `BASETEN_MODEL_ID`, `MODAL_GLIMMER_MODEL_ID`, `MODAL_SPARK_OPEN_MODEL_ID` | routing | Model ids, read by the existing client | none, required |
+| `META_SPEND_CAP_USD`, `BASETEN_SPEND_CAP_USD`, `MODAL_SPEND_CAP_USD` | budget guard | Hard cap in USD (`135.0`, `90.0`, `90.9` in GitHub Actions variables). Missing or invalid raises `InvalidCapError` before any call. | none, required |
+| `META_MODEL_ID`, `META_WONDER_MODEL_ID`, `BASETEN_MODEL_ID`, `MODAL_GLIMMER_MODEL_ID`, `MODAL_SPARK_OPEN_MODEL_ID` | routing | Model ids, read by the existing client (`muse-spark-1.3`, `muse-wonder-1.0`, `meta-models/muse-spark-open`, `meta-models/Muse-Glimmer-30B`, `meta-models/Muse-Spark-Open-816B-A42B` in GitHub Actions variables) | none, required |
 
-The Baseten base URL is fixed in code to the documented `https://inference.baseten.co/v1`. A plain `http` URL is accepted only when a test builds the settings with the loopback switch, which the environment cannot turn on.
+The Baseten base URL is fixed in code to the documented `https://inference.baseten.co/v1`. In GitHub Actions variables, `META_API_BASE_URL` is configured to `https://api.meta.ai/v1` and `MODAL_ENDPOINT_URL` is configured to `https://inference.us-west.modal.direct/v1` (Modal workspace `ac-BQSGYNtST9xpA7WA5Cef1y`). A plain `http` URL is accepted only when a test builds the settings with the loopback switch, which the environment cannot turn on.
 
 ## Prices
 
