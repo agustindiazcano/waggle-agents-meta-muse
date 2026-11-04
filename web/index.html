@@ -13,6 +13,10 @@
       #error { margin: 12px; padding: 12px; background: #5a1d1d; border: 1px solid #ff5a5a; }
       #viewer { flex: 1; display: flex; flex-direction: column; min-height: 0; }
       #viewer[hidden], #error[hidden] { display: none; }
+      #gallery { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+      #gallery[hidden] { display: none; }
+      #gallery-canvas { flex: 1; min-height: 0; }
+      #gallery-controls { display: flex; gap: 12px; align-items: center; padding: 8px 12px; flex-wrap: wrap; }
       #main { flex: 1; display: flex; min-height: 0; }
       #canvas { flex: 1; min-width: 0; }
       aside { width: 280px; padding: 8px 12px; overflow: auto; background: #1c222c; font-size: 13px; }
@@ -28,9 +32,23 @@
     <header>
       <h1>Waggle Hive viewer</h1>
       <label>Replay file <input id="file" type="file" accept=".jsonl,.json,.txt" /></label>
-      <span class="muted">Replay mode only. This page draws recorded frames and decides nothing.</span>
+      <button id="gallery-toggle" type="button">Models gallery</button>
+      <span id="scope-note" class="muted">Replay draws recorded frames and decides nothing.</span>
     </header>
     <div id="error" role="alert" hidden></div>
+    <div id="gallery" hidden>
+      <div id="gallery-controls">
+        <label>Model <select id="gallery-model"></select></label>
+        <label>Animation <select id="gallery-clip" disabled></select></label>
+        <span id="rack-controls" hidden>
+          <label>Bays <input id="rack-bays" type="number" min="1" max="10" value="3" /></label>
+          <label>Levels <input id="rack-levels" type="number" min="1" max="6" value="3" /></label>
+        </span>
+        <span class="muted">Drag: orbit; right-drag: pan; wheel: zoom</span>
+        <span id="gallery-status" role="status"></span>
+      </div>
+      <div id="gallery-canvas"></div>
+    </div>
     <div id="viewer" hidden>
       <div id="main">
         <div id="canvas"></div>
@@ -44,6 +62,10 @@
       </div>
       <div id="controls">
         <button id="play" type="button">Play</button>
+        <label>Inspect <select id="entity" aria-label="Entity to inspect"></select></label>
+        <button id="focus" type="button">Focus</button>
+        <button id="fit" type="button">Fit all</button>
+        <span class="muted">Drag: orbit; right-drag: pan; wheel: zoom</span>
         <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame" />
         <span id="tick"></span>
       </div>

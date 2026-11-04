@@ -1,0 +1,41 @@
+name: Waggle Hive viewer
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install viewer development dependencies
+        working-directory: web
+        run: npm ci
+      - name: Viewer unit tests
+        working-directory: web
+        run: npm test
+      - name: Viewer build and types
+        working-directory: web
+        run: npm run build
+      - name: Install Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Browser contract tests
+        working-directory: web
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: viewer-browser-failure
+          path: web/test-results/

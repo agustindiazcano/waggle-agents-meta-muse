@@ -1,0 +1,553 @@
+{
+  "schema_version": 1,
+  "recorded_date": "2026-11-04",
+  "rights": "Author; maintainer confirmed commercial use under Meshy Pro",
+  "models": [
+    {
+      "id": "carrier",
+      "label": "Parcel carrier robot",
+      "file": "carrier_bot.glb",
+      "bytes": 4825692,
+      "sha256": "fabeec7b6bdf1f00137e9e89d6113c7c6c0838e07db6803cf2ac1fece75c85e3",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Compact low-profile autonomous mobile robot for small parcel transport, rounded rectangular chassis, visible small wheels, flat top cargo platform, safety yellow accents, lidar sensor, no arms. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ec4-566d-756f-a2e8-32fc5218da1a",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ec6-5fc8-7094-abd2-ba7c87bb0bab",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "forklift",
+      "label": "Autonomous forklift",
+      "file": "heavy_forklift_bot.glb",
+      "bytes": 5453684,
+      "sha256": "94eecc9d04da0e1da7cf02b6c9379f80b8f4b1256fcc3da35c30faca69d105fe",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Autonomous industrial forklift robot, sturdy compact chassis, low mast, two clearly separated forward forks, protective frame, warning beacon, dark gray and safety yellow, no driver. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ec4-5676-7616-a956-8a3ca648b493",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ec6-7703-754c-9073-790d097619e8",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "parts",
+      "label": "Parts runner robot",
+      "file": "parts_runner_bot.glb",
+      "bytes": 5942312,
+      "sha256": "e84a3d61d24f0b35679a5a769acf9e75f5244c0bd65c0d0f0f06752c799f30e1",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Small autonomous maintenance parts delivery robot, yellow enclosed chassis, four wheels, closed parts compartment, visible amber warning beacon, compact lidar sensor. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ec9-3110-7026-aa97-40515b5daf7b",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ecb-5fb3-74b4-a476-73c6ca8f2536",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "repair",
+      "label": "Technician support robot",
+      "file": "tech_repair_bot.glb",
+      "bytes": 5571432,
+      "sha256": "0fa722b999661fbaa1ba7d1de5a7f1312a91295bb7aec1f87ff2ef3373db5fe4",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Autonomous technician support robot, compact wheeled gray chassis, yellow details, closed tool storage compartments, small inspection sensor mast, amber beacon, no human figure. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ec9-5d88-71f1-aac6-b828e11711f8",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ecb-6804-75dd-8a4f-1428e57eea2b",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "flat-carrier",
+      "label": "Flat platform robot",
+      "file": "flat_carrier_bot.glb",
+      "bytes": 5836780,
+      "sha256": "c547fb4e60cf7ecaa823d22c0b7243f38dfebca7fc4d1d111f3b4178de45cbd9",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Autonomous warehouse mobile robot, low flat rectangular platform with very low ground clearance, compact wide wheeled chassis, flat unobstructed upper deck made to carry a tall stack of boxes or a rack, safety yellow corner accents, small lidar sensors, no arms, no forklift mast, no boxes, no driver, physically plausible industrial design, single object, game ready, no logos, no text, no background.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a19f00-8f78-77a5-9bf7-43c8eac703cd",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a19f06-3f00-729c-a927-6704108a4f1b",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "worker",
+      "label": "Warehouse worker (revised)",
+      "file": "worker_v2.glb",
+      "bytes": 6272112,
+      "sha256": "bd78cc86e198e746e67de1424bb2f81541c8358817c9565e139dc666caf68fce",
+      "clips": [
+        "Idle_11",
+        "Casual_Walk_inplace",
+        "Male_Bend_Over_Pick_Up"
+      ],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Full body adult male warehouse worker, realistic anatomy, clear natural proportions. Neutral standing A-pose, both arms separated from torso and both legs separated, facing forward. Long sleeved blue work shirt with continuous consistent fabric over both arms and wrists, high visibility yellow safety vest, hard hat, work trousers, safety boots. Both hands wearing fitted work gloves, each hand anatomically correct with five separate fingers, clean wrists, no extra limbs. Single person, no objects, clean game-ready asset, no writing, no logos, no background.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a19efc-f7f3-723b-b7fe-ebe2f3032eca",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a19efd-ff67-75b7-8b18-1bb27b77bb7b",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          },
+          {
+            "stage": "rig",
+            "task_id": "01a19eff-c6fd-72f6-a55b-d89006def40f",
+            "state": "SUCCEEDED",
+            "consumed_credits": 5
+          },
+          {
+            "stage": "animation",
+            "task_id": "01a19f00-0aaf-75c6-b23c-400ec1541c6c",
+            "state": "SUCCEEDED",
+            "consumed_credits": 9
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "worker-black",
+      "label": "Black warehouse worker",
+      "file": "worker_black.glb",
+      "bytes": 6432888,
+      "sha256": "401131c33e3c5762417e2087f577f53cbeceae294c8b6dcb1c8fd3205626fa54",
+      "clips": [
+        "Idle_11",
+        "Casual_Walk_inplace",
+        "Male_Bend_Over_Pick_Up"
+      ],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Full body adult Black warehouse worker of African descent, realistic anatomy, clear natural proportions. Neutral standing A-pose, both arms separated from torso and both legs separated, facing forward. Long sleeved blue work shirt with continuous consistent fabric over both arms and wrists, high visibility yellow safety vest, hard hat, work trousers, safety boots. Both hands wearing fitted work gloves, each hand anatomically correct with five separate fingers, clean wrists, no extra limbs. Single person, no objects, clean game-ready asset, no writing, no logos, no background.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a19efd-037c-70f2-90de-f75caf534f4a",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a19efe-3ba5-75ed-bc1e-9b90868aac8c",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          },
+          {
+            "stage": "rig",
+            "task_id": "01a19eff-d625-734e-a610-abba2ea3587d",
+            "state": "SUCCEEDED",
+            "consumed_credits": 5
+          },
+          {
+            "stage": "animation",
+            "task_id": "01a19f00-18d4-7362-9f6d-89c69989b4ed",
+            "state": "SUCCEEDED",
+            "consumed_credits": 9
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "worker-asian-woman",
+      "label": "Asian woman warehouse worker",
+      "file": "worker_asian_woman.glb",
+      "bytes": 6699252,
+      "sha256": "c83f7c5572172d9f05727f8f5f75c555f3a50d81b6d88286a5a0816b8f37398c",
+      "clips": [
+        "Idle_11",
+        "Casual_Walk_inplace",
+        "Male_Bend_Over_Pick_Up"
+      ],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Full body adult East Asian woman warehouse worker, realistic anatomy, clear natural proportions. Neutral standing A-pose, both arms separated from torso and both legs separated, facing forward. Long sleeved blue work shirt with continuous consistent fabric over both arms and wrists, high visibility yellow safety vest, hard hat, work trousers, safety boots. Both hands wearing fitted work gloves, each hand anatomically correct with five separate fingers, clean wrists, no extra limbs. Single person, no objects, clean game-ready asset, no writing, no logos, no background.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a19f00-7e14-741c-9e56-1788ed034dda",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a19f04-0cbe-71fe-bb0d-2f2e64258158",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          },
+          {
+            "stage": "rig",
+            "task_id": "01a19f06-6948-7231-aad8-c796255deb54",
+            "state": "SUCCEEDED",
+            "consumed_credits": 5
+          },
+          {
+            "stage": "animation",
+            "task_id": "01a19f06-ac75-76fe-8fd3-bfaa515b79af",
+            "state": "SUCCEEDED",
+            "consumed_credits": 9
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "technician",
+      "label": "Maintenance technician",
+      "file": "human_technician_pickup.glb",
+      "bytes": 6023864,
+      "sha256": "e2936c59cdd7ec4f37f62b44192bf190165002fe727fe0707bf07ce663fa6d9a",
+      "clips": [
+        "Idle",
+        "Casual_Walk_inplace",
+        "Male_Bend_Over_Pick_Up"
+      ],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Full-body warehouse maintenance technician in blue workwear, reflective safety vest, safety shoes and hard hat; symmetrical A-pose, arms separated from torso, legs and fingers clearly separated; tool belt fitted close to body, empty hands; face forward along +Z; textured humanoid suitable for auto-rigging. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ecc-e2a8-75c0-8758-d09cd3f1b179",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ece-6717-77aa-821b-69a573e1e5a7",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          },
+          {
+            "route": "/openapi/v1/rigging",
+            "task_id": "01a19ecf-8b65-7211-b252-5eca8f91db5f",
+            "state": "SUCCEEDED",
+            "consumed_credits": 5
+          },
+          {
+            "route": "/openapi/v1/animations",
+            "task_id": "01a19ecf-d99b-70a7-89cf-3389d9fa6d96",
+            "state": "SUCCEEDED",
+            "consumed_credits": 6
+          },
+          {
+            "stage": "animation_with_pickup",
+            "task_id": "01a19eda-e296-743c-bb6d-5bb846a313a0",
+            "state": "SUCCEEDED",
+            "consumed_credits": 9
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "machine",
+      "label": "Industrial machine",
+      "file": "industrial_machine.glb",
+      "bytes": 4936644,
+      "sha256": "abbfdb9d4ce43d97c1961d2f6719a5f641c3900f14f619b0cb1d5a6c221cbe97",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Standalone industrial warehouse production machine, enclosed gray steel cabinet, safety-yellow guarded access panel, small indicator lights, vents and service hatch, rectangular footprint, no readable labels. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ecd-18d7-71b9-bf65-bf6caf91b560",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ecf-7b67-70d3-8c22-5fef89c34c0f",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "tank",
+      "label": "Industrial tank (M-05)",
+      "file": "industrial_tank.glb",
+      "bytes": 9605080,
+      "sha256": "30d2efb706da78cacf142d9354a2672adb94b4e3cbfbc2970e51092415ea1c43",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single industrial vertical cylindrical steel storage tank for a warehouse factory, domed top, three reinforcing rings, short support legs, side ladder and external pipe with a valve, small red amber green indicator tower, matte gray metal and dark fittings. Full object, clean industrial game asset, no text, no logos, no ground, no background, no people. Reference dimensions about 2.4 meters wide and 3 meters tall.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a1a4bb-50f9-73a2-9e18-96b54af7b681",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a1a4bd-2cc1-72d6-b1cf-a662186ec6f2",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "press",
+      "label": "Industrial press (M-06)",
+      "file": "industrial_press.glb",
+      "bytes": 9132924,
+      "sha256": "8e572fc021183ec1f027125cc2dec6b2099b3c9876b69d470d4d2fbd66c54143",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single industrial hydraulic workshop press for a warehouse factory, wide gray steel rectangular base, two upright columns supporting a thick top crossbeam, central vertical hydraulic ram above an open work bed, safety yellow accents, small red amber green indicator tower. Open gap between columns clearly visible, physically plausible game asset, no people, no text, no logos, no ground, no background. About 2.6 meters wide and 2.2 meters tall.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a1a4bb-5d98-762b-ab79-14bcf0036975",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a1a4bd-3f7b-7546-99d4-d78b95488081",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "rack",
+      "label": "Warehouse rack",
+      "file": "warehouse_rack.glb",
+      "bytes": 6249120,
+      "sha256": "3cf6b05acc9239a10901a213b1a40e1cfcca732273d8c22939bec5c5c970ceee",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single modular industrial warehouse storage rack, freestanding steel uprights and horizontal beams, three visible empty shelf levels, safety yellow end guards, rectangular footprint, no boxes. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ed0-0f28-7793-a5e5-b60c7efa9d9d",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ed1-3be3-7186-943e-744c6d88a8bb",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "package",
+      "label": "Package",
+      "file": "package.glb",
+      "bytes": 3153220,
+      "sha256": "2c734c22e8c753852679fbb598b6e3508eebddbc85b5b453a9b527486d67845c",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single closed corrugated cardboard shipping box, rectangular shape, simple taped seams, subtle unbranded material, no readable label, no pallet. Game-ready stylized industrial warehouse asset, clean low-poly geometry, realistic proportions, muted gray and yellow palette, PBR materials, isolated single object, no logos, no text, no background.",
+        "tasks": [
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ed1-2c0b-7719-8528-4994cd1f14d5",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "route": "/openapi/v2/text-to-3d",
+            "task_id": "01a19ed2-af1a-76c0-810f-379ca4cc88c5",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "truck",
+      "label": "Delivery truck",
+      "file": "delivery_truck.glb",
+      "bytes": 10930664,
+      "sha256": "7aa9c78c8985af770d13d799200cea375762a89742b6c1392659efeff88614aa",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single medium warehouse delivery box truck, complete vehicle, white enclosed rectangular cargo box, compact blue cab, black tires on two axles, rear cargo doors closed, simple industrial realistic game asset, unbranded. No trailer, no people, no text, no logos, no road, no ground, no background. Whole truck including wheels, front cab and rear box visible, plausible proportions.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a1a4c1-8ac2-778f-bf72-505eecb9e4f4",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a1a4c3-2927-70be-baec-ee2b66d040f7",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "extinguisher",
+      "label": "Fire extinguisher",
+      "file": "fire_extinguisher.glb",
+      "bytes": 8315556,
+      "sha256": "7cea9273834c6861ea4e68fc398e8f2d38c270d4b5176f9357b40d515a7e9352",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single wall mounted portable fire extinguisher for an industrial warehouse, red cylindrical metal body, black rubber hose on one side, black squeeze handle with a small safety pin, brass valve and circular pressure gauge, dark mounting bracket, simple pale instruction label with no writing. Complete recognizable object, clean realistic game asset, no text, no logos, no wall, no people, no ground, no background.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a1a4c1-cab3-7783-9ef3-dde551a2502f",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a1a4c2-d49d-76a2-b40a-129e68dfb408",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "tree",
+      "label": "Tree",
+      "file": "tree.glb",
+      "bytes": 12744924,
+      "sha256": "d4c6a5eba3909f3fa2cbf5db9f6ef27e86569db564de169481fae20d07ee2059",
+      "clips": [],
+      "provenance": {
+        "tool": "Meshy",
+        "model": "meshy-6",
+        "prompt": "Single small leafy deciduous tree for landscaping outside an industrial warehouse, natural brown branching trunk, rounded irregular green canopy made of visible leaf clusters, full tree including trunk base, believable proportions and moderately stylized realistic game asset. No pot, no grass patch, no fruit, no text, no people, no ground, no background.",
+        "tasks": [
+          {
+            "stage": "preview",
+            "task_id": "01a1a4c5-b1e6-7617-b5fb-649aaf3149cf",
+            "state": "SUCCEEDED",
+            "consumed_credits": 20
+          },
+          {
+            "stage": "refine",
+            "task_id": "01a1a4c7-5374-7177-a304-8e547e29424f",
+            "state": "SUCCEEDED",
+            "consumed_credits": 10
+          }
+        ],
+        "visual_review": "pending with maintainer"
+      }
+    }
+  ]
+}
