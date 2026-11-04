@@ -10,6 +10,7 @@ from waggle.llm.budget import PROVIDERS
 from waggle.llm.errors import ConfigError, UnknownRoleError
 
 DEFAULT_ROUTES_PATH = Path(__file__).with_name("routes.toml")
+META_ROUTES_PATH = Path(__file__).with_name("routes_meta.toml")
 
 
 class Role(StrEnum):
