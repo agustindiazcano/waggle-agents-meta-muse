@@ -8,6 +8,10 @@ Unchanged at this precision; a judgment, not a result.
 Updated: 2026-11-04. Branch `feat/viewer-assets-complete`, based on
 `chore/merge-wave-5` (PR 159), preserves and completes the uncommitted GLB viewer
 from `feat/viewer-glb`. The original viewer and Meshy worktrees are unchanged.
+PR 162 is open against `chore/merge-wave-5`. The base advanced with PR 160 during
+this task; it was merged into this branch without rewriting history. The loader
+record remains ADR-088 and the viewer record is ADR-089. Viewer cloud checks passed;
+the final integration CI is recorded in PR 162.
 
 The gallery has 20 entries: 17 generated GLBs and three procedural previews.
 Revised worker, Black worker, Asian woman worker and flat carrier are integrated;

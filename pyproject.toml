@@ -22,6 +22,7 @@ experiments-test = "waggle.tasks:experiments_test"
 report = "waggle.experiments.e1_report:main"
 provision = "waggle.provisioning:run"
 replay-verify = "waggle.replay.verify:run"
+load-failure-history = "waggle.experiments.failure_history_loader:run"
 
 [dependency-groups]
 dev = [

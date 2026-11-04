@@ -973,7 +973,17 @@ Decision: (1) `TrustedFacts.task_step`, `occluded`, `geofences` and `lease_holde
 
 Gaps, stated plainly: E5 prompts carry `unknown` for three facts, which weakens what the advisor can reason about, and that is reported as is. The mock provider cannot produce a real advisor answer, so runs still need the scripted provider. Database persistence of the caution log (a table and a migration) is not built; the file is the persistence for now. No real provider run exists. The full CI was not run by the subagent; it runs on the integration branch.
 
-## ADR-088: Generated models, modular previews and offline asset import
+## ADR-088: Failure history loader
+
+Status: implemented with unit tests (one generated log through `FailureHistory` and `FakeDatabase`, a skip double, abort on a bad row, CLI argv and missing `DATABASE_URL`); no PostgreSQL run in this change; not evaluated. Closes the loader gap named in ADR-084. The table and `FailureHistory` are unchanged (schema revision 14).
+
+Decision: `waggle.experiments.failure_history_loader.load_failure_history` takes a `FailureHistory` (or a double with the same `add`), a sequence of `FailureCase`, and a required `source` string with no default. It maps each case to a `FailureRow` (mode is the enum value) and calls `add`. The synthetic log is loaded with source `synthetic`, passed by the caller. `add` returning False is a skip, counted in `LoadResult`, not an error: a second load of the same cases inserts nothing. A `ValueError` from `add` fails the load at once; the invalid row is not skipped and later cases are not added. The generator stays in `waggle.experiments.failure_log`; this module does not reimplement it, so the same seed and count still produce the same rows. `waggle.db` and `waggle.maintenance` do not import `waggle.experiments`. The table is loaded by this script, never by a migration.
+
+The CLI `load-failure-history SEED COUNT SOURCE` matches `provisioning.main(argv, environ, stderr) -> int`. `DATABASE_URL` comes from the environment. Argv is checked before a database is constructed. Exit 2 on bad arguments, a missing or unusable database setting, or a refused row. Usage and errors go to stderr as a usage line or `load-failure-history failed: <ErrorType>`. One result line goes to stdout: `inserted=<n> skipped=<n>`. Environment values, URLs and secrets are never printed or logged.
+
+Gaps, stated plainly: the synthetic rows are still not evidence about real failures. PART-BRG-01, PART-LUB-01 and PART-ALN-01 are still placeholders and are not catalog parts; any caller must check part numbers against the catalog before an order. Diagnose and the E6 runner still read the in-memory log. No PostgreSQL load was run here.
+
+## ADR-089: Generated models, modular previews and offline asset import
 
 Status: implemented, not evaluated. Continues the unfinished GLB viewer on a separate
 branch. The maintainer requested completion and owns visual review.
