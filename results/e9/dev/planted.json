@@ -1,7 +1,8 @@
 {
   "experiment": "E9",
   "kind": "planted_defects",
-  "commit": "2fee4fe141aefd2e4ee5bee115ae0edff957d42c",
+  "seed_set": "dev",
+  "commit": "0c34b54de3a799d489a6bff7f863a17416819665",
   "date": "2026-11-04",
   "planted": 4,
   "killed": 4,
