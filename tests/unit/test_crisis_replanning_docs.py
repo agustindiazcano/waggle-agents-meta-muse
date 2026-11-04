@@ -152,7 +152,8 @@ def test_readme_marks_crisis_implementation_and_remaining_validation() -> None:
     readme = _read("README.md")
     row = next(line for line in readme.splitlines() if line.startswith("| Crisis replanning |"))
     assert "LLM proposer adapter" in row
-    assert "E10 harness, production caller and live evaluation" in row
+    assert "E10 harness and production caller" in row
+    assert row.endswith("| Live evaluation |")
     assert "designed, not implemented" not in row
     assert "not formal verification" in readme.lower()
 
