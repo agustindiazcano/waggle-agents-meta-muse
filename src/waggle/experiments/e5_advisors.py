@@ -72,6 +72,7 @@ VALID_ORGANIZER_NONE_JSON: Final = (
 )
 _MODEL_ENV: Final[dict[str, str]] = {
     "META_MODEL_ID": "meta-model",
+    "META_WONDER_MODEL_ID": "meta-wonder",
     "META_VOICE_MODEL_ID": "meta-voice",
     "BASETEN_MODEL_ID": "baseten-model",
     "MODAL_GLIMMER_MODEL_ID": "modal-glimmer",
