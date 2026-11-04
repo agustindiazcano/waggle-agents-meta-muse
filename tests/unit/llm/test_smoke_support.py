@@ -27,16 +27,25 @@ def test_empty_environment_is_refused(route: str) -> None:
         smoke_provider(route, {})
 
 
-@pytest.mark.parametrize("route", ["baseten", "modal"])
-def test_shipped_unverified_prices_are_refused(route: str) -> None:
+@pytest.mark.parametrize("route", sorted(MODEL_ENV_BY_ROUTE))
+def test_shipped_verified_prices_build(route: str) -> None:
+    provider, model_id = smoke_provider(route, FULL)
+    assert isinstance(provider, HttpProvider)
+    assert model_id == FULL[MODEL_ENV_BY_ROUTE[route]]
+
+
+@pytest.mark.parametrize("route", sorted(MODEL_ENV_BY_ROUTE))
+def test_unverified_prices_are_refused(route: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    import llm_smoke_support
+    from waggle.llm.provider_config import Price
+
+    monkeypatch.setattr(
+        llm_smoke_support,
+        "load_prices",
+        lambda: {r: Price(None, None, False) for r in MODEL_ENV_BY_ROUTE},
+    )
     with pytest.raises(ConfigError, match="not verified"):
         smoke_provider(route, FULL)
-
-
-def test_shipped_verified_meta_price_builds() -> None:
-    provider, model_id = smoke_provider("meta", FULL)
-    assert isinstance(provider, HttpProvider)
-    assert model_id == "a"
 
 
 @pytest.mark.parametrize("route", sorted(MODEL_ENV_BY_ROUTE))

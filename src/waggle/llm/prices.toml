@@ -9,14 +9,20 @@
 #   input_per_mtok = 0.0
 #   output_per_mtok = 0.0
 
-# Standard tier (Muse Spark), maintainer decision 2026-11-03.
+# Standard tier (Muse Spark / Muse Wonder), maintainer decision 2026-11-03.
 [meta]
 verified = true
 input_per_mtok = 1.25
 output_per_mtok = 4.25
 
+# Baseten Model APIs (meta-models/muse-spark-open), maintainer decision 2026-11-04.
 [baseten]
-verified = false
+verified = true
+input_per_mtok = 1.25
+output_per_mtok = 4.25
 
+# Modal Shared Endpoints (Muse Spark Open / Muse Glimmer), maintainer decision 2026-11-04.
 [modal]
-verified = false
+verified = true
+input_per_mtok = 1.25
+output_per_mtok = 4.25
