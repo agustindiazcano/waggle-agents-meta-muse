@@ -1098,7 +1098,45 @@ map polygons and the three overlay groups (`envelopeGroup`, `shadowGroup`,
 `ghostGroup`) directly from the validated simulator coordinates. No safety
 threshold, fencing check, MCP boundary or retry rule is modified.
 
-## ADR-094: Live E4 court runner on real routes with fallbacks disabled
+## ADR-094: Dedicated META_WONDER_MODEL_ID route for planning-tier orchestrator roles
+
+Status: implemented with unit tests (`tests/unit/llm/test_routing.py`,
+`tests/unit/test_providers_docs.py`), not evaluated on paid calls.
+
+Decision: In `src/waggle/llm/routes.toml`, the planning-tier orchestrator and
+reasoning roles (`director`, `planner`, `diagnosis`) read their model identifier
+from `META_WONDER_MODEL_ID` on the `meta` provider route, while `court_1` and
+`vision` continue to read `META_MODEL_ID` and `voice` reads
+`META_VOICE_MODEL_ID`. Model identifiers remain strictly externalized to
+environment variables and GitHub Actions repository variables (never hardcoded
+in `routes.toml`), and no safety threshold, fencing check, court rule or spend
+cap is modified.
+
+## ADR-095: Report robot-pair separation violations in plan rollouts
+
+Status: implemented with regression tests, not evaluated by an experiment sweep.
+
+Context: the simulator detector exposes robot contact flags, while its separation
+flags apply to humans. The plan rollout consumed contact flags for robot pairs
+and could accept two noncontact robots with a footprint gap below the configured
+separation margin. A regression first reproduced acceptance at a known 0.25 m
+gap under a 0.5 m margin, with and without humans in the scene.
+
+Decision: the rollout reuses the independent detector's public robot_robot_gap
+function over each tick's start and end poses. A circumscribed-disc broad phase
+includes both translations before excluding distant pairs. A gap strictly below
+the existing RolloutConfig.separation_margin_m yields SEPARATION_VIOLATION with
+both robot ids, the tick-end time and midpoint, the swept gap and SEPARATION_MIN.
+The gap describes the first violating interval, not the minimum over the full
+horizon; the midpoint is a diagnostic tick-end location, not an exact impact point.
+Each pair is reported once for separation, independently of collision reporting.
+
+Consequences: Stage C and all Stage D variants reject this additional unsafe
+case without changing the simulator detector, its experiment counters, trajectories,
+fast-layer thresholds or acceptance margins. Existing reflex, lease, ordering and
+terminal-state gaps of Stage C remain. This correction does not close E10.
+
+## ADR-096: Live E4 court runner on real routes with fallbacks disabled
 
 Status: implemented with unit tests (`tests/unit/experiments/test_e4_live.py`,
 `tests/unit/experiments/test_e4_run.py`), not evaluated on real cloud routes.

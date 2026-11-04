@@ -48,9 +48,11 @@ jobs:
       WAGGLE_LLM_PROVIDER: ${{ inputs.marker == 'llm' && 'http' || 'mock' }}
       META_API_BASE_URL: ${{ vars.META_API_BASE_URL }}
       META_MODEL_ID: ${{ vars.META_MODEL_ID }}
+      META_WONDER_MODEL_ID: ${{ vars.META_WONDER_MODEL_ID }}
       BASETEN_MODEL_ID: ${{ vars.BASETEN_MODEL_ID }}
       MODAL_ENDPOINT_URL: ${{ vars.MODAL_ENDPOINT_URL }}
       MODAL_GLIMMER_MODEL_ID: ${{ vars.MODAL_GLIMMER_MODEL_ID }}
+      MODAL_SPARK_OPEN_MODEL_ID: ${{ vars.MODAL_SPARK_OPEN_MODEL_ID }}
       META_SPEND_CAP_USD: ${{ vars.META_SPEND_CAP_USD }}
       BASETEN_SPEND_CAP_USD: ${{ vars.BASETEN_SPEND_CAP_USD }}
       MODAL_SPEND_CAP_USD: ${{ vars.MODAL_SPEND_CAP_USD }}

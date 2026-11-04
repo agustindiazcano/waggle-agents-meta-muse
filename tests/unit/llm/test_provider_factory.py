@@ -31,6 +31,7 @@ def _environ(url: str = "https://api.example.test/v1", mode: str = "http") -> di
         "BASETEN_SPEND_CAP_USD": "1",
         "MODAL_SPEND_CAP_USD": "1",
         "META_MODEL_ID": "meta-text",
+        "META_WONDER_MODEL_ID": "meta-wonder",
     }
 
 

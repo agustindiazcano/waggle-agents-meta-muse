@@ -53,6 +53,7 @@ DEFAULT_CAP_USD: Final = 1.0
 DEFAULT_DEADLINE_S: Final = 5.0
 _ENV: Final = {
     "META_MODEL_ID": "scripted-meta",
+    "META_WONDER_MODEL_ID": "scripted-meta-wonder",
     "BASETEN_MODEL_ID": "scripted-baseten",
     "MODAL_GLIMMER_MODEL_ID": "scripted-modal",
     "MODAL_SPARK_OPEN_MODEL_ID": "scripted-modal-open",
@@ -116,15 +117,16 @@ def run_case(
         return _baseline_run(case, repeat)
     table = load_routes()
     case_scripts = scripts.get(case.id, {})
-    providers: dict[str, ScriptedProvider] = {}
+    by_provider: dict[str, dict[str, Entry]] = {}
     for role in config.roles:
         if role not in case_scripts:
             raise ScriptMissingError(f"{case.id}: no script for {role}")
         name = table.get(role).primary.provider
-        providers[role] = ScriptedProvider(name, by_role={role: case_scripts[role]})
+        by_provider.setdefault(name, {})[role] = case_scripts[role]
+    built = {name: ScriptedProvider(name, by_role=roles) for name, roles in by_provider.items()}
     log = InMemoryCallLog()
     client = LlmClient(
-        providers={p.name: p for p in providers.values()},
+        providers=built,
         table=table,
         guard=BudgetGuard({f"{p.upper()}_SPEND_CAP_USD": str(cap_usd) for p in PROVIDERS}, log),
         log=log,

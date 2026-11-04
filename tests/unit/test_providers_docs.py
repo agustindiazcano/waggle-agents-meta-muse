@@ -120,6 +120,7 @@ def test_env_example_names() -> None:
     names = set(re.findall(r"^([A-Z0-9_]+)=", _read(".env.example"), flags=re.MULTILINE))
     required = {
         "META_MODEL_ID",
+        "META_WONDER_MODEL_ID",
         "META_USE_CONTRIBUTOR_TIER",
         "MODAL_GLIMMER_MODEL_ID",
         "MODAL_ENDPOINT_URL",

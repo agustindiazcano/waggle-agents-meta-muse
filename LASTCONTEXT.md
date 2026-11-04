@@ -1,6 +1,6 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. This branch (`exp/e4-live-runner`, ADR-094) adds the live E4
+Updated: 2026-11-04. This branch (`exp/e4-live-runner`, ADR-096) adds the live E4
 court runner on real routes with fallbacks disabled, wiring `build_client` to
 configurations A, B and C on the development split. Configuration D (cross-family)
 and baseline are refused in live mode with `LiveConfigurationError`. Live runs verify
@@ -10,23 +10,23 @@ fallback labels, and label result JSON as `provider_mode: "live"`. Tests first i
 zero spend. The maintainer merges the PR, not the agent.
 
 Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
-margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164
-(E8 reporting, ba2abcf), PR 165 (crisis planner adapter, ADR-090, c7098a7),
-PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091, d18991a) and PR 167 (E9 planted
-defects, ADR-092, 21e1b54), and this branch (`exp/e4-live-runner`, ADR-094)
-implements the live E4 runner, raising court/E4 code from 50% to about 95%.
-Measurements, calibration, documents and delivery do not count. No new published
-number or README result changed.
+margin about 3 points. Main now includes PR 163 to PR 174 (viewer gallery and overlays,
+CourtRuntime and CrisisRuntime, organizer E5 C2/C3, SDK fake-backed client test, E8 export,
+E1 diagnosis, scripted E4 CLI and Meta Wonder planning-role routes) and rollout separation check
+(ADR-095). This branch (`exp/e4-live-runner`, ADR-096) implements the live E4 runner, raising
+court/E4 code from 50% to about 95%. Measurements, calibration, documents and delivery do not
+count. No new published number or README result changed.
 
 ## Current state
 
-- E4 live runner is implemented on branch `exp/e4-live-runner` (ADR-094).
+- E4 live runner is implemented on branch `exp/e4-live-runner` (ADR-096).
   Supports configurations A, B and C. Refuses D (until a non-Muse route exists)
   and baseline. Validates environment caps and model IDs before calling. Records
   live warning, realized model IDs and call log records. Fallbacks are disabled.
   Local unit tests pass in mock mode.
-- Crisis planner adapter (ADR-090, PR 165) and organizer E5 (ADR-091, PR 166) are
-  in main. E10 harness and production crisis caller remain.
+- Crisis planner adapter (ADR-090, PR 165), organizer E5 (ADR-091, PR 166) and
+  Meta Wonder planning routes (ADR-094, PR 174) are in main. E10 harness and
+  production crisis caller remain.
 - Viewer map geometry, overlays and live stream parser are on `feat/viewer-overlays`
   (ADR-093).
 - LLM provider/logging code is about 93%; court/E4 95%; voice/vision 75%; package
@@ -37,7 +37,7 @@ number or README result changed.
 
 ## Done last
 
-- Live E4 court runner (ADR-094, this branch `exp/e4-live-runner`):
+- Live E4 court runner (ADR-096, this branch `exp/e4-live-runner`):
   Failing unit tests first in `tests/unit/experiments/test_e4_live.py` covering
   live result labeling, realized model IDs, rejection escalation, refusal of
   cross-family D and baseline, unauthorized held-out refusal, CLI `--live` execution,
@@ -66,7 +66,7 @@ number or README result changed.
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
 git status, branches and worktrees, and fetch origin. The live E4 court runner is
-complete on branch exp/e4-live-runner (ADR-094) with 13 unit tests passing in mock
+complete on branch exp/e4-live-runner (ADR-096) with 13 unit tests passing in mock
 mode without spending. Review the PR and its CI. The next priority is E10 live harness
 and production crisis caller, or running the live E4 cloud workflow once the smoke run
 reports green on declared routes. Project code is about 88% plus/minus 3 points,
