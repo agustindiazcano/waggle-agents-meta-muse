@@ -1,5 +1,12 @@
 # Waggle Hive: Pending
 
+Latest estimate by eye on 2026-11-04: project code about 83%, unchanged at this
+precision; overall viewer code about 68%, up from about 63% because model import,
+modular equipment, gallery pickup preview and browser checks now exist. The
+gallery/model task is 100% code; visual review remains with the maintainer.
+These are judgments, not measured results. The older table predates later work;
+inspect current PRs. See rows 113 and 114 and LASTCONTEXT.md for the current viewer.
+
 Code progress of the project (estimate by eye, code only): 75% on 2026-11-02 counting code written with a green CI even if not merged; about 66% measured on `main`. Experiments and runs are not code and do not count. The Code % column is an estimate by eye of how much of each task's code is written; `-` means the row has no code. Both are judgments, not results.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
@@ -119,3 +126,6 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 | 111 | P2 | Viewer: open it (`cd web && npm ci && npm run dev`, `?demo=1`) and say what is wrong. Decide whether the replay file carries the map geometry (walls, racks, zone polygons) so it can be drawn. Overlays, GLB models, the live connection and a browser test remain | M, A | pending | 50% |
 | 112 | P2 | Next code blocks, in order: schema revision 11 (technician lease, ticket close, settlement), then revision 12 (package registry), the maintenance alert loop and E6 runner, rollout validator with one deterministic rollout, advisor runtime and E5, the Python SDK client test. The two revisions touch `schema.py`: one after the other | A | next | 0% |
 
+
+| 113 | P2 | Complete GLB gallery and model pack: five robots, four people, industrial machines, exterior props, modular rack/conveyor/dock, offline hash-checked asset import, pickup preview and browser contract tests. Branch feat/viewer-assets-complete, stacked on chore/merge-wave-5 (PR 159). Binary assets remain outside Git | A | code complete; PR checks recorded in the task PR | 100% |
+| 114 | P2 | Review all 20 gallery entries, especially new worker hands and arm textures, human clips, pickup prop timing, equipment proportions and rack layout. The maintainer owns this visual review. Map geometry, overlays, live connection and simulator-owned action/role replay fields remain separate viewer work | M, A | visual review pending; remaining viewer code tracked in row 111 | - |

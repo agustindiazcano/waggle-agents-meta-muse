@@ -972,3 +972,33 @@ Status: implemented with unit tests (653 in the touched sets: governance, the E5
 Decision: (1) `TrustedFacts.task_step`, `occluded`, `geofences` and `lease_holders` may be `None` when the state does not expose the value. The advisor input renders `None` as `unknown`, never as a default. `occluded` comes from the fast layer output of the previous step through `E5Rig.occluded`, and is unknown before the first step or when the run has no occlusion layer. The task step, geofences and lease holders are unknown in E5 until the simulator or rig exposes them; zone kinds were not mapped to geofences because that would invent a meaning. (2) `waggle.experiments.e5_caller.AdvisorCaller` asks the advisor at tick 0 and each tick the context changed (reasons, zone, or the nearest distance crossing `near_threshold_m`). The threshold is a required argument everywhere, with no default. The caller can only add caution through the caution log; an advisor failure is counted under `advisor_error` and leaves the limits already in force. (3) `waggle.governance.caution_file` writes the caution log as JSON lines through a temp file, `fsync` and `os.replace` (the temp file is removed on failure and the old file is kept) and loads it through `CautionLog.from_jsonl`, rejecting the whole file on a bad line or a file that is not UTF-8. `C1_REPLAY` accepts `replay_path`; exactly one of `replay_log` and `replay_path` must be given. (4) `E5Runner` accepts an optional `client_environ` and `call_log` (in-memory or `PostgresCallLog`) and builds its client with `build_client(..., fallbacks_enabled=False)`. Only mock mode is accepted. `build_client` gained a `providers` override, allowed only in mock mode, so the scripted provider keeps working. Nine guards were broken on purpose in the audit (fallbacks forced on, temp file left, UTF-8 check, the two mock-only checks, `occluded` defaulting to false, the advisor failure catch, the hard-coded threshold, an unknown rendered as a default) and each broke its test.
 
 Gaps, stated plainly: E5 prompts carry `unknown` for three facts, which weakens what the advisor can reason about, and that is reported as is. The mock provider cannot produce a real advisor answer, so runs still need the scripted provider. Database persistence of the caution log (a table and a migration) is not built; the file is the persistence for now. No real provider run exists. The full CI was not run by the subagent; it runs on the integration branch.
+
+## ADR-088: Generated models, modular previews and offline asset import
+
+Status: implemented, not evaluated. Continues the unfinished GLB viewer on a separate
+branch. The maintainer requested completion and owns visual review.
+
+Decision: the model gallery is separate from replay state and offers all current
+models plus original modular rack, conveyor and dock previews. GLBs stay outside
+Git history in a separate archive. `web/models.json` pins each file's SHA-256,
+byte count, authored animation names and generation provenance. The offline
+importer validates all sources before copying, rejects external resource
+references, and refuses to replace a different existing destination file.
+No API key is needed for import. Meshy generation checkpoints retain task ids
+and consumed credits; monthly credits fund the five additional models, with no
+permanent-credit purchase or consumption requested.
+
+The revised worker replaces the old replay worker. A replay without chassis or
+human roles still uses one model per kind. Gallery pickup uses an independent
+visual box following the hand midpoint during an authored fraction of the clip;
+it is hidden if the clip, hand nodes or timing are unavailable. No human pickup
+or package pose is invented in the replay. Procedural dimensions never define
+simulator geometry. No control, fencing, audit, retry or simulator contract changes.
+
+Verification: viewer unit and browser contract tests cover camera pan without a
+recorded-state change, malformed replays, missing models, invalid rack settings,
+pickup prop ownership and offline import failures. A separate model browser check
+requires the binary pack and checks decoding and clip names. Playwright 1.64.1 is
+development only (ADR-029). `viewer.yml` runs checks without the binary pack.
+Artistic quality, map geometry, overlays, live mode and role/action replay fields
+remain outside this gallery change.

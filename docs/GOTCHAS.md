@@ -118,3 +118,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### `ON CONFLICT (column) DO NOTHING` does not cover a second unique index
 - Symptom: two concurrent inserts with the same logical key raise `UniqueViolation` on another unique index of the table, even though the statement names the primary key as the conflict target. Cloud run 41259268312 failed this way in `open_ticket`; it passed locally in unit tests because no database ran there.
 - What to do: when the key is derived and several unique indexes describe the same fact, use a bare `ON CONFLICT DO NOTHING`, then read the committed row and compare. Test the race with several keys and many threads, not one.
+
+### The model gallery needs the separate asset pack
+- Symptom: a new checkout shows primitives in replay and a model-unavailable message in the gallery.
+- What to do: extract the matching model archive outside `web/public/models`, then run `npm run models:sync -- --source DIRECTORY` from `web/`. The importer checks hashes and refuses a different existing destination file. Preserve that file and inspect the mismatch; do not overwrite it blindly. GLBs are intentionally excluded from Git. Use `npm run test:models` to check decoding after import. The gallery pickup prop is a visual preview; the current replay has no human pickup action.
