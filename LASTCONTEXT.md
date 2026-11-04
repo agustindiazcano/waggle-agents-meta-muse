@@ -8,6 +8,11 @@ origin/main at ba2abcf without rewriting history. The maintainer merges the PR,
 not the agent. Other agents work in separate worktrees (viewer, global custody,
 Meshy assets, E3 labels, organizer); this branch touches none of those areas.
 
+E9 update (2026-11-04): branch exp/e9-planted-defects in worktree
+../waggle-e9-planted-defects adds the planted-defect campaign (ADR-092):
+4 defects, copy-only runner, baseline check, result writer; first run
+4 of 4 killed, in results/e9/dev/planted.json. Cloud mutation arm remains.
+
 Code progress of the project (estimate by eye, code only): 85% on 2026-11-04,
 margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089) and
 PR 164 (E8 reporting at ba2abcf), and this branch adds the per-robot organizer
