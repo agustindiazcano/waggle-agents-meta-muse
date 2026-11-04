@@ -54,6 +54,18 @@ _HUMAN = {"id", "x", "y", "heading"}
 _ZONE = {"id", "polygon_id", "occupant", "token"}
 _MACHINE = {"id", "state", "temperature", "severity"}
 _EVENT = {"kind", "text"}
+_OVERLAYS = {"envelopes", "lidar_shadows", "ghost_paths", "extra"}
+_ENVELOPE = {"robot_id", "polygon", "margin_m", "nearest_id"}
+_LIDAR_SHADOW = {"robot_id", "polygon", "sample_stride"}
+_GHOST_PATH = {
+    "variant_index",
+    "robot_id",
+    "passed",
+    "points",
+    "k",
+    "horizon_s",
+    "snapshot_hash",
+}
 
 
 class FrameError(ValueError):
@@ -100,6 +112,48 @@ class FrameEvent:
 
     kind: str
     text: str
+
+
+@dataclass(frozen=True)
+class EnvelopeOverlay:
+    """Safety stopping envelope and separation margin ring for one robot."""
+
+    robot_id: str
+    polygon: Sequence[tuple[float, float]]
+    margin_m: float
+    nearest_id: str | None = None
+
+
+@dataclass(frozen=True)
+class LidarShadowOverlay:
+    """Downsampled lidar occlusion shadow polygon for one robot."""
+
+    robot_id: str
+    polygon: Sequence[tuple[float, float]]
+    sample_stride: int = 1
+
+
+@dataclass(frozen=True)
+class GhostPathOverlay:
+    """One K-variant rollout trajectory from the plan validator."""
+
+    variant_index: int
+    robot_id: str
+    passed: bool
+    points: Sequence[tuple[float, float]]
+    k: int
+    horizon_s: float
+    snapshot_hash: str
+
+
+@dataclass(frozen=True)
+class FrameOverlays:
+    """Optional safety and validator overlays shipped with a frame."""
+
+    envelopes: Sequence[EnvelopeOverlay] = ()
+    lidar_shadows: Sequence[LidarShadowOverlay] = ()
+    ghost_paths: Sequence[GhostPathOverlay] = ()
+    extra: Mapping[str, Any] | None = None
 
 
 def _round(value: float) -> float:
@@ -220,6 +274,69 @@ def _events(events: Sequence[FrameEvent]) -> list[JsonObject]:
     return out
 
 
+def _points(points: Sequence[tuple[float, float]], min_len: int, what: str) -> list[list[float]]:
+    if len(points) < min_len:
+        raise ValueError(f"{what} needs at least {min_len} points")
+    return [[_round(x), _round(y)] for x, y in points]
+
+
+def _overlays(overlays: FrameOverlays | None) -> JsonObject:
+    if overlays is None:
+        return {}
+    out: JsonObject = {}
+    if overlays.envelopes:
+        out["envelopes"] = [
+            {
+                "robot_id": _text(env.robot_id, "envelope robot_id"),
+                "polygon": _points(env.polygon, 3, "envelope polygon"),
+                "margin_m": _round(env.margin_m),
+                "nearest_id": (
+                    None if env.nearest_id is None else _text(env.nearest_id, "nearest_id")
+                ),
+            }
+            for env in overlays.envelopes
+        ]
+    if overlays.lidar_shadows:
+        shadows: list[JsonObject] = []
+        for sh in overlays.lidar_shadows:
+            if type(sh.sample_stride) is not int or sh.sample_stride < 1:
+                raise ValueError("lidar_shadows sample_stride must be a positive integer")
+            shadows.append(
+                {
+                    "robot_id": _text(sh.robot_id, "lidar_shadow robot_id"),
+                    "polygon": _points(sh.polygon, 3, "lidar_shadow polygon"),
+                    "sample_stride": sh.sample_stride,
+                }
+            )
+        out["lidar_shadows"] = shadows
+    if overlays.ghost_paths:
+        ghosts: list[JsonObject] = []
+        for gp in overlays.ghost_paths:
+            if type(gp.variant_index) is not int or gp.variant_index < 0:
+                raise ValueError("ghost_paths variant_index must be a non-negative integer")
+            if type(gp.k) is not int or gp.k < 1:
+                raise ValueError("ghost_paths k must be a positive integer")
+            if not isinstance(gp.snapshot_hash, str) or len(gp.snapshot_hash) != 64:
+                raise ValueError("ghost_paths snapshot_hash must be a SHA-256 hex digest")
+            ghosts.append(
+                {
+                    "variant_index": gp.variant_index,
+                    "robot_id": _text(gp.robot_id, "ghost_path robot_id"),
+                    "passed": bool(gp.passed),
+                    "points": _points(gp.points, 2, "ghost_path points"),
+                    "k": gp.k,
+                    "horizon_s": _round(gp.horizon_s),
+                    "snapshot_hash": gp.snapshot_hash,
+                }
+            )
+        out["ghost_paths"] = ghosts
+    if overlays.extra is not None:
+        if not isinstance(overlays.extra, Mapping):
+            raise ValueError("overlays.extra must be a mapping")
+        out["extra"] = dict(overlays.extra)
+    return out
+
+
 def encode_frame(frame: Mapping[str, Any]) -> str:
     """Canonical JSON text of a frame: sorted keys, no spaces, no NaN."""
     return json.dumps(frame, sort_keys=True, separators=(",", ":"), allow_nan=False)
@@ -232,6 +349,7 @@ def export_frame(
     zones: Sequence[ZoneView] = (),
     machines: Sequence[MachineView] = (),
     events: Sequence[FrameEvent] = (),
+    overlays: FrameOverlays | None = None,
     speed_limits: Sequence[float | None] | None = None,
     modes: Sequence[str | None] | None = None,
     max_bytes: int = MAX_FRAME_BYTES,
@@ -252,7 +370,7 @@ def export_frame(
         "humans": _humans(sim),
         "zones": _zones(zones),
         "machines": _machines(machines),
-        "overlays": {},
+        "overlays": _overlays(overlays),
         "events": _events(events),
     }
     size = len(encode_frame(out).encode("utf-8"))
@@ -286,6 +404,22 @@ def _check_list(value: object, fields: set[str], what: str) -> None:
                 raise FrameError(f"{what}.{key} is too long")
 
 
+def _check_overlays(value: object) -> None:
+    if not isinstance(value, dict):
+        raise FrameError("overlays must be an object")
+    unknown = set(value) - _OVERLAYS
+    if unknown:
+        raise FrameError(f"unknown field in overlays: {sorted(unknown)[0]}")
+    if "envelopes" in value:
+        _check_list(value["envelopes"], _ENVELOPE, "overlays.envelopes")
+    if "lidar_shadows" in value:
+        _check_list(value["lidar_shadows"], _LIDAR_SHADOW, "overlays.lidar_shadows")
+    if "ghost_paths" in value:
+        _check_list(value["ghost_paths"], _GHOST_PATH, "overlays.ghost_paths")
+    if "extra" in value and not isinstance(value["extra"], dict):
+        raise FrameError("overlays.extra must be an object")
+
+
 def parse_frame(text: str, max_bytes: int = MAX_FRAME_BYTES) -> JsonObject:
     """Read a frame. Unknown versions, unknown fields and oversize input are rejected."""
     if len(text.encode("utf-8")) > max_bytes:
@@ -305,8 +439,7 @@ def parse_frame(text: str, max_bytes: int = MAX_FRAME_BYTES) -> JsonObject:
     _check_list(top["zones"], _ZONE, "zones")
     _check_list(top["machines"], _MACHINE, "machines")
     _check_list(top["events"], _EVENT, "events")
-    if top["overlays"] != {}:
-        raise FrameError("overlays must be empty in schema version 1")
+    _check_overlays(top["overlays"])
     if type(top["tick"]) is not int or top["tick"] < 0:
         raise FrameError("tick must be a non-negative integer")
     if not isinstance(top["state_hash"], str) or len(top["state_hash"]) != 64:
