@@ -35,7 +35,7 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 8. Never rewrite published history: no force push, no `git reset --hard`, no `git clean -f`, no amend or rebase of a pushed commit. Unpushed local commits may be amended.
 9. Never skip hooks or CI: no `--no-verify`, no disabling a check to get a green result.
 10. Pull request text, used as the PR body and also delivered in the reply: a title in Conventional Commit form, then a summary, a test plan with the commands and their results, the base branch if stacked, and a list of protected paths touched.
-11. Before each push: `uv run ci` is green, `git diff` against the base shows no secret, `.env`, build output or held-out result file, and the branch is not `main`. After a merge, delete the local branch. The maintainer deletes the remote branch. Merges use a merge commit and not a squash, so the per-commit history stays visible as evidence of the work (maintainer decision).
+11. Before each push: touched tests and style checks pass, `git diff` against the base shows no secret, `.env`, build output or held-out result file, and the branch is not `main`. Full CI executes in the cloud on the pushed branch. After a merge, delete the local branch. The maintainer deletes the remote branch. Merges use a merge commit and not a squash, so the per-commit history stays visible as evidence of the work (maintainer decision).
 
 ## 3. Test tiers and cloud runs
 
@@ -46,10 +46,10 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 5. The regular CI and `uv run ci` exclude both markers, identically.
 6. The heavy workflow uploads result JSON as an artifact. The maintainer commits it.
 7. Path filters are allowed only where safe. The link, style and import-contract tests always run.
-8. Cloud first (maintainer decision). Anything that can run in the cloud runs in the cloud: the full test suite, experiment sweeps, dev seeds baselines and long measurements. Locally run nothing, or only what finishes very fast (the test file being written, lint on the changed files). When in doubt, push the branch and let GitHub run the checks and read the result there.
-9. Do not wait on a long local run. A multi-minute local run (the full `uv run ci`, a 90-run baseline on dev seeds) is a reason to push the branch and use a workflow instead. Add or extend a `workflow_dispatch` workflow when a run has none yet.
+8. Cloud first (maintainer decision). Never run the full test suite locally. The maintainer machine is slow; full test suites run in the cloud on the pushed branch in GitHub Actions. Locally, run only what finishes very fast (the test file being written, lint and format on the changed files). Push the task branch and let GitHub run the checks and read the result there.
+9. Parallelize test execution whenever possible (in cloud workflows and local runners). Do not wait on a long local run: a multi-minute local run is forbidden; push the branch and let the cloud CI execute the test suite in parallel.
 10. Held-out seeds follow section 9 whatever the place: they run once per configuration, in the cloud, and the maintainer commits the result.
-11. Until a workflow replaces it, the pre-push check (`tools/ci/pre_push_check.py`) still requires a green `uv run ci` stamp on HEAD. Changing that gate to rely on the cloud CI is a maintainer decision and touches protected paths (`tools/hooks/`), so propose it, do not edit it.
+11. Pre-push checks verify secrets (gitleaks), no `.env` or held-out result files, and fast unit checks. Full regression and integration suites run in GitHub Actions on the pushed branch.
 
 ## 4. Hard rules
 

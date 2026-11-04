@@ -1,6 +1,6 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 87% on 2026-11-04, margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164 (E8 reporting at ba2abcf), PR 165 (crisis planner adapter, ADR-090 at c7098a7), PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091 at d18991a, raising advisors/E5 code to 95%) and PR 167 (E9 planted-defect arm, ADR-092 at 21e1b54), and this branch (`feat/viewer-overlays`, ADR-093) implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client, raising viewer code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 88% on 2026-11-04, margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164 (E8 reporting at ba2abcf), PR 165 (crisis planner adapter, ADR-090 at c7098a7), PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091 at d18991a, raising advisors/E5 code to 95%) and PR 167 (E9 planted-defect arm, ADR-092 at 21e1b54), and this branch (`exp/e4-live-runner`, ADR-094) implements the live E4 runner for configurations A, B and C with fallbacks disabled, raising E4 court runner code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -19,7 +19,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Review the E8 reporting PR and cloud benchmark artifacts | A, M | - | Main includes PR 163; maintainer merges E8 after green checks |
 | P1 | Verify balances, expiry, rate limits, model ids, console caps and cloud secrets; verify Baseten/Modal prices | M | - | Rows 4, 5, 7, 10, 11, 12, 32; no secret inspection in this audit |
 | P1 | Review E3/E4/E5 labels, attack fixtures, real catalog, zones, machine data and recordings | M | - | Rows 54, 87, 94, 98; a pending label is not a result |
-| P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 50% | E4 harness remains scripted-only; no paid call authorized here |
+| P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 95% | Live E4 runner implemented with unit tests in ADR-094; configuration D and real cloud runs pending |
 | P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (PR 165 merged in main); E10 harness and production crisis caller remain |
 | P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 95% | C0/C1/C1_REPLAY/C2/C3/C3_REPLAY exist (ADR-091); C4 and production DB call-log wiring remain |
 | P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
