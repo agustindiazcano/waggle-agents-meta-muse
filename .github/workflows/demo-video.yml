@@ -7,6 +7,13 @@ on:
         description: "Shot number 1-8, or all"
         required: false
         default: "all"
+  push:
+    branches: [feat/video-demo]
+    paths:
+      - "demo/**"
+      - "web/package.json"
+      - "web/package-lock.json"
+      - ".github/workflows/demo-video.yml"
 
 permissions:
   contents: read
