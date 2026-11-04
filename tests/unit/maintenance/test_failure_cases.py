@@ -40,3 +40,20 @@ def test_ties_are_broken_by_case_id() -> None:
     first = failure_cases.similar_cases(log, mode, 60.0, 5.0, 5.0, 5)
     again = failure_cases.similar_cases(tuple(reversed(log)), mode, 60.0, 5.0, 5.0, 5)
     assert first == again
+
+
+@pytest.mark.parametrize("case_id", ["warehouse-case_1.2", "fl-1", "a" * 64])
+def test_database_case_ids_are_accepted(case_id: str) -> None:
+    from dataclasses import replace
+
+    sample = failure_log.generate_failure_log(1, 1)[0]
+    assert replace(sample, case_id=case_id).case_id == case_id
+
+
+@pytest.mark.parametrize("case_id", ["", "bad id", "bad\n", "a" * 65])
+def test_invalid_database_case_ids_are_rejected(case_id: str) -> None:
+    from dataclasses import replace
+
+    sample = failure_log.generate_failure_log(1, 1)[0]
+    with pytest.raises(ValueError, match="case_id"):
+        replace(sample, case_id=case_id)
