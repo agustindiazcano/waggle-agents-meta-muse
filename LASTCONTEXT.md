@@ -13,6 +13,11 @@ no product code or experiment result changed.
 
 ## Done last
 
+- Diagnosed both failed PR 191 CI jobs: the same stale documentation assertion
+  expected E10 harness/caller to remain pending. Both runs had 3914 passing tests
+  and this single failure. Updated the existing assertion to require implemented
+  harness/caller text and the remaining live-evaluation column. No test was
+  disabled. No local tests run, as requested; cloud checks validate the push.
 - Removed the delivery/rubric checklist from README in favor of SUBMISSION.md,
   removed symbolic provision arguments and updated implementation status against
   source. Schema revision is 15; ADR-097 discards Vertex/cross-family E4 and
