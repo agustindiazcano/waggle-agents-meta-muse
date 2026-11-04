@@ -1,4 +1,4 @@
-﻿"""Automated llm_calls export feeding the existing E8 report runner."""
+"""Automated llm_calls export feeding the existing E8 report runner."""
 
 import json
 from collections.abc import Iterator
