@@ -66,11 +66,31 @@ def test_empty_or_invalid_metadata_fails(tmp_path: Path) -> None:
         summarize(tmp_path, target="control", commit="abc", date="2026-11-04")
 
 
-def test_execution_refuses_local_campaign(tmp_path: Path) -> None:
-    from waggle.experiments.e9_mutation import main
+def test_execution_refuses_local_campaign(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import waggle.experiments.e9_mutation as module
 
+    monkeypatch.setattr("waggle.experiments.e9_mutation.sys.platform", "win32")
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     with pytest.raises(RuntimeError, match="Linux GitHub Actions"):
-        main(["--target", "control", "--out", str(tmp_path / "out")])
+        module.main(["--target", "control", "--out", str(tmp_path / "out")])
+
+
+def test_missing_mutation_tool_raises_typed_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from importlib.metadata import PackageNotFoundError
+
+    import waggle.experiments.e9_mutation as module
+
+    monkeypatch.setattr("waggle.experiments.e9_mutation.sys.platform", "linux")
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    def missing(_name: str) -> str:
+        raise PackageNotFoundError("mutmut")
+
+    monkeypatch.setattr(module, "version", missing)
+    with pytest.raises(RuntimeError, match="mutation tool must be"):
+        module.main(["--target", "control", "--out", str(tmp_path / "out")])
 
 
 def test_campaign_runs_baseline_first_and_cleans_copy(
