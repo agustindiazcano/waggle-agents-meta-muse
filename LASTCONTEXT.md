@@ -9,12 +9,14 @@ and rendering (`world_schema.ts`, `scene.ts`), pure overlay provenance and
 visibility toggles (`overlays.ts`), and the `/ws/live` stream parser and client
 (`live_client.ts`, `main.ts`). The maintainer merges the PR, not the agent.
 
-Code progress of the project (estimate by eye, code only): 86% on 2026-11-04,
-margin about 3 points. With PR 165 merged and the viewer map geometry, safety
-overlays and live stream client implemented with tests on this branch, viewer
-code rises from 68% to about 95% (visual review in a browser remains with the
-maintainer). Measurements, calibration, documents and delivery do not count.
-No new published number or README result changed.
+Code progress of the project (estimate by eye, code only): 87% on 2026-11-04,
+margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164
+(E8 reporting, ba2abcf), PR 165 (crisis planner adapter, ADR-090, c7098a7) and
+PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091, d18991a), and this branch
+(`feat/viewer-overlays`, ADR-092) implements the viewer map geometry, safety
+overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client,
+raising viewer code from 68% to about 95%. Measurements, calibration, documents
+and delivery do not count. No new published number or README result changed.
 
 ## Current state
 
@@ -29,13 +31,16 @@ No new published number or README result changed.
   E8 never treats those placeholders as measured durations. Extrapolation uses
   successful-call latency and the observed error-row fraction, explicitly labeled
   as an assumption. Cached and denied rows are counted separately.
-- The crisis LLM proposer adapter exists on feat/crisis-planner-adapter (ADR-090);
-  its E10 harness and production caller remain. E4 production court/cross-family
-  routes, E5 organizer and service wiring, E6 database-backed diagnosis, MCP SDK
-  validation, real multimodal providers, package integrity and E9 remain. No paid
-  call, migration, held-out run or safety change was performed in this task.
+- The crisis LLM proposer adapter is merged in main (`c7098a7`, PR 165, ADR-090);
+  its E10 harness and production caller remain. This branch (`feat/organizer-e5`,
+  ADR-091) adds `waggle.governance.organizer`, `waggle.llm.organizer_runtime`
+  (`organizer-v1`) and E5 `C2`, `C3` and `C3_REPLAY`. E5 `C4` remains refused
+  until the fleet planner exists. E4 production court/cross-family routes, E6
+  database-backed diagnosis, MCP SDK validation, real multimodal providers,
+  package integrity and E9 remain. No paid call, migration, held-out run or
+  safety change was performed in this task.
 - LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
-  model 75%; catalog/technician lease 90%; advisors/E5 85%; maintenance/E6 80%;
+  model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
   rollout/crisis 90%; E2 harness 97%; replay generator 100%. Estimates by eye only.
 - Provider balances, caps, secrets, labels, catalog, zones and recordings still
   require the maintainer. G-GLOBAL remains unauthorized, outside the denominator.

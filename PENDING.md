@@ -1,6 +1,6 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 86% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner, validator stage D, PR 163 (viewer gallery), PR 164 (E8 reporting) and PR 165 (crisis planner adapter ADR-090). Branch feat/viewer-overlays (ADR-092) implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client, bringing viewer code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 87% on 2026-11-04, margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164 (E8 reporting at ba2abcf), PR 165 (crisis planner adapter, ADR-090 at c7098a7) and PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091 at d18991a, raising advisors/E5 code to 95%), and this branch (`feat/viewer-overlays`, ADR-092) implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client, raising viewer code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -20,8 +20,8 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P1 | Verify balances, expiry, rate limits, model ids, console caps and cloud secrets; verify Baseten/Modal prices | M | - | Rows 4, 5, 7, 10, 11, 12, 32; no secret inspection in this audit |
 | P1 | Review E3/E4/E5 labels, attack fixtures, real catalog, zones, machine data and recordings | M | - | Rows 54, 87, 94, 98; a pending label is not a result |
 | P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 50% | E4 harness remains scripted-only; no paid call authorized here |
-| P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (branch feat/crisis-planner-adapter); E10 harness and production crisis caller remain |
-| P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 85% | C0/C1/replay exist; C2/C3/C4 are explicitly refused |
+| P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (PR 165 merged in main); E10 harness and production crisis caller remain |
+| P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 95% | C0/C1/C1_REPLAY/C2/C3/C3_REPLAY exist (ADR-091); C4 and production DB call-log wiring remain |
 | P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
 | P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 95% | Implemented on feat/viewer-overlays (ADR-092); maintainer visual review remains |
 | P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 80% | Revision 14, loader, diagnosis/sheet/tool port and mock runner exist |
@@ -165,4 +165,5 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 123 | P2 | Delete obsolete docs/context-wave3 remotely, never merge (endpoint diff removes 6325 lines). Ticket race patch is already in main as 8ae51e3; feat/maintenance-tickets needs no PR | M | remote cleanup pending; preserve all worktrees with unmerged work | - |
 | 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | done: PR 164 merged in main ba2abcf; broader production exports and calibration remain | 100% |
 | 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done: PR 165 merged in main c7098a7; E10 harness and production caller remain | 100% |
-| 126 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-092) | A | done on branch feat/viewer-overlays; maintainer visual review and merge remain | 100% |
+| 126 | P1 | Organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY (ADR-091) | A | done: PR 166 merged in main d18991a; C4 fleet planner and live cloud evaluation remain | 100% |
+| 127 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-092) | A | done on branch feat/viewer-overlays; maintainer visual review and merge remain | 100% |
