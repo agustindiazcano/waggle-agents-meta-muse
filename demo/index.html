@@ -10,7 +10,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e13;font-family:Ar
 #event b{color:#ffd34d}
 #subs{position:fixed;left:50%;transform:translateX(-50%);bottom:9.5%;max-width:78%;text-align:center;color:#fff;font-size:24px;font-weight:600;text-shadow:0 2px 6px #000;background:rgba(0,0,0,.45);padding:6px 14px;border-radius:6px}
 #banner{position:fixed;left:0;right:0;bottom:0;height:7%;background:#07090d;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:0 22px;box-sizing:border-box;border-top:2px solid #1c69d4}
-#banner .l{font-size:19px;letter-spacing:.4px}
+#banner .l{font-size:19px;letter-spacing:.4px;line-height:1.2}
+#banner .l small{font-size:13px;color:#b9c6d2;letter-spacing:0}
+#banner .c{font-size:16px;color:#dbe6f0}
 #banner .r{text-align:right;font-size:17px;line-height:1.25}
 #banner .r small{font-size:13px;color:#b9c6d2}
 #card{position:fixed;inset:12% 16%;display:none;background:rgba(8,12,18,.94);color:#e8eef4;border:1px solid #2b3a4a;border-radius:12px;padding:34px 40px;font-size:20px;line-height:1.6}
@@ -28,7 +30,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0b0e13;font-family:Ar
 <div id="close"><h1>Waggle Hive</h1><p>Safety and reliability control plane for LLM-directed robot fleets</p><p>Built with Muse Spark Open</p><p style="font-size:17px">github.com/agustindiazcano/waggle-agents-meta-muse</p></div>
 <canvas id="minimap" width="300" height="180" style="position:fixed;left:14px;bottom:9%;background:rgba(10,14,20,.85);border:1px solid #2b3a4a;border-radius:8px"></canvas>
 <canvas id="cellmap" width="300" height="180" style="position:fixed;right:14px;bottom:9%;background:rgba(10,14,20,.85);border:1px solid #2b3a4a;border-radius:8px;display:none"></canvas>
-<div id="banner"><div class="l">Powered by Meta Muse</div><div class="r">Agustin Diaz Cano<br><small>MS Candidate, Systems Engineering</small></div></div>
+<div id="banner"><div class="l">Waggle Hive<br><small>Agentic robot fleet for logistics</small></div><div class="c">Powered by Meta Muse</div><div class="r">Agustin Diaz Cano<br><small>MS Candidate, Systems Engineering</small></div></div>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/"}}</script>
 <script type="module">
 import * as THREE from 'three';

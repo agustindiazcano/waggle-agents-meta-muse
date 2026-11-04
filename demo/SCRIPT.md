@@ -15,7 +15,14 @@ All ids are presentation mocks: ORD-1042, PKG-8841, TRK-07, TRK-12, T-331, R-B04
 | 7 | 2:35-2:45 | 10 s | Engineering evidence card | Measured evidence, from committed result files. Development seeds only. |
 | 8 | 2:45-3:00 | 15 s | Fleet return, closing card, attribution | Waggle Hive. Models propose. Deterministic code disposes. |
 
-Capture, one shot at a time (re-record only the failed shot):
+Cloud capture (preferred): GitHub Actions workflow "Waggle Hive demo video
+shots" (.github/workflows/demo-video.yml, workflow_dispatch, input shot=all
+or 1-8) records the eight shots in parallel jobs on Ubuntu runners with
+Google Chrome, checks out the GLB models with Git LFS and uploads each shot
+as a shot-<n> artifact. Download with: gh run download <run-id> --dir
+output/cloud. Shots land in output/cloud/shot-<n>/shot-<n>.mp4.
+
+Local capture, one shot at a time (re-record only the failed shot):
 
     node demo/capture.mjs shot <start> <duration> output/shot-<n>.mp4 1920 1080 audio
 
