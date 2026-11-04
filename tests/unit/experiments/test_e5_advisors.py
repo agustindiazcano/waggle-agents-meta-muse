@@ -207,10 +207,10 @@ def test_c2_organizer_only_and_c3_combined_and_c3_replay_match() -> None:
     assert record_c3_replay["widening_ticks"] == 0
 
 
-def test_c4_fleet_planner_raises_typed_error() -> None:
+def test_c4_fleet_planner_requires_explicit_topology() -> None:
     runner = _make_runner()
     spec = RunSpec(config="C4", scenario="S01", seed=SEED_S01, ticks=SHORT_TICKS)
-    with pytest.raises(UnsupportedConfigurationError):
+    with pytest.raises(UnsupportedConfigurationError, match="fleet"):
         runner.run_one(spec)
 
 
