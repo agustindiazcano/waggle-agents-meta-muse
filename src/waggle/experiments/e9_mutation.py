@@ -17,7 +17,7 @@ import sys
 import tempfile
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import TypedDict
 
@@ -146,7 +146,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if sys.platform != "linux" or os.environ.get("GITHUB_ACTIONS") != "true":
         raise RuntimeError("mutation execution requires Linux GitHub Actions")
-    if version("mutmut") != TOOL_VERSION:
+    try:
+        installed = version("mutmut")
+    except PackageNotFoundError:
+        installed = ""
+    if installed != TOOL_VERSION:
         raise RuntimeError(f"mutation tool must be mutmut=={TOOL_VERSION}")
     root = Path.cwd()
     commit = subprocess.run(
