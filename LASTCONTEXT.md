@@ -41,6 +41,10 @@ no product code or experiment result changed.
 
 ## Current state
 
+- PR 191 merged as 594ac60 while the workflow change was being prepared.
+  The CI-only follow-up is PR 192, branch ci/docs-only-scope in this worktree.
+  Runs 41936830706 and 41936830633 passed scope detection and skipped Python
+  and viewer respectively. No local tests. Maintainer reviews and merges PR 192.
 - Preserve main's uncommitted LASTCONTEXT.md and untracked GLB files, plus all
   dirty and unmerged worktrees. No changes were made to those files.
 - Video plan: ../waggle-video-demo-plan, docs/video-demo-plan,
@@ -54,10 +58,10 @@ no product code or experiment result changed.
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first.
-The cleaned README and banner live in .worktrees/readme-cleanup on
-docs/readme-cleanup, including the commits from docs/readme-brand-header.
+The cleaned README and banner were merged in PR 191. The follow-up CI change
+lives in .worktrees/readme-cleanup on ci/docs-only-scope, PR 192 against main.
 The maintainer explicitly requested no tests and a PR for this documentation-only
-task. PR 191 is open against main; inspect its status before further work and do
+task. Review PR 192 for the requested documentation-only suite skipping and do
 not rerun tests. No runtime code or historical measurement changed. The HTML
 source, local Meta symbol, attribution and 1600 by 500 capture are in docs/assets.
 The earlier banner work passed 42 focused docs/style checks; cleanup was reviewed
