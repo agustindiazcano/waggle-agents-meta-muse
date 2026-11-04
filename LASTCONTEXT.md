@@ -23,7 +23,9 @@ not product code. Existing per-task estimates remain in PENDING.md.
   Changed-test Ruff check and formatting pass. No product behavior changed.
 - `uv run replay-verify web/public/demo.jsonl` fails at tick 4 against current code;
   `--digest-only` passes. README distinguishes playback/integrity from resimulation;
-  the fixture is unchanged. Final full CI/pre-push verification remains to run.
+  the fixture is unchanged. Full local CI was stopped at the maintainer request:
+  this is a README task; do not run more tests. The branch was pushed without
+  bypass flags; remaining CI belongs in GitHub Actions.
 
 ## Current state
 
