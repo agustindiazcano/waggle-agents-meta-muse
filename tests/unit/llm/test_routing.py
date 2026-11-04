@@ -68,6 +68,19 @@ def test_roles_without_fallback_are_the_meta_roles() -> None:
         assert table.get(role).fallback is None
 
 
+def test_planning_roles_use_meta_wonder_model_env() -> None:
+    table = load_routes()
+    for role in ("director", "planner", "diagnosis"):
+        primary = table.get(role).primary
+        assert primary.provider == "meta"
+        assert primary.model_env == "META_WONDER_MODEL_ID"
+    for role in ("court_1", "vision"):
+        primary = table.get(role).primary
+        assert primary.provider == "meta"
+        assert primary.model_env == "META_MODEL_ID"
+    assert table.get("voice").primary.model_env == "META_VOICE_MODEL_ID"
+
+
 def test_model_id_comes_from_config_not_code() -> None:
     spec = load_routes().get("director").primary
     assert (
@@ -82,6 +95,7 @@ def test_model_id_comes_from_config_not_code() -> None:
 def test_routes_file_has_no_hardcoded_model_ids() -> None:
     text = (ROOT / "src" / "waggle" / "llm" / "routes.toml").read_text(encoding="utf-8")
     assert "muse-spark" not in text.lower()
+    assert "muse-wonder" not in text.lower()
     assert "gemini" not in text.lower()
 
 

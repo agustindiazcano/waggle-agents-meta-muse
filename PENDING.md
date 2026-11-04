@@ -42,13 +42,13 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 2 | P1 | Confirm `ci.yml` runs green on GitHub | M | done: main 9cfb142 cloud CI success, run 41777534335 | - |
 | 3 | P1 | Review the 11 stacked branches and merge them in order with merge commits | M | done: historical stack integrated; PR 163 is the only open PR at audit | - |
 | 4 | P1 | Verify balances, expiry dates and rate limits in each provider console (Meta, Baseten, Modal, Vertex) | M | pending | - |
-| 5 | P1 | Set provider caps in the consoles and in `.env`; rename Gemini variables to the Vertex and Modal names in `.env.example` by hand | M | pending | - |
-| 6 | P2 | Verify Muse Glimmer availability and price per hour on Modal and Baseten (a first search found hosted endpoints elsewhere, none on those two) | M | pending | - |
-| 7 | P2 | Verify model ids through the Meta model list (`GET /v1/models`) and fill `META_MODEL_ID`, `META_VOICE_MODEL_ID` in `.env` | M | pending | - |
+| 5 | P1 | Set provider caps in the consoles and in `.env`; rename Gemini variables to the Vertex and Modal names in `.env.example` by hand | M | done in GitHub Actions variables (`META_SPEND_CAP_USD=135.0`, `BASETEN_SPEND_CAP_USD=90.0`, `MODAL_SPEND_CAP_USD=90.9`); console hard caps and local `.env` remain | - |
+| 6 | P2 | Verify Muse Glimmer availability and price per hour on Modal and Baseten (a first search found hosted endpoints elsewhere, none on those two) | M | `MODAL_GLIMMER_MODEL_ID=meta-models/Muse-Glimmer-30B` and `MODAL_ENDPOINT_URL=https://inference.us-west.modal.direct/v1` (workspace `ac-BQSGYNtST9xpA7WA5Cef1y`) set in GitHub Actions; `prices.toml` verification pending | - |
+| 7 | P2 | Verify model ids through the Meta model list (`GET /v1/models`) and fill `META_MODEL_ID`, `META_VOICE_MODEL_ID` in `.env` | M | `META_MODEL_ID=muse-spark-1.3`, `META_WONDER_MODEL_ID=muse-wonder-1.0` and `META_API_BASE_URL=https://api.meta.ai/v1` set in GitHub Actions; `META_VOICE_MODEL_ID` and local `.env` remain | - |
 | 8 | P2 | Read the Muse Model License text and confirm the attribution wording used in README and `web/index.html` | M | pending | - |
-| 9 | P2 | Choose the runtime HTTP client dependency (OpenAI SDK or httpx). Check that Baseten and a Modal endpoint are OpenAI-compatible. Agent asks before adding it | M | pending | - |
-| 10 | P2 | Verify price and latency of Muse Spark Open versus Muse Spark in the consoles, and the Baseten rate limit for 10 concurrent robots | M | pending | - |
-| 11 | P2 | Add GitHub Actions secrets for the heavy workflow | M | pending | - |
+| 9 | P2 | Choose the runtime HTTP client dependency (OpenAI SDK or httpx). Check that Baseten and a Modal endpoint are OpenAI-compatible. Agent asks before adding it | M | pending (stdlib `HttpProvider` active per ADR-070) | - |
+| 10 | P2 | Verify price and latency of Muse Spark Open versus Muse Spark in the consoles, and the Baseten rate limit for 10 concurrent robots | M | `BASETEN_MODEL_ID=meta-models/muse-spark-open` set in GitHub Actions; `prices.toml` verification for Baseten and Modal pending | - |
+| 11 | P2 | Add GitHub Actions secrets for the heavy workflow | M | done: `META_API_KEY`, `BASETEN_API_KEY`, `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` set in GitHub Actions secrets | - |
 | 12 | P2 | Claim Meta Model API credits (deadline Nov 4, 9 PM ET), request Baseten and Modal credits | M | pending | - |
 | 13 | P3 | Show the "Built with Muse Spark Open" attribution card in the final video | M | pending | - |
 | 14 | P3 | Fill judging rubric weights in `SUBMISSION.md` | M | pending | - |
@@ -167,4 +167,5 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done: PR 165 merged in main c7098a7; E10 harness and production caller remain | 100% |
 | 126 | P1 | Organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY (ADR-091) | A | done: PR 166 merged in main d18991a; C4 fleet planner and live cloud evaluation remain | 100% |
 | 127 | P2 | E9 planted-defect campaign (ADR-092): registry of 4 defects, copy-only runner, baseline check, result writer; first run 4 of 4 killed on dev code | A | done: PR 167 merged in main 21e1b54; cloud mutation-tool arm remains | 100% |
-| 128 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-093) | A | done on branch feat/viewer-overlays; maintainer visual review and merge remain | 100% |
+| 128 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-093) | A | done: PR 169 merged in main 5b9a19d; maintainer visual review remains | 100% |
+| 129 | P2 | Route `director`, `planner` and `diagnosis` to `META_WONDER_MODEL_ID` while keeping `META_MODEL_ID` for `court_1` and `vision` (ADR-094) | A | done on branch feat/meta-wonder-routing; maintainer review and merge remain | 100% |

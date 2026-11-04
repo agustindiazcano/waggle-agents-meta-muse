@@ -23,3 +23,17 @@ def test_route_answers_one_cheap_call(route: str) -> None:
     assert result.tokens_in > 0
     assert result.tokens_out > 0
     assert 0 < result.cost_usd < SMOKE_COST_LIMIT_USD
+
+
+@pytest.mark.llm
+def test_meta_wonder_answers_one_cheap_call() -> None:
+    provider, _ = smoke_provider("meta", os.environ)
+    wonder_id = os.environ.get("META_WONDER_MODEL_ID", "").strip()
+    assert wonder_id, "META_WONDER_MODEL_ID is not set"
+    request = LlmRequest(request_id="smoke-meta-wonder", role="planner", prompt=SMOKE_PROMPT)
+    assert provider.estimate_cost(request) < SMOKE_COST_LIMIT_USD
+    result = provider.complete(request, wonder_id)
+    assert result.text.strip()
+    assert result.tokens_in > 0
+    assert result.tokens_out > 0
+    assert 0 < result.cost_usd < SMOKE_COST_LIMIT_USD

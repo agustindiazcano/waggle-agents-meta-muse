@@ -1,14 +1,14 @@
 # Waggle Hive: Last context
 
 Updated: 2026-11-04. PR 163 (8cfb8fb), PR 164 (ba2abcf, E8 reporting), PR 165
-(c7098a7, crisis planner adapter ADR-090), PR 166 (d18991a, organizer E5 ADR-091)
-and PR 167 (21e1b54, E9 planted defects ADR-092) are merged in main. This branch
-(feat/viewer-overlays, ADR-093) adds the simulator-supplied safety overlays
-contract (`envelopes`, `lidar_shadows`, `ghost_paths`, `extra`) to
-`waggle.sim.frame` and `web/src/frame_schema.ts`, static map geometry validation
-and rendering (`world_schema.ts`, `scene.ts`), pure overlay provenance and
-visibility toggles (`overlays.ts`), and the `/ws/live` stream parser and client
-(`live_client.ts`, `main.ts`). The maintainer merges the PR, not the agent.
+(c7098a7, crisis planner adapter ADR-090), PR 166 (d18991a, organizer E5 ADR-091),
+PR 167 (21e1b54, E9 planted defects ADR-092), PR 169 (5b9a19d, viewer overlays
+ADR-093) and PR 170 (e47a5b6) are merged in main. This branch
+(feat/meta-wonder-routing, ADR-094) routes the planning-tier orchestrator roles
+(`director`, `planner`, `diagnosis`) to `META_WONDER_MODEL_ID` on the `meta`
+provider while keeping `META_MODEL_ID` for `court_1` and `vision`, and exposes
+`META_WONDER_MODEL_ID` in `.env.example` and `.github/workflows/heavy.yml`. The
+maintainer merges the PR, not the agent.
 
 E9 update (2026-11-04): branch exp/e9-planted-defects (PR 167, ADR-092) adds the
 planted-defect campaign: 4 defects, copy-only runner, baseline check, result
@@ -49,8 +49,19 @@ number or README result changed.
 - LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
   model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
   rollout/crisis 90%; E2 harness 97%; replay generator 100%. Estimates by eye only.
-- Provider balances, caps, secrets, labels, catalog, zones and recordings still
-  require the maintainer. G-GLOBAL remains unauthorized, outside the denominator.
+- GitHub Actions secrets (`META_API_KEY`, `BASETEN_API_KEY`, `MODAL_TOKEN_ID`,
+  `MODAL_TOKEN_SECRET`) and repository variables (`META_API_BASE_URL=https://api.meta.ai/v1`,
+  `META_MODEL_ID=muse-spark-1.3`, `META_WONDER_MODEL_ID=muse-wonder-1.0`,
+  `BASETEN_MODEL_ID=meta-models/muse-spark-open`,
+  `MODAL_ENDPOINT_URL=https://inference.us-west.modal.direct/v1`,
+  `MODAL_GLIMMER_MODEL_ID=meta-models/Muse-Glimmer-30B`,
+  `MODAL_SPARK_OPEN_MODEL_ID=meta-models/Muse-Spark-Open-816B-A42B`,
+  `META_SPEND_CAP_USD=135.0`, `BASETEN_SPEND_CAP_USD=90.0`,
+  `MODAL_SPEND_CAP_USD=90.9`, Modal workspace `ac-BQSGYNtST9xpA7WA5Cef1y`) are
+  now configured. Baseten and Modal `verified = true` price entries in
+  `src/waggle/llm/prices.toml`, `META_VOICE_MODEL_ID`, Vertex backup variables,
+  and maintainer-reviewed labels/catalog/zones/recordings still remain.
+  G-GLOBAL remains unauthorized, outside the denominator.
 
 ## Done last
 
