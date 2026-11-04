@@ -1,0 +1,59 @@
+1
+00:00:00,000 --> 00:00:08,000
+Three warehouses. Thirty robots. One urgent order.
+
+2
+00:00:08,000 --> 00:00:15,000
+ORD-1042: transfer PKG-8841 from WH-A to WH-C. Priority: urgent.
+
+3
+00:00:15,000 --> 00:00:25,000
+One global coordinator assigns the transfer to three cell organizers.
+
+4
+00:00:25,000 --> 00:00:35,000
+Each organizer directs ten robots. Thirty advisors add caution; deterministic code decides.
+
+5
+00:00:35,000 --> 00:00:48,000
+WH-B organizer assigns pickup. PKG-8841 attaches to carrier R-B04.
+
+6
+00:00:48,000 --> 00:00:58,000
+A human crosses the aisle. The fast layer commands a stop. No model is in this loop.
+
+7
+00:00:58,000 --> 00:01:05,000
+Clear. Motion resumes inside the allowed envelope.
+
+8
+00:01:05,000 --> 00:01:18,000
+A package label tries to add an override instruction.
+
+9
+00:01:18,000 --> 00:01:30,000
+Screening, strict schema and tool permissions reject it. The order is unchanged.
+
+10
+00:01:30,000 --> 00:01:45,000
+Machine M-B2 reports overheating. Ticket, diagnosis and part reservation open.
+
+11
+00:01:45,000 --> 00:02:00,000
+Simulated route variants are reviewed. One safe alternative is selected.
+
+12
+00:02:00,000 --> 00:02:18,000
+Truck TRK-07 is delayed. The coordinator reassigns the transfer to TRK-12.
+
+13
+00:02:18,000 --> 00:02:35,000
+PKG-8841 is loaded, moved and delivered. ORD-1042 is complete.
+
+14
+00:02:35,000 --> 00:02:45,000
+Measured evidence, from committed result files. Development seeds only.
+
+15
+00:02:45,000 --> 00:03:00,000
+Waggle Hive. Models propose. Deterministic code disposes.

@@ -15,6 +15,17 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Current state
 
+- Video demo implementation is in .worktrees/video-demo, branch feat/video-demo.
+  The deterministic 180 s scene (three warehouses, thirty robots, trucks, hero
+  package), global minimap and WH-B cell map, banner, subtitles, synthetic
+  narration and per-shot capture are built. All six maintainer GLBs are in
+  demo/assets/ under Git LFS: Blue_Delivery_Truck on TRK-12, Shipping_Container
+  beside each dock, and four distinct workers (worker-2 crosses the WH-B aisle
+  on its Walking clip; the others play Idle_11). Verified with fixed-time
+  stills at t=8 and t=50: all six load, no page errors beyond a favicon 404.
+  Not done: recording the eight shots and assembling the final MP4. Videos are
+  written to output/ in this worktree (git-ignored). Reuse of the same models
+  in the production viewer web/ is PENDING row 137, not built here.
 - Video handoff is in ../waggle-video-demo-plan, branch docs/video-demo-plan.
   Read docs/VIDEO_DEMO_PLAN.md there. The maintainer wants a three-minute
   finished-product experience with mocks while implementation continues.
