@@ -13,6 +13,10 @@ no product code or experiment result changed.
 
 ## Done last
 
+- Maintainer explicitly disabled application suites for documentation-only PRs.
+  Added a shared change-scope action and conditional Python/viewer jobs (ADR-098).
+  Code changes retain checks; unknown paths and detection failures run suites.
+  No local tests run. PR 191 includes this requested workflow change.
 - Diagnosed both failed PR 191 CI jobs: the same stale documentation assertion
   expected E10 harness/caller to remain pending. Both runs had 3914 passing tests
   and this single failure. Updated the existing assertion to require implemented

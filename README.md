@@ -233,7 +233,8 @@ uv run pytest tests/unit/test_docs_content.py tests/unit/test_docs_consistency.p
 
 `uv run ci` runs Ruff, strict mypy, the light pytest suite with coverage and import
 contracts. It excludes `heavy` and `llm` identically to regular CI. Run the full
-suite in GitHub Actions; local work uses targeted quick checks. The current
+suite in GitHub Actions for code changes; documentation-only updates skip the
+Python and viewer suites. Local work uses targeted quick checks. The current
 pre-push gate still requires a green `uv run ci` stamp on HEAD.
 
 For the frontend, from `web/`, run `npm test` and `npm run build`. Browser checks
