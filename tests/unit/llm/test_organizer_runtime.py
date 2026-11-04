@@ -173,7 +173,7 @@ def test_tool_call_uses_authenticated_robot_identity_and_catches_dispatch_errors
     res = runtime.organize(FACTS, tick=10, class_max=2.0, run_id="run-1", task_id="task-1")
     assert res.status == "accepted"
     assert res.tool_outcome == {"ok": True, "tool": "release_zone"}
-    assert dispatch.calls == [("R1", "release_zone", {"zone_id": "corr_1"}, "organizer-R1-10")]
+    assert dispatch.calls == [("R1", "release_zone", {"zone_id": "corr_1"}, res.request_id)]
     assert len(log.events) == 0
 
     # Exception inside tool dispatch returns tool_error without crashing the process (AGENTS.md 6.5)
@@ -225,6 +225,48 @@ def test_repeated_request_id_returns_cached_result_without_second_call() -> None
     assert r2.cached is True
     assert provider.calls == 1
     assert len(dispatch.calls) == 1
+
+
+def test_same_robot_tick_in_different_runs_and_tasks_never_reuses_a_decision() -> None:
+    runtime, _, provider = _make_runtime({"organizer": VALID_NONE})
+    results = [
+        runtime.organize(FACTS, tick=10, class_max=2.0, run_id=run, task_id=task)
+        for run, task in (("run-1", "task-1"), ("run-2", "task-1"), ("run-2", "task-2"))
+    ]
+    assert all(r.status == "accepted" and not r.cached for r in results)
+    assert len({r.request_id for r in results}) == 3
+    assert provider.calls == 3
+
+
+class RefusedToolDispatch(FakeToolDispatch):
+    """A tool returns an explicit failure receipt without raising."""
+
+    def call_tool(
+        self, *, robot_id: str, tool: str, arguments: Mapping[str, ArgScalar], request_id: str
+    ) -> Mapping[str, object]:
+        return {"ok": False, "error": "denied"}
+
+
+class MalformedToolDispatch(FakeToolDispatch):
+    """A broken adapter returns a value outside its declared contract."""
+
+    def call_tool(
+        self, *, robot_id: str, tool: str, arguments: Mapping[str, ArgScalar], request_id: str
+    ) -> Mapping[str, object]:
+        return None  # type: ignore[return-value]  # exercise malformed external receipt
+
+
+def test_malformed_tool_receipt_becomes_an_error_result() -> None:
+    runtime, _, _ = _make_runtime({"organizer": VALID_TOOL}, tool_dispatch=MalformedToolDispatch())
+    result = runtime.organize(FACTS, tick=10, class_max=2.0, run_id="run-1", task_id="task-1")
+    assert result.status == "tool_error"
+
+
+def test_failed_tool_receipt_is_never_accepted_or_cached_as_success() -> None:
+    runtime, _, _ = _make_runtime({"organizer": VALID_TOOL}, tool_dispatch=RefusedToolDispatch())
+    result = runtime.organize(FACTS, tick=10, class_max=2.0, run_id="run-1", task_id="task-1")
+    assert result.status == "tool_error"
+    assert result.reason == "tool_dispatch_refused"
 
 
 class BlockedProvider(ScriptedProvider):
