@@ -1,12 +1,11 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. PR 163 (chore/merge-wave-5 to main) contains the viewer
-gallery and offline asset import. This task merges origin/main at 9cfb142 into
-its head 10010cc and resolves LASTCONTEXT.md and PENDING.md by retaining current
-main tasks plus the viewer handoff. The maintainer merges the PR, not the agent.
-Main remains clean at 9cfb142 with green cloud CI (run 41777534335). PR 156 was
-already merged before this task. The user supplied an older 75% analysis; it is
-superseded by this code/PR audit and PENDING.md active priorities.
+Updated: 2026-11-04. PR 163 is merged in main at 8cfb8fb. This task adds the
+LLM proposer adapter for the crisis loop on branch feat/crisis-planner-adapter
+(ADR-090): `LlmPlanProposer` and the `planner-v1` prompt in `waggle.llm`, with
+9 adapter tests; mock provider only, no paid call. The maintainer merges the
+PR, not the agent. Other agents work in separate worktrees (viewer, global
+custody, Meshy assets, E3 labels); this branch touches none of those areas.
 
 Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points.
 This replaces the stale November 2 estimate of 80%: main now includes technician
@@ -25,7 +24,9 @@ results, documentation and delivery do not count. These are judgments, not resul
   E4 is scripted-only; E3 includes court_unanimity but live evaluation remains.
   E8 extension and the E9 mutation campaign remain pending. E6 diagnosis
   still reads synthetic in-memory cases; production database-backed retrieval and
-  orchestration remain. Crisis planning still needs its LLM proposer adapter.
+  orchestration remain. The crisis LLM proposer adapter exists on
+  feat/crisis-planner-adapter (ADR-090); its E10 harness and production
+  caller remain.
 - LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
   model 75%; catalog/technician lease 90%; advisors/E5 85%; maintenance/E6 80%;
   rollout/crisis 80%; E2 harness 97%; replay generator 100%. Estimates by eye only.
@@ -52,6 +53,12 @@ results, documentation and delivery do not count. These are judgments, not resul
 
 ## Done last
 
+- Crisis planner adapter (ADR-090, this branch): failing test first
+  (ModuleNotFoundError for waggle.llm.crisis_adapter), then planner_v1.txt and
+  crisis_adapter.py. Local run: 214 passed (adapter, full validation suite and
+  court adapter) with the sandbox workarounds below. The guard adapter tests
+  fail locally because the sandbox blocks the asyncio localhost socketpair;
+  that file is untouched by this branch.
 - The first local resolution CI found two document-format defects: required
   headings and the exact percentage prefix were missing. They were corrected
   in the documents without changing tests. Final validation is reported in the PR.
@@ -80,14 +87,15 @@ results, documentation and delivery do not count. These are judgments, not resul
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md, fetch the
-remote, inspect PR 163 and worktrees. The conflict-resolution task merges main
-9cfb142 into chore/merge-wave-5 without rewriting history. Review its latest CI
-and mergeability before the maintainer merges; agents never merge. Project code
-is about 83% plus/minus 3 points, viewer 68% and gallery task 100%, judgments only.
-Preserve dirty global, Meshy, GLB and all unmerged worktrees and the binary model
-pack. Review all gallery entries visually. Local browser validation previously
-failed because Chromium 1248 was absent; do not call it passed. Production E5/E6
-integration, the LLM crisis proposer, MCP SDK validation, viewer overlays/map/live
-mode and maintainer labels/data remain. Never merge docs/context-wave3; its remote
-deletion belongs to the maintainer. Ticket race patch is already in main. No paid
+remote and inspect worktrees. PR 163 is merged (main 8cfb8fb). Review the PR of
+feat/crisis-planner-adapter (ADR-090, crisis LLM proposer, mock only) and its CI
+before the maintainer merges; agents never merge. Project code is about 83%
+plus/minus 3 points, judgments only. Preserve dirty global, Meshy, GLB and all
+unmerged worktrees and the binary model pack. Local Python note: the machine
+Python 3.12.4 was removed, so .venv/pyvenv.cfg in this worktree now points at a
+uv-downloaded 3.12.16 under the session sandbox; mypy cannot load _ctypes there
+and the sandbox blocks the asyncio socketpair (guard tests) and the uv cache
+lock. Use cloud CI for the full gates. Production E5/E6 integration, the E10
+harness and crisis caller, MCP SDK validation, viewer overlays/map/live mode
+and maintainer labels/data remain. Never merge docs/context-wave3. No paid
 call, held-out run, migration or safety change is authorized by this handoff.
