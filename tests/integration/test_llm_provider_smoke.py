@@ -13,10 +13,9 @@ from waggle.llm.models import LlmRequest
 
 
 @pytest.mark.llm
-@pytest.mark.parametrize("route", ["meta", "baseten", "modal"])
-def test_route_answers_one_cheap_call(route: str) -> None:
-    provider, model_id = smoke_provider(route, os.environ)
-    request = LlmRequest(request_id=f"smoke-{route}", role="smoke", prompt=SMOKE_PROMPT)
+def test_meta_spark_answers_one_cheap_call() -> None:
+    provider, model_id = smoke_provider("meta", os.environ)
+    request = LlmRequest(request_id="smoke-meta", role="smoke", prompt=SMOKE_PROMPT)
     assert provider.estimate_cost(request) < SMOKE_COST_LIMIT_USD
     result = provider.complete(request, model_id)
     assert result.text.strip()

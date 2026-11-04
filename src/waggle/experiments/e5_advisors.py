@@ -240,12 +240,18 @@ class E5Runner:
         self._tool_dispatch = tool_dispatch
 
     def _make_client(self, provider: Provider) -> LlmClient:
-        """Client over the scripted provider for the baseten route. Fallbacks are always off.
+        """Client over the scripted provider for the primary advisor route. Fallbacks are off.
 
         Without an injected environment the harness keeps its own in-memory log and fixed caps.
         With one, the client comes from ``build_client`` and the injected log (mock mode only).
         """
-        override = {p: provider if p == "baseten" else MockProvider(p) for p in PROVIDERS}
+        table = load_routes()
+        primary_names = {
+            table.get("advisor").primary.provider,
+            table.get("organizer").primary.provider,
+            provider.name,
+        }
+        override = {p: provider if p in primary_names else MockProvider(p) for p in PROVIDERS}
         if self._client_environ is not None:
             return build_client(
                 self._client_environ,
@@ -257,7 +263,7 @@ class E5Runner:
         guard = BudgetGuard({f"{p.upper()}_SPEND_CAP_USD": "10.0" for p in PROVIDERS}, call_log)
         return LlmClient(
             providers=override,
-            table=load_routes(),
+            table=table,
             guard=guard,
             log=call_log,
             environ=_MODEL_ENV,

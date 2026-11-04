@@ -18,8 +18,8 @@ MODEL_ENV_BY_ROUTE = {
 }
 SMOKE_PROMPT = "Reply with the single word: ok"
 # Reasoning models (muse-spark-1.3, muse-wonder-1.0) consume reasoning_tokens inside
-# max_tokens before emitting message.content (16 tokens hits finish_reason="length").
-SMOKE_MAX_OUTPUT_TOKENS = 256
+# max_tokens before emitting message.content (16 or 256 tokens can hit finish_reason="length").
+SMOKE_MAX_OUTPUT_TOKENS = 1024
 SMOKE_COST_LIMIT_USD = 0.02
 
 

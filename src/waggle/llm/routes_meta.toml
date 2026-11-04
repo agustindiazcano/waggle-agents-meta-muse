@@ -1,0 +1,70 @@
+# Meta-only routing profile (ADR-094).
+# Routes every LLM role to the Meta Model API using META_WONDER_MODEL_ID
+# and META_MODEL_ID, so live runs need no Baseten or Modal endpoint while
+# those providers remain optional nice-to-haves.
+
+[roles.guard]
+tier = "fast"
+[roles.guard.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.director]
+tier = "planning"
+[roles.director.primary]
+provider = "meta"
+model_env = "META_WONDER_MODEL_ID"
+
+[roles.planner]
+tier = "planning"
+[roles.planner.primary]
+provider = "meta"
+model_env = "META_WONDER_MODEL_ID"
+
+[roles.diagnosis]
+tier = "planning"
+[roles.diagnosis.primary]
+provider = "meta"
+model_env = "META_WONDER_MODEL_ID"
+
+[roles.court_1]
+tier = "planning"
+[roles.court_1.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.court_2]
+tier = "planning"
+[roles.court_2.primary]
+provider = "meta"
+model_env = "META_WONDER_MODEL_ID"
+
+[roles.court_3]
+tier = "planning"
+[roles.court_3.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.advisor]
+tier = "fast"
+[roles.advisor.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.organizer]
+tier = "fast"
+[roles.organizer.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"
+
+[roles.voice]
+tier = "planning"
+[roles.voice.primary]
+provider = "meta"
+model_env = "META_VOICE_MODEL_ID"
+
+[roles.vision]
+tier = "planning"
+[roles.vision.primary]
+provider = "meta"
+model_env = "META_MODEL_ID"

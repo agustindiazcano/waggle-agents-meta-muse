@@ -53,6 +53,7 @@ SCRIPTS: Mapping[str, Mapping[str, Entry]] = {
 }
 _ENV = {
     "META_MODEL_ID": "scripted-meta",
+    "META_WONDER_MODEL_ID": "scripted-meta-wonder",
     "BASETEN_MODEL_ID": "scripted-baseten",
     "MODAL_GLIMMER_MODEL_ID": "scripted-modal",
     "MODAL_SPARK_OPEN_MODEL_ID": "scripted-modal-open",
@@ -112,14 +113,18 @@ def _run(
     if case.id not in scripts:
         raise ValueError(f"{case.id}: no script for this case")
     table = load_routes()
-    providers: dict[str, ScriptedProvider] = {}
+    by_provider: dict[str, dict[str, Entry]] = {}
     for role in COURT_ROLES:
         name = table.get(role).primary.provider
         answer = scripts[case.id].get(role)
-        providers[role] = provider_cls(name, by_role={} if answer is None else {role: answer})
+        by_provider.setdefault(name, {})
+        if answer is not None:
+            by_provider[name][role] = answer
+    built = {name: provider_cls(name, by_role=roles) for name, roles in by_provider.items()}
+    providers = {role: built[table.get(role).primary.provider] for role in COURT_ROLES}
     log = InMemoryCallLog()
     client = LlmClient(
-        providers={p.name: p for p in providers.values()},
+        providers=built,
         table=table,
         guard=BudgetGuard(_CAPS, log),
         log=log,
