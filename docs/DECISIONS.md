@@ -1187,6 +1187,7 @@ section 3.7 for documentation-only changes. No local tests were requested or run
 
 Consequences: The workflows still report skipped jobs, so a required check does
 not stay waiting for an absent workflow. Unknown paths trigger the suites.
-Initial pushes, manual viewer runs and scope-detection failures run the suites.
+New branches compare against the default branch on their first push. Initial
+default-branch pushes, manual viewer runs and scope-detection failures run suites.
 Code-changing PRs retain existing lint, types, coverage, imports and browser checks.
 Protected-path reporting remains enabled. No safety or runtime check is removed.
