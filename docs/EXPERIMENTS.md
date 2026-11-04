@@ -108,6 +108,7 @@ The design of the full chaos harness (faults, oracle, baseline, build order) is 
   - E: two Muse members plus a non-Muse member on Vertex, run once on the held-out set within the Vertex cap
   - An LLM never checks inventory, chassis capability or zone invariants: code does.
 - The default court for the live demo is whatever the held-out results support.
+- Scripted runner: `uv run python -m waggle.experiments.e4_run` (development split only, scripted answers from a strict scripts file, no network or spend) and the `e4.yml` workflow_dispatch. It refuses pending cases and the synthetic placeholder. Live mode remains blocked on maintainer labels, caps and authorization.
 - Metrics: false approvals, false blocks, escalation rate, agreement and pairwise error correlation (Muse pairs, and Muse versus non-Muse in E), latency, cost per task.
 - Repeats per case, reported as repeats.
 
