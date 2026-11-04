@@ -126,3 +126,8 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### The model gallery needs the separate asset pack
 - Symptom: a new checkout shows primitives in replay and a model-unavailable message in the gallery.
 - What to do: extract the matching model archive outside `web/public/models`, then run `npm run models:sync -- --source DIRECTORY` from `web/`. The importer checks hashes and refuses a different existing destination file. Preserve that file and inspect the mismatch; do not overwrite it blindly. GLBs are intentionally excluded from Git. Use `npm run test:models` to check decoding after import. The gallery pickup prop is a visual preview; the current replay has no human pickup action.
+
+### Live E4 runner refuses configuration D
+- Symptom: running `--live` on `D_cross_family` raises `LiveConfigurationError`.
+- What to do: configuration D requires a non-Muse `court_3` route to evaluate cross-family correlation. The declared primary `court_3` route in `routes.toml` points to Modal Glimmer, which is in the Muse family. Labeling Glimmer as non-Muse would falsify the evaluation results. Live evaluation of configuration D is deferred until a verified non-Muse route (such as Vertex AI) is configured by the maintainer (ADR-094).
+

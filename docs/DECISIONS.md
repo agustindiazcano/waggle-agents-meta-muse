@@ -1097,3 +1097,23 @@ frame and error messages without computing state, and `scene.ts` renders the
 map polygons and the three overlay groups (`envelopeGroup`, `shadowGroup`,
 `ghostGroup`) directly from the validated simulator coordinates. No safety
 threshold, fencing check, MCP boundary or retry rule is modified.
+
+## ADR-094: Live E4 court runner on real routes with fallbacks disabled
+
+Status: implemented with unit tests (`tests/unit/experiments/test_e4_live.py`,
+`tests/unit/experiments/test_e4_run.py`), not evaluated on real cloud routes.
+
+Decision: `waggle.experiments.e4_harness.run_e4_live` wires the production client
+via `build_client(environ, log, fallbacks_enabled=False, providers=providers)` for
+configurations A, B and C on the development split. Cross-family configuration D
+and the baseline configuration are refused with `LiveConfigurationError` because D
+requires a non-Muse route for `court_3` (Vertex is secondary) and the baseline makes
+no court calls.
+
+Before making any provider call, `_check_live_environ` validates that every used route
+has its required spend cap and model ID configured in the environment, failing closed
+otherwise. Fallbacks are disabled per AGENTS.md section 6.9, so any failure is
+recorded as a substantive failure rather than rerouted. Results are labeled with
+`provider_mode: "live"`, live warning text, realized model IDs, and any fallback
+labels. The CLI flag `--live` in `waggle.experiments.e4_run` enables this mode.
+No change to unanimity, the court prompt, or safety thresholds was made.
