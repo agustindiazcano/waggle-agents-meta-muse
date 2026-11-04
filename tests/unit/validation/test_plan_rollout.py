@@ -8,15 +8,18 @@ same sensitivity checks, so a green result cannot come from a validator that can
 import ast
 import json
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from waggle.coordination.corridors import Direction
 from waggle.coordination.routing import AisleEdge, AisleGraph, AisleNode
-from waggle.sim.params import RobotKind
+from waggle.sim.params import ROBOT_PARAMS, RobotKind
 from waggle.sim.scenarios import load_map
-from waggle.validation.counterexample import CounterexampleCode
+from waggle.sim.world import World
+from waggle.validation.belief import HumanState
+from waggle.validation.counterexample import CounterexampleCode, Rule
 from waggle.validation.path_compiler import StaticMap
 from waggle.validation.plan import Plan, PlanContext, parse_plan
 from waggle.validation.plan_rollout import (
@@ -125,6 +128,72 @@ def test_two_robots_on_separate_aisles_pass() -> None:
     result = validate_plan(_plan(*SAFE), _static(SAFE_START), _config())
     assert result.accepted and result.counterexamples == () and result.stage == "rollout"
     assert result.final_hash is not None
+
+
+def _parked_pair(gap_m: float) -> StaticMap:
+    length = ROBOT_PARAMS[RobotKind.CARRIER].length
+    graph = AisleGraph((AisleNode("a", 3.0, 2.0), AisleNode("b", 3.0 + length + gap_m, 2.0)), ())
+    return replace(_static({"R1": "a", "R2": "b"}), graph=graph, zone_anchor={})
+
+
+@pytest.mark.parametrize("walkers", [(), (HumanState((30.0, 20.0), (0.0, 0.0)),)])
+def test_noncontact_robot_separation_is_reported_once_with_or_without_humans(
+    walkers: tuple[HumanState, ...],
+) -> None:
+    # Carrier length is 1.2 m; centers 1.45 m apart give a known 0.25 m gap.
+    config = _config(horizon_s=0.1)
+    result = run_plan_rollout((), _parked_pair(0.25), config, walkers)
+    assert len(result.counterexamples) == 1
+    violation = result.counterexamples[0]
+    assert violation.code == CounterexampleCode.SEPARATION_VIOLATION
+    assert violation.entities == ("R1", "R2")
+    assert violation.rule == Rule.SEPARATION_MIN
+    assert violation.min_clearance_m == pytest.approx(0.25)
+    assert violation.time_s == pytest.approx(0.025)
+    assert violation.place_xy_m is not None
+    assert result == run_plan_rollout((), _parked_pair(0.25), config, walkers)
+
+
+@pytest.mark.parametrize("gap_m", [0.5, 0.75])
+def test_robot_gap_at_or_above_the_margin_is_not_rejected(gap_m: float) -> None:
+    result = validate_plan(_plan(), _parked_pair(gap_m), _config(horizon_s=0.1))
+    assert result.accepted and result.counterexamples == ()
+
+
+def test_validator_rejects_a_robot_separation_violation_without_contact() -> None:
+    result = validate_plan(_plan(), _parked_pair(0.25), _config(horizon_s=0.1))
+    assert not result.accepted
+    assert _codes(result) == {CounterexampleCode.SEPARATION_VIOLATION}
+
+
+def test_a_moving_robot_passing_an_idle_robot_is_rejected_without_contact() -> None:
+    graph = AisleGraph(
+        (AisleNode("a", 3.0, 2.0), AisleNode("b", 6.0, 3.05), AisleNode("c", 9.0, 2.0)),
+        _both("a", "c", 6.0),
+    )
+    static = StaticMap(
+        World("open", (0.0, 0.0, 20.0, 20.0), (), (), ()),
+        graph,
+        {"connector_e": "c"},
+        {"R1": "a", "R2": "b"},
+        0.9,
+    )
+    # Side-by-side carrier half-widths sum to 0.8 m: lateral gap is 0.25 m.
+    result = validate_plan(_plan(_node("a", "R1", "connector_e")), static, _config(horizon_s=5.0))
+    assert not result.accepted
+    assert _codes(result) == {CounterexampleCode.SEPARATION_VIOLATION}
+    violation = result.counterexamples[0]
+    assert violation.time_s is not None and violation.time_s > 0.025
+    assert violation.min_clearance_m is not None
+    assert 0.0 < violation.min_clearance_m < 0.5
+
+
+def test_contact_still_reports_collision_as_well_as_separation() -> None:
+    result = run_plan_rollout((), _parked_pair(-0.1), _config(horizon_s=0.1))
+    assert {c.code for c in result.counterexamples} == {
+        CounterexampleCode.COLLISION,
+        CounterexampleCode.SEPARATION_VIOLATION,
+    }
 
 
 def test_a_head_on_plan_is_rejected_with_a_collision_at_a_time_and_place() -> None:

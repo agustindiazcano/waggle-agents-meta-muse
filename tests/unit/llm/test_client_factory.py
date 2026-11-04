@@ -10,6 +10,7 @@ from waggle.llm.provider_config import MODE_VAR
 
 MODEL_IDS = {
     "META_MODEL_ID": "m-meta",
+    "META_WONDER_MODEL_ID": "m-meta-wonder",
     "BASETEN_MODEL_ID": "m-baseten",
     "MODAL_GLIMMER_MODEL_ID": "m-modal",
     "MODAL_SPARK_OPEN_MODEL_ID": "m-modal-open",
