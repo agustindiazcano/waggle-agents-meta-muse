@@ -1,5 +1,7 @@
 # Waggle Hive
 
+![Waggle Hive: agents robot fleets for logistic. Meta Global AI Developer Hackathon.](docs/assets/waggle-hive-header.png)
+
 **A safety and reliability control plane for LLM-directed warehouse robot fleets.**
 
 Waggle Hive explores how language models can coordinate work in a warehouse shared
