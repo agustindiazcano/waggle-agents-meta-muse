@@ -135,3 +135,6 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 - Symptom: running `--live` on `D_cross_family` raises `LiveConfigurationError`.
 - What to do: configuration D requires a non-Muse `court_3` route to evaluate cross-family correlation. The declared primary `court_3` route in `routes.toml` points to Modal Glimmer, which is in the Muse family. Labeling Glimmer as non-Muse would falsify the evaluation results. Live evaluation of configuration D is deferred until a verified non-Muse route (such as Vertex AI) is configured by the maintainer (ADR-096).
 
+### An example replay can pass integrity checks and fail resimulation
+- Symptom: `uv run replay-verify web/public/demo.jsonl` reports a frame mismatch at tick 4, while `--digest-only` passes.
+- What to do: distinguish recorded playback and file integrity from equivalence to the current simulator. The `fixture0` demo is historical; show the digest-only command for playback setup and disclose the resimulation mismatch. Do not regenerate the fixture or relabel it as a measured experiment to hide the mismatch.

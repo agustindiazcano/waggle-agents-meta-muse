@@ -1,175 +1,287 @@
 # Waggle Hive
 
-Safety and reliability control plane for LLM-directed warehouse robot fleets. It includes predictive maintenance, demonstrated in a seeded warehouse simulation with 10 robots, scripted and adversarial human workers, and industrial machines that emit telemetry.
+**A safety and reliability control plane for LLM-directed warehouse robot fleets.**
 
-Meta Global AI Developer Hackathon. Track: Indie Developer. Problem statement: Push the Frontier.
+Waggle Hive explores how language models can coordinate work in a warehouse shared
+by robots, people and industrial machines while deterministic code retains control
+of motion, permissions and resource ownership. It combines a seeded simulator,
+a motion control layer, PostgreSQL coordination, an MCP tool boundary,
+model-based task review, predictive maintenance and a 3D technical viewer.
 
-Status: work in progress. Every number in this file is marked TBD until the experiment that produces it has run. Nothing in this repository claims a result that was not measured.
+Built by Agustin Diaz Cano for the **Meta Global AI Developer Hackathon 2026**,
+**Indie Developer** track, **Push the Frontier** theme. Built with Muse Spark Open.
 
-## What it does
+Status as of November 4, 2026: implemented components and development experiments,
+with production integration and live model evaluations still pending. The recorded
+viewer demo runs without provider credentials. It does not demonstrate the complete
+voice-to-robot workflow.
 
-An operator gives a command by text or voice, for example "bring Z89 to the North Depot". The system turns it into a verified task, assigns a robot, moves it through a warehouse shared with other robots and humans, and keeps it safe while doing so.
+[Try the viewer locally](#run-the-viewer) |
+[Architecture](docs/ARCHITECTURE.md) |
+[Measured results](#measured-results) |
+[Hackathon requirements](#hackathon-requirements-and-evidence) |
+[Submission checklist](SUBMISSION.md)
 
-Core principle: LLMs propose, deterministic code disposes. Hard safety never depends on an LLM.
+## The problem and the approach
 
-| Layer | Mechanism | Depends on an LLM |
+A warehouse command such as "bring Z89 to the North Depot" requires more than a
+plausible answer. The item must exist, the caller must have permission, a robot
+must own the task and corridor, and its motion must account for people and
+occluded space. A worker crash or an instruction hidden in a package label must
+not create a second owner or grant new permissions.
+
+**LLMs propose, deterministic code disposes.** Models interpret context and propose
+actions. Code validates those actions, authenticates tool access and limits motion.
+The safety advisor can add caution; it cannot relax a stopping limit. A rejected,
+ambiguous or failed model decision escalates rather than granting permission.
+
+The intended operator workflow is:
+
+1. Screen text, a voice transcript or a package label as untrusted input.
+2. Resolve the task and review it through the unanimous model court.
+3. Validate the proposal and claim tasks and corridors with leases and fencing tokens.
+4. Execute authorized tools through MCP while the deterministic control layer limits motion.
+5. On a machine fault, restrict the hazard area and prepare diagnosis, parts and technician work.
+6. On a blocked plan, test proposed alternatives in simulator forks and return counterexamples.
+7. Inspect recorded state, safety overlays and events in the viewer.
+
+This is the integration target. The following table identifies what exists today.
+
+## Architecture and implementation
+
+```mermaid
+flowchart TD
+    Input[Operator command or untrusted warehouse text] --> Guard[Sanitizers and guard]
+    Guard --> Models[Director, court and bounded advisors]
+    Models --> Proposal[Typed proposal]
+    Proposal --> Validate[Schema and simulation validation]
+    Validate --> MCP[Authenticated MCP tools]
+    MCP --> DB[PostgreSQL tasks, leases, fencing and audit]
+    DB --> Motion[Motion execution]
+    Motion --> Fast[Deterministic motion limits]
+    Fast --> Sim[Seeded warehouse simulator]
+    Sim --> View[Read-only replay and live viewer]
+    Sim --> Context[Telemetry and counterexamples]
+    Context --> Models
+```
+
+The diagram shows component responsibilities and intended integration. It does not
+claim that every arrow is wired into one deployed service.
+
+| Component | Implemented behavior | Evaluation or integration remaining |
 |---|---|---|
-| Fast control loop | Stopping-distance envelope, separation monitoring, hazard geofences, e-stop, every tick (designed, not implemented) | No |
-| Coordination | Pure leases, deterministic A* aisle routing, and atomic per-zone-direction corridor reservations with monotonic fencing tokens (implemented, not evaluated). Map binding validates an explicit graph against rectangular static geometry and declared chassis clearance, then returns waypoints; it does not certify curved tracking. Simulator admission is integrated in an explicit S03 variant with exterior staging and parking, covered by unit tests; mapped A* supplies the same fixture waypoints and complete reservation requests, including per-resource direction restoration. The manual E2 simulator comparison harness is implemented, not evaluated; no E2 sweep has run. A durable corridor reference and transactionally fenced event effect are implemented and verified by cloud correctness tests. Task queue, bounded recovery and worker iteration are implemented and verified by cloud correctness tests. A transactional handoff record is implemented, not evaluated; cloud PostgreSQL correctness tests passed, while trusted occupancy and physical effect integration remain pending. Daemon/tool wiring and the full chaos evaluation remain pending. See ADR-031 in [docs/DECISIONS.md](docs/DECISIONS.md) | No |
-| Tool boundary | MCP server, chassis identity, per-tool allowlist, strict schemas, rate limit, audit (designed, not implemented) | No |
-| Input screening | Sanitizers and an async classifier interface with a fail-closed label policy and an offline mock (implemented, not evaluated). [E3 development declarations](data/e3/README.md) await maintainer labels; production detection and E3 evaluation are not implemented | Planned, first screen only |
-| Task review | Unanimous court of three related Muse models, any reject, split or failure goes to the operator | Yes, advisory |
-| Per-robot advisors | Safety advisor (can only add caution) and organizer (decides inside its task) (designed, not implemented) | Yes, bounded |
-| Fleet planner | Optional, event driven. Proposals pass a deterministic validator, the code-only assigner is the fallback (designed, not implemented) | Yes, optional |
-| Crisis replanning | Muse Spark proposes a plan, a simulation-based validator returns counterexamples, at most 3 iterations, then the operator (designed, not implemented) | Yes, proposal only |
-| Sensing and prediction | Simulated 2D lidar, closest point of approach predictor that can only restrict (designed, not implemented) | No |
-| Missions and handoff | Task dependencies and transactional handoff record (implemented, not evaluated); trusted physical integration pending | No |
-| Predictive maintenance | Physical degradation model, structured manual sheet, RAG for procedure and part (designed, not implemented) | RAG text only |
+| Simulator and sensing | Seeded floor-plane dynamics, snapshot/fork, exact collision detector, simulated 2D lidar, scripted/adversarial humans and machine telemetry | Simulation only; no physical robot validation |
+| Fast control | Stopping-distance envelopes, separation checks, occlusion caps, CPA restriction, geofences, watchdog and e-stop | E1 development results expose remaining collisions and throughput loss; limits are not calibrated |
+| Coordination | Aisle routing, atomic corridor reservations, leases, fencing, task dependencies, crash recovery and handoff records | Full E2 chaos campaign and trusted physical handoff integration |
+| MCP boundary | Token-derived chassis identity, tool allowlists, strict physical bounds, persistent rate limits, audit and tool backends | SDK interoperability test uses a fake dispatcher; production deployment validation remains |
+| Guard and court | Sanitizers, fail-closed classifier adapter, strict review schemas, unanimous court, role checklists and E3/E4 harnesses | Reviewed labels, live provider evaluation and production court integration |
+| Robot advisors and organizer | Caution-only advisor, structured organizer, bounded runtime adapters and E5 configurations through C3/replay | Production service/call-log wiring and C4 fleet planner |
+| Crisis replanning | Belief state, human variants, rollout aggregation, bounded counterexample loop and LLM proposer adapter | E10 harness, production caller and live evaluation |
+| Predictive maintenance | Degradation/telemetry, alert loop, failure-history generator/loader, diagnosis sheet, parts/catalog checks and mock E6 chain | Database-backed production diagnosis, real catalog review and evaluation |
+| Voice and vision | Typed intent/read-back and visual verification contracts, mock E7 paths and configured model roles | Real transcription/image provider integration, recordings and operator UI |
+| Viewer | Replay playback, camera controls, map geometry, envelopes, lidar shadows, ghost paths, live WebSocket client and model gallery | Visual review and complete operator workflow; GLBs are distributed separately |
 
-## Planned multi-warehouse extension
+Implementation status is based on the source in [src/waggle](src/waggle),
+[tests](tests) and [web](web). An implemented harness is not an experiment result.
+See [PENDING.md](PENDING.md) for the remaining work and
+[docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for residual risks.
 
-The [multi-warehouse logistics plan](docs/MULTI_WAREHOUSE_PLAN.md) treats each Waggle warehouse as an independent cell. A higher-level coordinator proposes inter-site transfers through cell APIs; local safety, task ownership, inventory custody and MCP authorization remain local. Trucks are proposed as a seeded graph-transit simulation, not autonomous road vehicles. This extension is planned, not implemented or evaluated. Its readiness gate preserves the complete local build order and requires maintainer authorization before implementation.
+## Where Meta models contribute
 
-## Models used
+Model roles are explicit in [routes.toml](src/waggle/llm/routes.toml). Model ids come
+from configuration, not from model-generated routing decisions. This is the
+configured design; it is not evidence that every provider has been exercised.
 
-- Meta Model API: Muse Spark (director, fleet planner, diagnosis, court member 1), Muse Voice Transcribe, and Muse Spark with image input (label and obstruction verification).
-- Muse Spark Open 1026 on Baseten (court member 2, per-robot advisors, organizer).
-- Muse Glimmer 30B on Modal (court member 3 and the input guard).
-- Vertex AI (Gemini): secondary backup only, and the non-Muse member of one E4 configuration.
-- The court members are related models, so correlated errors are expected. See [docs/DECISIONS.md](docs/DECISIONS.md), ADR-015 to ADR-017.
+| Route | Roles | Current boundary |
+|---|---|---|
+| Meta Model API, Muse Wonder (`META_WONDER_MODEL_ID`) | Director, crisis planner and diagnosis | Produces proposals; production callers are incomplete |
+| Meta Model API, Muse Spark (`META_MODEL_ID`) | Court member 1 and vision | Strict review/vision contracts; live evaluation pending |
+| Baseten, Muse Spark Open (`BASETEN_MODEL_ID`) | Court member 2, robot advisors and organizer | Bounded adapters; evaluated flows currently use mocks/scripted outputs |
+| Modal, Muse Glimmer (`MODAL_GLIMMER_MODEL_ID`) | Guard and court member 3 | Classifier/reviewer roles; live evaluation pending |
+| Meta Model API, Muse Voice Transcribe (`META_VOICE_MODEL_ID`) | Voice transcription | Provider integration and recordings pending |
+| Modal Spark Open / Vertex AI | Explicit fallback routes; Vertex is also planned for the cross-family E4 comparison | Vertex integration and cross-family evaluation pending |
 
-## Results
+The three primary court members are related Meta models. Unanimity does not imply
+independent errors. E4 must report false approvals first and reviewer correlation.
+Fallbacks are logged and disabled in held-out evaluations so the measured court
+composition matches the declared configuration.
 
-All results come from seeded, reproducible scripts. See [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) for protocol, seeds, baselines and ablations.
+The `mock` provider supports tests without network access or spend. Real calls
+require configured credentials, verified pricing and spending limits. Missing or
+invalid caps fail closed. See [provider integration](docs/PROVIDER_INTEGRATION.md).
 
-| Experiment | Metric | Without layer | With layer | Status |
-|---|---|---|---|---|
-| E1 Fast layer | Human collisions and separation violations per N scenarios | No control, 90 runs on development seeds: 107 human collisions, 1027 robot collisions, 125 separation violations (`no_control_20261030T173638Z.json`) | TBD | baseline on development seeds only, fast layer not built |
-| E2 Leases and chaos | Double assignments in 500 tasks with killed workers | TBD | TBD | not run |
-| E3 Injection matrix | Attempts rejected per layer, by ablation | TBD | TBD | not run |
-| E4 Court | Correct blocks, false blocks, reviewer correlation | TBD | TBD | not run |
-| E5 Per-robot advisors | Near-misses, false stops, tasks per hour | TBD | TBD | not run |
-| E6 Predictive maintenance | Lead time, false alarms, missed failures vs fixed threshold | TBD | TBD | not run |
-| E7 Multimodal | ID error rate in transcription, label verification accuracy | TBD | TBD | not run |
-| E8 Latency and cost | Fast loop latency, cost per task, LLM latency distribution | 10 robots, 4 humans, 45 s simulated, lidar included: 12.2 s per rollout with the exact lidar and 5.8 s (median) with the rollout lidar, code speed on this machine (`sim_speed_20261030T121253Z.json`). Same-session before and after, four alternating runs: median 18.0 s to 5.7 s, 3.1x (`before_after_20261030.json`). Targets of 2.0 s and 5x are missed | TBD | simulator only |
+## Measured results
 
-Scaling to thousands of agents is reported as an extrapolation from a stub calibrated on measured latency distributions. It is not a claim about real fleets.
+These are historical development results at the commits recorded in their files,
+not measurements of the latest HEAD. There are no held-out results published here.
+Full protocols, baselines and limitations are in [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
-The [E8 report runner](docs/E8_RUNNER.md) adds production control code latency,
-metadata-only call-log summaries and a reproducible finite-burst extrapolation.
-It is implemented, not evaluated for provider latency, provider cost or real fleets.
+### E1: safety versus progress
 
-## Third-party libraries
+Ninety runs per configuration, development seeds, commit `94bacc41a4`.
+The selected rows below come from the [E1 report](results/e1/dev/report.md), which
+links the configuration names to the committed result set in [results/e1/dev](results/e1/dev).
+Intervals are Wilson 95% intervals for runs with a human collision; collision
+episodes are not independent samples.
 
-- numpy 2.5.4 (pinned): the only runtime dependency of the simulator and control, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
-- fastapi 0.162.0 and uvicorn[standard] 0.54.0 (pinned): runtime dependencies of `waggle.api` only, which streams simulator frames over a read-only WebSocket. Import contracts forbid `waggle.sim`, `waggle.control` and `waggle.validation` from importing them. Approved by the maintainer (ADR-029). httpx is a dev dependency, used only by the Starlette test client.
-- mcp 2.3.0 (pinned): dev dependency only, the official MCP Python SDK client used by `tests/unit/mcp_server/test_mcp_sdk_client.py` to run the line transport against a real client. Never imported by runtime code.
+| Configuration | Runs with human collision (95% interval) | Human collisions | Robot collisions | Separation violations | Throughput / no control |
+|---|---|---|---|---|---|
+| No control | 62/90 (58.7% to 77.5%) | 107 | 1027 | 125 | 1.00 |
+| Lidar envelope | 11/90 (7.0% to 20.6%) | 38 | 0 | 63 | 0.11 |
+| Envelope + occlusion + CPA | 12/90 (7.8% to 21.9%) | 46 | 0 | 62 | 0.23 |
 
-## Scope and limits
+The baseline file, [no_control_20261030T173638Z.json](results/e1/dev/no_control_20261030T173638Z.json),
+records 107 human collisions and 1027 robot collisions.
 
-- Simulation only. Latencies of the fast layer are code latencies inside the simulator, not real-time guarantees on hardware.
-- The separation formula is inspired by speed and separation monitoring. This project does not claim compliance with any standard.
-- The simulation is 2D on the floor plane. Height is not modeled. Rendering is 3D and the FPV vision check renders the 3D scene.
-- Exact reproduction of a run holds on the same platform and numpy version. Published results come from the cloud run (Linux).
-- Plan validation in crisis replanning is simulation-based with counterexample feedback. It is not formal verification and not a safety proof. The reflex layer stays the safety mechanism against humans.
-- The lidar is simulated (designed, not implemented). Failure history and purchase orders are synthetic (designed, not implemented).
-- Vision inputs are synthetic renders, not in the control loop, so ground truth is known by construction.
-- Human behavior is scripted or adversarial by design, not learned from real data.
+The controls reduce observed collisions against the baseline but do not eliminate
+human collisions. Adding occlusion and CPA did not improve the human-collision
+count over the lidar envelope in this run. Throughput falls substantially.
+The report includes all ablations, failing seeds, false stops and latency.
+E1 disables the watchdog, geofence and e-stop reflex limits to isolate the compared
+configurations; it does not evaluate the complete deployed safety stack.
 
-## Repository layout
+The earlier [sim_speed_20261030T121253Z.json](results/e8/dev/sim_speed_20261030T121253Z.json)
+records 12.2 s per rollout with exact lidar and 5.8 s with rollout lidar. These
+are code speed on this machine, not a hardware performance claim.
 
-```
-README.md                this file
-PLAN.md                  phases, tasks, exit criteria
-AGENTS.md                development workflow and rules for coding agents
-PRIOR_WORK.md            declaration of prior work
-ASSETS.md                provenance and rights of every asset
-SUBMISSION.md            hackathon submission checklist
-docs/
-  ARCHITECTURE.md        components, data model, interfaces
-  THREAT_MODEL.md        assets, adversaries, controls, residual risk
-  EXPERIMENTS.md         protocol for every measurement
-  DECISIONS.md           architecture decision records
-src/waggle/              Python package: sim, control, coordination, mcp_server,
-                         governance, maintenance, multimodal, llm, api, db
-web/                     frontend
-experiments/             seeded experiment scripts
-results/                 result files produced by experiments
-data/                    synthetic manuals and SOPs
-assets/                  3D assets and media
-tests/                   unit, property, integration, chaos
-tools/hooks/             Claude Code hook scripts (safety guard, lint check, session start)
-.github/workflows/       CI
-```
+### Other recorded measurements
+
+| Experiment | Recorded result | Scope and evidence |
+|---|---|---|
+| E2 admission | Both robot routes complete in 0/5 runs without admission and 5/5 with admission; Wilson 95% intervals 0% to 43.4% and 56.6% to 100% | Small sample, fixed S03 geometry with sensor/odometry noise. Zero robot collisions and occupancy violations in both arms. [Result JSON](results/e2/dev/s03_admission_f1b26ea3f5c7_20261101T185947Z.json). This does not test killed workers or the full database chaos protocol |
+| E8 rollout speed | Median 18.0 s before and 5.7 s after, about 3.1x | Four alternating measurements on one machine, 10 robots and 4 humans, 45 simulated seconds. Targets of 2.0 s and 5x were missed. [Result JSON](results/e8/dev/before_after_20261030.json). Simulator code speed, not hardware real-time performance |
+| E9 planted defects | 4/4 declared defects detected; none survived | Lowered margin, speed-raising cap, accepted stale scan and inverted fencing comparison. [Result JSON](results/e9/dev/planted.json). Four selected regressions, not a general mutation score |
+
+| Evaluation | Publication status |
+|---|---|
+| E2 full chaos | Harness/workflow implemented, no full campaign result committed |
+| E3 injection matrix | Layer runners implemented; no live-model result committed |
+| E4 court | Scripted evaluation paths; no live court or cross-family result committed |
+| E5 advisors/organizer | Mock/replay harnesses; no live benefit measurement committed |
+| E6 maintenance | Mock chain; no measured predictive benefit committed |
+| E7 multimodal | Mock contracts; no transcription/vision accuracy result committed |
+| E8 provider cost and latency | Report/extrapolation tooling implemented; production collection/calibration pending |
+| E9 mutation-tool campaign | Pending cloud execution |
+| E10 crisis replanning | Loop/proposer implemented; harness and evaluation pending |
+
+The [E8 runner](docs/E8_RUNNER.md) separates measured control code latency,
+metadata-only model call summaries and assumed fleet extrapolation. Thousands of
+agents would be an extrapolation, never a measured real-fleet claim.
+
+## Hackathon requirements and evidence
+
+The [official event page](https://dev.meta.ai/events/global-hackathon) identifies
+Indie Developer and Push the Frontier, describes Meta API/open-weight use, and
+lists creativity, technical ambition and working behavior for the Indie track.
+It lists submission on November 4 at 9 PM ET. These public descriptions are distinct
+from the accepted participant rules. The linked rules/waiver page could not be
+read during this audit; final eligibility and delivery checks remain with the
+maintainer. Checked November 4, 2026.
+
+| Requirement or delivery check | Status | Evidence and remaining action |
+|---|---|---|
+| Indie Developer track | Declared fit | Solo project by Agustin Diaz Cano; participant registration/acceptance is an organizer-side check |
+| Push the Frontier theme | Demonstrated scope fit | Robotics/manufacturing simulation, constrained model actions, fault recovery and measurable ablations |
+| Use Meta models | Integrated in code; live evidence pending | Meta routes, prompts and adapters exist. Mock tests do not establish successful real-model use; record an authorized cloud run before marking this complete |
+| Creativity and technical ambition | Evidence available for judges | Simulation forks, counterexample replanning, restrictive advisors and transactional tool execution; judging outcome is not claimed |
+| Working behavior | Partial, reproducible evidence | Recorded viewer demo, tests and development results above; full live operator workflow remains incomplete |
+| Work built during the hackathon | Declared and traceable | [PRIOR_WORK.md](PRIOR_WORK.md) declares a new repository from October 27 and no copied prior code; Git history provides reviewable provenance |
+| Public source and reproduction | Source/instructions present; logged-out access check pending | Verify repository visibility and a fresh clone using the submission checklist |
+| AI tools, dependencies and prior work disclosed | Documented | Disclosure below, pinned dependencies and prior-work declaration |
+| Asset rights and model attribution | Partial | Attribution notice present. [ASSETS.md](ASSETS.md) still has missing provenance fields; confirm license wording and video attribution |
+| Demo video, live link and submission form | Pending delivery | [SUBMISSION.md](SUBMISSION.md) tracks the video, live product, contributor list, access checks and final submission |
+
+This table distinguishes source-backed project evidence from participant and
+submission checks. It does not assert complete hackathon compliance. The public
+page does not provide final rubric weights; the application scoring weights are
+not the final project judging rubric.
 
 ## Repository safeguards
 
-Claude Code hooks in `.claude/settings.json` run scripts from `tools/hooks/`: a PreToolUse safety guard (denies push, merge, force options, `git add -A`, staged `.env` and held-out result writes; asks first for branch deletion, rebase, amend and protected paths), a PostToolUse lint check and a SessionStart context loader. `tools/hooks/protected_paths.txt` is the single list of protected paths, and `CODEOWNERS` covers every entry.
+[tools/](tools) contains CI helpers and agent hooks. Hooks and CODEOWNERS are a
+weak control: they help enforce review rules but depend on repository settings.
+Required review and branch protection on main remain maintainer responsibilities.
+Agents work on task branches and open PRs; the maintainer reviews and merges.
 
-This is a weak control in a single-maintainer repository. The hooks help an agent stay inside the rules, but the maintainer can change them, and CODEOWNERS has an effect only when branch protection requires code owner review. Branch protection is a repository setting that the maintainer sets by hand. The command guard also reads interpreter one-liners (python -c, node -e, powershell -Command) for the text git push, git remote and gh api, which is a best-effort text match: a command built at run time, a script file or an encoded string passes it. Branch protection on main is the real control.
+## Run the viewer
 
-## Run
+Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/) for Python checks;
+Node 24 and npm for the viewer. Docker/PostgreSQL are needed for persistent
+coordination, not for recorded playback. Run from the repository root:
 
-Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker.
-
-```
-cp .env.example .env        # fill in values locally, never commit .env
-uv sync
-uv run ci                   # ruff, mypy --strict, pytest with coverage, import-linter
-docker compose up --build   # db, api, worker, mcp_server, web (Phase 0 placeholders)
-```
-
-Other tasks: `uv run lint`, `uv run type`, `uv run test`, `uv run experiments-dev`, `uv run experiments-test`, `uv run report`, `uv run provision SPEC TOKENS_OUT`. `uv run provision` loads catalog, machines, zones, robot identities and an optional `compatibility` list of machine and part pairs from a JSON spec such as `data/provision/example.json` into the database named by `DATABASE_URL`; tokens go to a new file and are never printed. `uv run experiments-dev` runs E1 on the development seeds (a full run is a cloud job, see `.github/workflows/e1.yml`) and `uv run report` writes `results/e1/dev/report.md` from the result files. `experiments-test` is still a placeholder.
-
-Tooling: uv, ruff, mypy, pytest, pytest-cov, hypothesis, import-linter, pre-commit. Postgres image: pgvector/pgvector.
-
-PostgreSQL coordination uses `psycopg[binary]==3.3.6`, approved by the maintainer on 2026-10-31. The binary extra supplies the matching libpq adapter on Windows and Linux; there is no ORM. See the [Psycopg documentation](https://www.psycopg.org/psycopg3/docs/basic/install.html).
-
-### Persistent coordination
-
-`waggle.db.corridors` implements the pure corridor transitions under PostgreSQL locks. Migration revision 1 creates `zones`, `fenced_events` and `waggle_schema`; revision 2 adds `tasks`, `task_dependencies` and `task_events`; revision 3 adds handoff requirements, without sample rows. Provision resource ids separately through `CorridorRepository.register`; registering an existing resource never resets its token. Implementation is not an E2 result. Handoff records require trusted occupancy, identity and tick inputs; physical effects and production MCP tool wiring remain pending.
-
-With `DATABASE_URL` configured for the intended database, inspect its revision before applying the approved migration:
-
-```
-uv run python -m waggle.db.schema
-uv run python -m waggle.db.schema --expected-revision 0
+```powershell
+uv sync --frozen
+uv run replay-verify web/public/demo.jsonl --digest-only
+cd web
+npm ci
+npm run dev -- --host 127.0.0.1 --port 5174 --strictPort
 ```
 
-The first command only inspects. The second requires revision 0 under a transaction lock and atomically installs the current revision 2. An existing revision 1 database upgrades with `--expected-revision 1`, preserving corridor state. Reapplying with `--expected-revision 2` is a no-op. `--target-revision 1` can select the initial revision when creating a new database; downgrades are rejected. Unexpected revisions or conflicting tables roll back the complete migration. Migration never runs automatically during service startup.
+Open [the recorded demo](http://127.0.0.1:5174/?demo=1). Play, pause, seek,
+orbit/pan, select an entity and inspect available state/overlays. The fixture is
+S01 development seed 7, labeled `fixture0`; it is a replay example, not a measured
+LLM run. It does not contain every safety overlay. The digest-only command checks
+file integrity. Resimulation against the current code differs at tick 4, so the
+fixture is not a current simulator regression reference.
 
-Every operation opens a separate connection. Defaults are a 5 s connect timeout, a 5000 ms statement timeout, a 3000 ms lock timeout and the `public` schema; these are explicit `Database` constructor arguments. `DATABASE_URL` is required and has no default. Configuration values and credentials are not logged.
+Open [the model gallery](http://127.0.0.1:5174/?gallery=1) for asset inspection.
+GLBs are excluded from Git and require the separate archive plus the hash-checking
+importer described in [web/README.md](web/README.md). Without them, playback uses
+primitive geometry and the gallery reports unavailable models.
 
-All zone rows are locked in sorted id order for a complete pure-model transition, with per-holder transaction locks and a shared topology lock. This intentionally coarse implementation has no fleet throughput claim. Occupancy and ticks must come from a trusted coordination adapter, not model output. The fencing proof effect inserts an idempotent `fenced_events` row under those same locks; it does not move a robot or establish MCP audit. A matching repeat returns the historical result without inserting again, even after expiry. Reusing an event id with different content raises an error.
+Live viewing is implemented via `/ws/live`. Start the Python API with
+`uv run python -m waggle.api` from the root, and serve/proxy the viewer's
+`/ws/live` path to that API before using `?live=S01`. The standalone Vite command
+above does not configure that proxy. The API is read-only, has no authentication
+and binds to localhost by default; this is a local development viewer setup.
 
-Real PostgreSQL correctness tests are marked `heavy` and run only in cloud workflows, including the manual [PostgreSQL workflow](.github/workflows/postgres.yml). They use temporary schemas and no provider keys. The existing heavy workflow can also select them with `marker=heavy`, `seed_set=dev`. They check model parity, concurrency, rollback, restart and a lock-contended stale-token race. [Cloud run 41217047545](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41217047545) on commit `7fa02c0` passed the original 10 PostgreSQL corridor tests. Queue/worker [cloud run 41225808111](https://github.com/agustindiazcano/waggle-agents-meta-muse/actions/runs/41225808111) on commit `085f8ff` passed all 26 PostgreSQL tests (10 corridor and 16 queue/worker tests), with no failures, errors or skips in the JUnit artifact. The full 500-task chaos protocol, physical handoff and production service wiring remain pending.
+## Verify and reproduce
 
-### Task queue and workers
+```powershell
+uv run pytest tests/unit/test_docs_content.py tests/unit/test_docs_consistency.py tests/unit/test_style.py -q
+uv run lint
+uv run type
+uv run ci
+```
 
-`waggle.coordination.task_model` provides pure task transitions. `TaskRepository` persists task metadata and one immutable event snapshot per transition. Callers supply trusted worker identities and current simulation ticks. Review must progress through `PENDING`, `SCREENED`, `REVIEWED` and `APPROVED` before a claim. These APIs do not authenticate an operator or replace the guard and court.
+`uv run ci` runs Ruff, strict mypy, the light pytest suite with coverage and import
+contracts. It excludes `heavy` and `llm` identically to regular CI. Run the full
+suite in GitHub Actions; local work uses targeted quick checks. The current
+pre-push gate still requires a green `uv run ci` stamp on HEAD.
 
-Claims select eligible approved tasks with `FOR UPDATE SKIP LOCKED`, highest priority first and task id as the tie-break. Dependencies must already exist and finish `DONE`; immutable definitions and existing-parent insertion prevent cycles through this API. A unique index and per-worker transaction lock allow one active attempt per worker. Assignment increments both attempt and fencing token. Start, completion and failure check the exact live task/worker/token with the task row locked. State and event writes commit together. Matching successful request ids replay historical results; conflicting content raises an error. Empty or denied claims create no transition and may be retried.
+For the frontend, from `web/`, run `npm test` and `npm run build`. Browser checks
+and model-pack checks are described in [web/README.md](web/README.md).
 
-`recover` skips locked rows and requeues expired attempts until their cap, then marks them `FAILED`. It retains counters and never changes zone reservations or occupied faults. `DONE`, `FAILED`, `REJECTED`, `ESCALATED` and `ABORTED` are terminal in this queue; resubmission requires a new reviewed task. Explicit handler failure is terminal, while an abandoned expired attempt is eligible for bounded recovery.
+Rebuild the committed E1 summary without a model call using `uv run report`.
+Development sweeps run in [.github/workflows/e1.yml](.github/workflows/e1.yml);
+PostgreSQL correctness checks run in [postgres.yml](.github/workflows/postgres.yml),
+and long/paid tests in [heavy.yml](.github/workflows/heavy.yml).
+See [docs/E8_RUNNER.md](docs/E8_RUNNER.md) for latency/report commands.
+Only the maintainer commits cloud result artifacts. `uv run experiments-test` is
+still a placeholder and must not be treated as a held-out evaluation.
 
-`waggle.worker.run_once` commits claim and start before calling its handler. A handler must return exactly `HandlerOutcome.DONE` for completion; malformed results, explicit failure and exceptions fail closed. Exception text is not logged. Replayed claims never invoke the handler again. A handler that outlives its lease cannot complete after recovery. Production handlers must use fenced, idempotent tool effects; this iteration does not provide exactly-once execution for arbitrary external effects. A bounded worker polling loop is implemented, not evaluated. A process entry point, trusted adapters and physical handoff integration remain separate work.
+## Persistent services and configuration
 
-| Queue parameter | Default | Bound or meaning |
-|---|---|---|
-| `lease_ticks` | 400 | Positive ticks; 10 s at the simulator's 40 Hz, an assumption to calibrate |
-| `max_attempts` | 3 | 1 to 10 total assignments; exhaustion fails the task |
-| `priority` | 0 | 0 to 9, higher first; no fairness guarantee |
-| Recovery `limit` | 100 | 1 to 1000 rows per transaction |
-| Dependencies | empty | At most 32 unique existing task ids |
+The package includes PostgreSQL repositories, worker entry points and the stdio
+MCP server (`uv run python -m waggle.mcp_server`). These require explicit database,
+identity, map and runtime configuration. Compose is development scaffolding,
+not a one-command demonstration of the complete product.
 
-Task ids, worker ids and external request ids use 1 to 64 ASCII letters, digits, underscores, periods or hyphens. Persisted queue metadata contains no item-resolution or model-output payload; those belong to the reviewed mission integration. The queue and worker iteration are implemented, not evaluated by full E2. New cloud tests cover real process exit, competing workers/sweepers, dependency eligibility, stale completion, rollback and handler isolation.
+Migrations never run on service startup. Inspect the target database with
+`uv run python -m waggle.db.schema` before an approved migration. The current
+schema is revision 14; do not follow old revision-2 setup instructions.
+Provision sample data separately with `uv run provision SPEC TOKENS_OUT`, using
+[data/provision/example.json](data/provision/example.json) as a format reference.
+Tokens are written to a new file rather than printed.
 
 ## Environment variables
+
 
 Names only live in `.env.example`. Values go in `.env`, which git ignores.
 
 | Variable | Description | Default |
 |---|---|---|
+| `WAGGLE_LLM_PROVIDER` | Provider mode: `mock` or `http`; unset fails closed | none |
 | `META_API_KEY`, `META_API_BASE_URL` | Meta Model API access | none |
 | `META_MODEL_ID`, `META_WONDER_MODEL_ID`, `META_VOICE_MODEL_ID` | Model ids, read from the API model list (`GET /v1/models`) | none |
 | `META_USE_CONTRIBUTOR_TIER` | Use the cheaper contributor tier. Allowed only because all data is synthetic | false |
@@ -184,22 +296,75 @@ Names only live in `.env.example`. Values go in `.env`, which git ignores.
 | `WAGGLE_MCP_RATE_MAX_CALLS`, `WAGGLE_MCP_RATE_WINDOW_S` | MCP server: allowed intents per chassis in the window | none, required |
 | `WAGGLE_MCP_TIMEOUT_S` | MCP server: per-call timeout, above 0 and at most 60 | none, required |
 | `MESHY_API_KEY`, `LANGFUSE_*` | 3D assets and optional tracing | none |
+| `WAGGLE_API_HOST`, `WAGGLE_API_PORT` | Read-only API bind address and port | `127.0.0.1`, `8000` |
+| `WAGGLE_REPLAY_DIR`, `WAGGLE_API_LIVE_SEED`, `WAGGLE_COMMIT` | Replay directory and live-run provenance | `replays`, `0`, `unknown` |
+| `WAGGLE_API_MAX_FPS`, `WAGGLE_API_STRIDE`, `WAGGLE_API_MAX_FRAME_BYTES` | Streaming limits | `30`, `1`, `262144` |
 | `WAGGLE_IMAGE_TAG` | Tag of the service images in compose | dev |
 
-## Model license notice
+## Third-party libraries and assets
 
-Built with Muse Spark Open. Muse Spark Open is used under its license, which asks for an attribution notice in products and services. The exact text is to be confirmed against the license (see PENDING.md).
+Runtime dependencies are pinned in [pyproject.toml](pyproject.toml):
+
+- numpy 2.5.4: simulator/control arrays and seeded random streams.
+- psycopg[binary] 3.3.6: PostgreSQL persistence, with no ORM.
+- fastapi 0.162.0 and uvicorn[standard] 0.54.0: read-only simulator/replay API.
+
+The viewer uses TypeScript, Vite and three.js with pinned versions in
+[web/package.json](web/package.json). Playwright is a development browser-test
+dependency. The official MCP Python SDK (`mcp==2.3.0`) is development-only for
+client interoperability tests; runtime code does not import it. httpx is also a
+development test dependency. Python resolutions are pinned in the lockfile.
+
+Model binaries and generated visuals have separate provenance; see
+[ASSETS.md](ASSETS.md), [web/models.json](web/models.json) and the
+[viewer asset workflow](web/README.md).
+
+## Scope and limits
+
+- Simulation only: 2D physics on the floor plane with 3D rendering. Height is not modeled.
+  Telemetry, manuals and failure history are synthetic; humans are scripted/adversarial.
+  The lidar is simulated. Vision is not in the control loop. No physical robot validation.
+- Deterministic reproduction requires the same platform and numpy version.
+  The published E1 cloud run used Linux; result files identify their platform and commit.
+- Simulation validation and unanimous model review are not formal verification or safety proofs.
+  The stopping/separation approach does not imply standards compliance or certification.
+- Control timings are code latencies inside a simulator, not hardware real-time guarantees.
+- Remaining integration includes production court/advisor/diagnosis services,
+  multimodal providers, the fleet planner, package consistency checks and E10 evaluation.
+- [Multi-warehouse logistics](docs/MULTI_WAREHOUSE_PLAN.md) is a planned extension,
+  not implemented or evaluated as part of the local system described here.
+
+## Repository guide
+
+| Path | Purpose |
+|---|---|
+| [src/waggle](src/waggle) | Simulator, control, coordination, DB, MCP, governance, LLM, validation, maintenance, multimodal, replay and API |
+| [web](web) | Read-only 3D viewer, gallery and browser checks |
+| [tests](tests) | Unit, property, integration and cloud-only checks |
+| [results](results) | Committed experiment evidence |
+| [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md) | E1 to E10 protocols, baselines and reporting rules |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decisions and superseded designs |
+| [PLAN.md](PLAN.md), [PENDING.md](PENDING.md) | Build order and remaining work |
+| [AGENTS.md](AGENTS.md) | Development, safety and review rules |
+| [SUBMISSION.md](SUBMISSION.md) | Final delivery checklist |
 
 ## Disclosure
 
 | Area | Detail |
 |---|---|
-| AI tools used to build this repository | Claude Code, used for code, tests and documentation under maintainer review. |
-| Models used by the product | Muse Spark, Muse Spark Open 1026, Muse Voice Transcribe and Muse Spark with image input (Meta); Muse Glimmer 30B on Modal; Vertex AI only as a declared backup. See [docs/DECISIONS.md](docs/DECISIONS.md). |
-| Libraries | Listed in `pyproject.toml` and pinned in `uv.lock`. Notable ones are named in this README. |
-| Prior code | None. See PRIOR_WORK.md. |
-| Assets | See ASSETS.md for the source and rights of every asset. |
+| Author | Agustin Diaz Cano, solo maintainer |
+| AI development tools | Claude Code, Codex and Antigravity assisted with code, tests, research and documentation under maintainer review |
+| Product models | Configured Meta Muse Wonder, Muse Spark, Muse Spark Open, Muse Glimmer and Muse Voice Transcribe roles; Vertex is a declared backup/comparison route. Integration status is listed above |
+| Prior code and ideas | No prior code copied or adapted, as declared in [PRIOR_WORK.md](PRIOR_WORK.md); earlier related ideas are disclosed there |
+| Assets | Generated assets and synthetic source documents; provenance and outstanding rights records in [ASSETS.md](ASSETS.md) |
+| Measurements | Only committed result files support the numbers in this README; mocks and example replays are labeled |
+
+## Model license notice
+
+Built with Muse Spark Open. The project retains this attribution notice in the
+README and viewer. Exact model-license wording and the video end card still need
+maintainer verification; the notice alone is not a license-compliance assessment.
 
 ## License
 
-MIT.
+Project code: [MIT](LICENSE). Model and asset licenses apply separately.

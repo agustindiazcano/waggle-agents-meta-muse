@@ -1,6 +1,12 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 88% on 2026-11-04, margin about 3 points. Main now includes PR 163 to PR 174 (viewer gallery, ADR-089; E8 reporting, ba2abcf; crisis planner adapter, ADR-090; organizer E5 C2/C3, ADR-091; E9 planted-defects, ADR-092; Meta Wonder routes, ADR-094; rollout separation, ADR-095), and this branch (`exp/e4-live-runner`, ADR-096) implements the live E4 runner for configurations A, B and C with fallbacks disabled, raising E4 court runner code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
+margin about 4 points, retained from the main implementation audit at 7b99bbf.
+The rollout robot-pair separation fix (ADR-095) is merged in PR 176, task
+code 100%. The README task and PR 178 conflict resolution add no
+product code and do not change the main audit estimate.
+Code percentages are judgments, not coverage or experimental results.
+Experiments, calibration, documents, delivery and G-GLOBAL are excluded.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -33,6 +39,10 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |
+
+PR 178 implements live E4 A/B/C with fallbacks disabled (ADR-096). Court/E4
+code is estimated by eye at 95%; real evaluation remains pending. No project
+percentage change is justified by this documentation conflict resolution.
 
 ## Current branch update (supersedes stale implementation text above)
 
@@ -181,3 +191,5 @@ runner are merged. Production integration and experiment gaps remain.
 | 129 | P2 | Route `director`, `planner` and `diagnosis` to `META_WONDER_MODEL_ID` while keeping `META_MODEL_ID` for `court_1` and `vision` (ADR-094) | A | done on branch feat/meta-wonder-routing; maintainer review and merge remain | 100% |
 
 | 130 | P1 | Reject robot-pair separation false accepts in Stage C/D rollouts (ADR-095) | A | implemented on fix/rollout-separation-check; see PR test plan for full gates | 100% |
+| 131 | P2 | Rewrite README around project behavior, current implementation, measured evidence and hackathon requirements | A | PR 177 updated with main a264b5b; conflicts resolved preserving the main audit and both gotchas; 181 documentation/style checks pass; digest-only replay passes; full resimulation differs at tick 4; local full CI stopped at maintainer request; cloud CI and maintainer PR review remain | - |
+| 132 | P2 | Resolve PR 178 documentation conflicts against main 54aa19e | A | resolved: retain main audit, live E4 status, README and rollout tasks, and both warning entries; 55 focused E4/CLI/style/docs checks passed; cloud CI and maintainer review remain | - |

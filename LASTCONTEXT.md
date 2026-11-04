@@ -1,55 +1,65 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. This branch (`exp/e4-live-runner`, ADR-096) adds the live E4
-court runner on real routes with fallbacks disabled, wiring `build_client` to
-configurations A, B and C on the development split. Configuration D (cross-family)
-and baseline are refused in live mode with `LiveConfigurationError`. Live runs verify
-caps and model IDs fail-closed before any call, record realized model IDs and
-fallback labels, and label result JSON as `provider_mode: "live"`. Tests first in
-`tests/unit/experiments/test_e4_live.py` run in mock mode with zero network and
-zero spend. The maintainer merges the PR, not the agent.
+Updated: 2026-11-04. PR 178 (`exp/e4-live-runner`, ADR-096) incorporates
+main 54aa19e, including merged PRs 175, 176 and 177. Resolved documentation
+conflicts, preserving the main audit, live E4 status, README and rollout task
+records, and both warning entries. The maintainer reviews and merges PRs.
 
 Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
-margin about 3 points. Main now includes PR 163 to PR 174 (viewer gallery and overlays,
-CourtRuntime and CrisisRuntime, organizer E5 C2/C3, SDK fake-backed client test, E8 export,
-E1 diagnosis, scripted E4 CLI and Meta Wonder planning-role routes) and rollout separation check
-(ADR-095). This branch (`exp/e4-live-runner`, ADR-096) implements the live E4 runner, raising
-court/E4 code from 50% to about 95%. Measurements, calibration, documents and delivery do not
-count. No new published number or README result changed.
+margin about 4 points, as reviewed in the previous main audit. Live E4 code
+is estimated at 95% on PR 178;
+real evaluation remains pending. This documentation resolution adds no code
+and does not change the project estimate; task Code % is -. Experiments,
+calibration, documents and delivery are excluded.
+G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Current state
 
-- E4 live runner is implemented on branch `exp/e4-live-runner` (ADR-096).
-  Supports configurations A, B and C. Refuses D (until a non-Muse route exists)
-  and baseline. Validates environment caps and model IDs before calling. Records
-  live warning, realized model IDs and call log records. Fallbacks are disabled.
-  Local unit tests pass in mock mode.
-- Crisis planner adapter (ADR-090, PR 165), organizer E5 (ADR-091, PR 166) and
-  Meta Wonder planning routes (ADR-094, PR 174) are in main. E10 harness and
-  production crisis caller remain.
-- Viewer map geometry, overlays and live stream parser are on `feat/viewer-overlays`
-  (ADR-093).
-- LLM provider/logging code is about 93%; court/E4 95%; voice/vision 75%; package
-  model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
-  rollout/crisis 90%; E2 harness 97%; replay generator 100%. Estimates by eye only.
-- Provider balances, caps, secrets, labels, catalog, zones and recordings still
-  require the maintainer. G-GLOBAL remains unauthorized, outside the denominator.
+- PR 178 implements live E4 A/B/C through build_client with fallbacks disabled
+  (ADR-096). Live mode refuses baseline and D until a verified non-Muse route
+  exists. Caps/model IDs are checked before calls. Results record provider mode,
+  realized model IDs and fallback labels. Local tests use mocks with no spend.
+
+- Main includes PRs 163 to 174: viewer gallery and overlays, CourtRuntime and
+  CrisisRuntime, organizer E5 C2/C3, SDK fake-backed client test, E8 export,
+  E1 diagnosis, scripted E4 CLI and Meta Wonder planning-role routes.
+- Merged PR 176 corrects a false acceptance in validation/plan_rollout.py:
+  robot contact flags do not include robot-pair separation. The rollout now
+  reuses the independent detector's swept robot_robot_gap and existing margin,
+  reporting SEPARATION_VIOLATION once per pair. No simulator experiment counters,
+  fast-layer threshold, fencing, audit, MCP rule or trajectory was modified.
 
 ## Done last
 
-- Live E4 court runner (ADR-096, this branch `exp/e4-live-runner`):
-  Failing unit tests first in `tests/unit/experiments/test_e4_live.py` covering
-  live result labeling, realized model IDs, rejection escalation, refusal of
-  cross-family D and baseline, unauthorized held-out refusal, CLI `--live` execution,
-  fail-closed missing caps and missing model IDs, and fallbacks disabled on provider
-  outage.
-  Implemented `run_case_live` and `run_e4_live` in `src/waggle/experiments/e4_harness.py`,
-  `LIVE_PROVIDER_MODE` and live warning in `e4_result.py`, `--live` mutually exclusive
-  CLI mode and `run_live` in `e4_run.py`.
-  All 13 live and CLI unit tests pass in under 2 seconds. `test_style.py`, ruff,
-  mypy --strict, and import-linter pass cleanly.
+- Resolved PR 178 conflicts against main 54aa19e. Only documentation was edited.
+  Focused E4, CLI, style and documentation consistency checks passed: 55 tests
+  in 8.91s using the existing environment after a new environment hit disk
+  capacity. No paid call or result change. Full regression runs in cloud CI.
+- PR 178 previously reported 36 focused E4/CLI/style tests passing, with failure
+  coverage for missing caps/model IDs, provider outages, rejected configurations,
+  held-out refusal, escalation and result labels. This is mock-backed evidence.
+
+- Rewrote README in PR 177 with the project workflow, implementation status,
+  model roles, development results and hackathon requirement/evidence matrix.
+  Accepted participant rules and final delivery checks are not claimed complete.
+- Preserved the main rollout fix and audit below while resolving PR 177 conflicts.
+  PENDING.md keeps rollout task 130 and README task 131. Both GOTCHAS entries remain.
+- No further tests were run, as requested by the maintainer for this README task.
+  Earlier documentation checks passed 181 tests; lint and strict types passed.
+  Full local CI was interrupted. The historical demo replay passed digest-only
+  verification but differed at tick 4 on full resimulation; its fixture is unchanged.
+
+- Tests first: 3 failed and 2 passed on the new proximity cases before the fix.
+  Afterwards the rollout test file passed 30 tests; focused strict Mypy passed.
+  ADR-095 records semantics; GOTCHAS records the detector flag trap.
+- Still pending: E1 residual failures, E2 full chaos evaluation/physical wiring,
+  E4 real evaluation and Vertex, E10 harness/execution, live safety overlay data,
+  E6 production, real voice/vision, package integrity and E9 mutation arm.
+- No paid call, held-out run, migration, secret access or dependency addition.
+  See the PR test plan for the full gate and publishing status.
 
 ## Preserved work and assets
+
 
 - Preserve dirty global-custody, Meshy and GLB worktrees and all unmerged work.
   Preserve C:/Users/agusd/.codex/artifacts/waggle-viewer-models-20261104.zip;
@@ -65,11 +75,14 @@ count. No new published number or README result changed.
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
-git status, branches and worktrees, and fetch origin. The live E4 court runner is
-complete on branch exp/e4-live-runner (ADR-096) with 13 unit tests passing in mock
-mode without spending. Review the PR and its CI. The next priority is E10 live harness
-and production crisis caller, or running the live E4 cloud workflow once the smoke run
-reports green on declared routes. Project code is about 88% plus/minus 3 points,
-court/E4 about 95%. No paid call, held-out run, migration or safety change is authorized
-without explicit maintainer authorization. Never merge docs/context-wave3 or delete
-another agent's work.
+status, branches and worktrees, and fetch origin. PR 178 (`exp/e4-live-runner`)
+incorporates main 54aa19e, including merged PR 177, with documentation conflicts
+resolved. Check mergeability and cloud CI before maintainer review. Live E4
+A/B/C exists (ADR-096); D needs a verified non-Muse route. Real E4 evaluation,
+E10 harness and production crisis wiring remain pending. Project code remains
+about 88% plus/minus 4 points; court/E4 about 95%, estimated by eye. Preserve
+ADR-095 rollout semantics, all pending tasks, warnings and unmerged worktrees.
+Do not resume the stopped README tests. The replay fixture is historical and
+not a current resimulation pass. Never merge docs/context-wave3. No paid call,
+held-out run, migration, secret access or safety threshold change is authorized
+by this handoff. Agents never merge PRs.

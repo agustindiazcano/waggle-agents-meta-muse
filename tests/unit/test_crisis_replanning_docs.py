@@ -148,10 +148,12 @@ def test_architecture_has_the_replanning_sections_and_diagram_nodes() -> None:
     assert "hashtextextended" in text
 
 
-def test_readme_marks_the_new_layers_and_priorities_stay() -> None:
+def test_readme_marks_crisis_implementation_and_remaining_validation() -> None:
     readme = _read("README.md")
-    assert readme.count("designed, not implemented") >= 8
-    assert "Crisis replanning" in readme
+    row = next(line for line in readme.splitlines() if line.startswith("| Crisis replanning |"))
+    assert "LLM proposer adapter" in row
+    assert "E10 harness, production caller and live evaluation" in row
+    assert "designed, not implemented" not in row
     assert "not formal verification" in readme.lower()
 
 
