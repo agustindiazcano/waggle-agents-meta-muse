@@ -7,6 +7,10 @@ robot-human contacts, separation violations, hazard zone entries along the real 
 robots that made no progress. It is a pure function of its inputs: the same plan, map and
 config give the same counterexamples and state hash.
 
+Robot-pair separation uses the independent detector's swept footprint gap, including idle
+robots. The margin is strict: equality is allowed. Each pair produces at most one separation
+counterexample per rollout; the reported gap is for its first violating tick interval.
+
 Not in this stage, stated plainly: the reflex layer inside the rollout
 (a plan that only survives because the reflex layer would brake is rejected here, which is
 stricter than the design), lease and deadlock checks, the recoverable terminal state check, and
@@ -171,8 +175,10 @@ def run_plan_rollout(
     found: list[Counterexample] = []
     hit_zones: set[tuple[str, str]] = set()
     reported: set[tuple[int, int]] = set()
+    reported_separation: set[tuple[int, int]] = set()
     reported_human: set[tuple[int, int, int]] = set()
     half_width = [p.width / 2.0 for p in fleet.params]
+    half_diagonal = [math.hypot(p.length, p.width) / 2.0 for p in fleet.params]
     ticks = params.ticks_for(config.horizon_s)
 
     def scan_hazards() -> None:
@@ -217,13 +223,45 @@ def run_plan_rollout(
                             )
                         )
 
-    def scan_contacts() -> None:
+    def scan_robot_separation(i: int, k: int, previous: np.ndarray, poses: np.ndarray) -> None:
+        if (i, k) in reported_separation:
+            return
+        # A footprint stays inside its circumscribed disc throughout rotation. Include
+        # both translations so the broad phase cannot miss an encounter between ticks.
+        distance = float(np.linalg.norm(previous[i, :2] - previous[k, :2]))
+        travel = float(np.linalg.norm(poses[i, :2] - previous[i, :2])) + float(
+            np.linalg.norm(poses[k, :2] - previous[k, :2])
+        )
+        reach = half_diagonal[i] + half_diagonal[k] + travel + config.separation_margin_m
+        if distance > reach:
+            return
+        gap = detector.robot_robot_gap(
+            fleet.params[i], previous[i], poses[i], fleet.params[k], previous[k], poses[k]
+        )
+        if detector.is_violation(gap, config.separation_margin_m):
+            reported_separation.add((i, k))
+            found.append(
+                Counterexample(
+                    CounterexampleCode.SEPARATION_VIOLATION,
+                    time_s=sim.state.tick * params.DT,
+                    entities=(ids[i], ids[k]),
+                    place_xy_m=(
+                        float((poses[i, 0] + poses[k, 0]) / 2),
+                        float((poses[i, 1] + poses[k, 1]) / 2),
+                    ),
+                    min_clearance_m=gap,
+                    rule=Rule.SEPARATION_MIN,
+                )
+            )
+
+    def scan_contacts(previous: np.ndarray) -> None:
         now = sim.state.tick * params.DT
         flags = np.asarray(sim.state.arrays["det_flags"], dtype=np.int64)
         poses = np.asarray(sim.state.arrays["robot_pose"], dtype=np.float64)
         scan_human_flags(flags, now)
         for i in range(len(ids)):
             for k in range(i + 1, len(ids)):
+                scan_robot_separation(i, k, previous, poses)
                 if flags[i, count + k, _CONTACT] and (i, k) not in reported:
                     reported.add((i, k))
                     found.append(
@@ -241,9 +279,10 @@ def run_plan_rollout(
 
     scan_hazards()
     for _ in range(ticks):
+        previous = np.asarray(sim.state.arrays["robot_pose"], dtype=np.float64).copy()
         sim.step()
         scan_hazards()
-        scan_contacts()
+        scan_contacts(previous)
     waypoint = np.asarray(sim.state.arrays["script_wp"], dtype=np.int64)
     for i, rid in enumerate(ids):
         if routes[i] and waypoint[i] == 0:

@@ -1,6 +1,11 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 87% on 2026-11-04, margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164 (E8 reporting at ba2abcf), PR 165 (crisis planner adapter, ADR-090 at c7098a7), PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091 at d18991a, raising advisors/E5 code to 95%) and PR 167 (E9 planted-defect arm, ADR-092 at 21e1b54), and this branch (`feat/viewer-overlays`, ADR-093) implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client, raising viewer code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
+margin about 4 points, retained from the main implementation audit at 7b99bbf.
+This branch fixes rollout robot-pair separation false accepts (ADR-095), task
+code 100%. A bounded correctness fix does not justify a whole-point increase.
+Code percentages are judgments, not coverage or experimental results.
+Experiments, calibration, documents, delivery and G-GLOBAL are excluded.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -33,6 +38,16 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |
+
+## Current branch update (supersedes stale implementation text above)
+
+Main includes PRs 163 to 174. CourtRuntime, CrisisRuntime, viewer overlays,
+SDK fake-backed client tests, E8 database export, E1 diagnosis and scripted E4
+runner are merged. Production integration and experiment gaps remain.
+
+| Priority | Task | Owner | Code % | Status |
+|---|---|---|---|---|
+| P1 | Reject robot-pair separation violations in plan rollouts | A | 100% | fix/rollout-separation-check, ADR-095; regression failed first; 30 rollout tests passed; full gate status belongs in the PR test plan |
 
 ## Historical task ledger with current status
 
@@ -169,3 +184,5 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 127 | P2 | E9 planted-defect campaign (ADR-092): registry of 4 defects, copy-only runner, baseline check, result writer; first run 4 of 4 killed on dev code | A | done: PR 167 merged in main 21e1b54; cloud mutation-tool arm remains | 100% |
 | 128 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-093) | A | done: PR 169 merged in main 5b9a19d; maintainer visual review remains | 100% |
 | 129 | P2 | Route `director`, `planner` and `diagnosis` to `META_WONDER_MODEL_ID` while keeping `META_MODEL_ID` for `court_1` and `vision` (ADR-094) | A | done on branch feat/meta-wonder-routing; maintainer review and merge remain | 100% |
+
+| 130 | P1 | Reject robot-pair separation false accepts in Stage C/D rollouts (ADR-095) | A | implemented on fix/rollout-separation-check; see PR test plan for full gates | 100% |
