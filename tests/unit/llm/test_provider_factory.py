@@ -78,11 +78,13 @@ def test_http_mode_missing_key_fails_closed(tmp_path: Path) -> None:
         build_providers(environ, _prices(tmp_path, verified=True))
 
 
-def test_shipped_prices_all_routes_estimate_cost() -> None:
+def test_shipped_prices_meta_estimates_cost_others_refuse() -> None:
     providers = build_providers(_environ())
     request = LlmRequest("r", "director", "hi")
-    for name in ("meta", "baseten", "modal"):
-        assert providers[name].estimate_cost(request) > 0
+    assert providers["meta"].estimate_cost(request) > 0
+    for name in ("baseten", "modal"):
+        with pytest.raises(ConfigError):
+            providers[name].estimate_cost(request)
 
 
 def _client(

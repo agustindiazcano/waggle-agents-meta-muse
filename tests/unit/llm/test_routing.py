@@ -5,7 +5,7 @@ import pytest
 
 from waggle.llm.budget import PROVIDERS
 from waggle.llm.errors import ConfigError, UnknownRoleError
-from waggle.llm.routing import ROLES, Role, load_routes, resolve_model_id
+from waggle.llm.routing import META_ROUTES_PATH, ROLES, Role, load_routes, resolve_model_id
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -81,6 +81,19 @@ def test_planning_roles_use_meta_wonder_model_env() -> None:
     assert table.get("voice").primary.model_env == "META_VOICE_MODEL_ID"
 
 
+def test_meta_only_profile_routes_every_role_to_meta() -> None:
+    table = load_routes(META_ROUTES_PATH)
+    for role in EXPECTED_ROLES:
+        route = table.get(role)
+        assert route.primary.provider == "meta"
+        assert route.fallback is None
+    for role in ("director", "planner", "diagnosis", "court_2"):
+        assert table.get(role).primary.model_env == "META_WONDER_MODEL_ID"
+    for role in ("court_1", "court_3", "guard", "advisor", "organizer", "vision"):
+        assert table.get(role).primary.model_env == "META_MODEL_ID"
+    assert table.get("voice").primary.model_env == "META_VOICE_MODEL_ID"
+
+
 def test_model_id_comes_from_config_not_code() -> None:
     spec = load_routes().get("director").primary
     assert (
@@ -93,10 +106,11 @@ def test_model_id_comes_from_config_not_code() -> None:
 
 
 def test_routes_file_has_no_hardcoded_model_ids() -> None:
-    text = (ROOT / "src" / "waggle" / "llm" / "routes.toml").read_text(encoding="utf-8")
-    assert "muse-spark" not in text.lower()
-    assert "muse-wonder" not in text.lower()
-    assert "gemini" not in text.lower()
+    for path in (ROOT / "src" / "waggle" / "llm" / "routes.toml", META_ROUTES_PATH):
+        text = path.read_text(encoding="utf-8")
+        assert "muse-spark" not in text.lower()
+        assert "muse-wonder" not in text.lower()
+        assert "gemini" not in text.lower()
 
 
 def test_every_route_env_name_is_listed_in_env_example() -> None:

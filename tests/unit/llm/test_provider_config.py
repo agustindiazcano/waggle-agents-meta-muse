@@ -37,12 +37,12 @@ def test_secret_never_shows_its_value() -> None:
     assert secret.reveal() == KEY
 
 
-def test_shipped_prices_are_verified() -> None:
+def test_shipped_prices_meta_verified_others_unverified() -> None:
     prices = load_prices(DEFAULT_PRICES_PATH)
     assert set(prices) == {"meta", "baseten", "modal"}
-    expected = Price(input_per_mtok=1.25, output_per_mtok=4.25, verified=True)
-    for name in ("meta", "baseten", "modal"):
-        assert prices[name] == expected
+    assert prices["meta"] == Price(input_per_mtok=1.25, output_per_mtok=4.25, verified=True)
+    for name in ("baseten", "modal"):
+        assert prices[name].verified is False
 
 
 def test_prices_file_with_a_number_but_no_verified_flag_is_unverified(tmp_path: Path) -> None:

@@ -15,14 +15,8 @@ verified = true
 input_per_mtok = 1.25
 output_per_mtok = 4.25
 
-# Baseten Model APIs (meta-models/muse-spark-open), maintainer decision 2026-11-04.
 [baseten]
-verified = true
-input_per_mtok = 1.25
-output_per_mtok = 4.25
+verified = false
 
-# Modal Shared Endpoints (Muse Spark Open / Muse Glimmer), maintainer decision 2026-11-04.
 [modal]
-verified = true
-input_per_mtok = 1.25
-output_per_mtok = 4.25
+verified = false
