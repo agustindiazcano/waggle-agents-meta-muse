@@ -1012,3 +1012,47 @@ requires the binary pack and checks decoding and clip names. Playwright 1.64.1 i
 development only (ADR-029). `viewer.yml` runs checks without the binary pack.
 Artistic quality, map geometry, overlays, live mode and role/action replay fields
 remain outside this gallery change.
+
+## ADR-090: Crisis planner adapter in waggle.llm
+
+Status: implemented with unit tests (9 in the adapter file, plus the validation and
+court suites); mock provider only, no paid call, no result file, not evaluated.
+Closes the proposer gap named in ADR-086.
+
+Decision: `waggle.llm.crisis_adapter.LlmPlanProposer` satisfies the `PlanProposer`
+protocol of `waggle.validation.crisis_loop` without that package importing the LLM
+side. It is bound at construction to one mission id and one `PlanContext`, renders
+the versioned `planner-v1` prompt (`planner_v1.txt`, hash recorded in the module)
+listing only the trusted robot, item and zone ids with their speed limits, and
+passes validator feedback as data in the prompt. The request id is a digest of the
+prompt hash and the canonical mission, context and feedback, so a repeated round
+is served from the client cache and a new feedback round is a real call through
+the `planner` route, with budget, retries and the call log applied by the shared
+client. The adapter returns raw text and never parses it: `parse_plan` and the
+rollout validator still decide, and a provider error propagates so the loop counts
+the round and escalates at the bound. No caller outside tests exists yet; the E10
+harness and any production crisis caller remain separate work.
+
+## ADR-091: Organizer schema, runtime, loop boundaries and E5 C2/C3/C3_REPLAY
+
+Status: implemented, not evaluated. Follows `docs/ADVISORS_DESIGN.md` sections 6, 8, 9,
+12, 13 and 14.
+
+Decision: `waggle.governance.organizer` defines the strict JSON schema for the per-robot
+organizer (`action` in `none`, `yield_hold`, `call_tool`, `send_message`, extra keys
+forbidden), `OrganizerLimits` (max 5 turns per task, max 3 outbound messages per task,
+2.0 s minimum interval between turns, and consecutive identical action-signature loop
+detection), and `build_organizer_input`, which validates inbound inter-robot messages
+with `parse_robot_message`, verifies `recipient == robot_id`, runs `classify_input`,
+`sanitize` and `fence` with source `ROBOT_MESSAGE`, and withholds any message whose
+screening fails or flags injection.
+
+`waggle.llm.organizer_runtime.OrganizerRuntime` loads `organizer_v1.txt` (`organizer-v1`),
+enforces turn and loop limits before calling `LlmClient` on the `organizer` role, caches
+decisions by `request_id`, submits `yield_hold` cautions to `CautionLog`, queues
+schema-validated outbound messages, and dispatches `call_tool` through an injected
+`McpToolDispatch` using the robot's own `robot_id` while catching exceptions as error
+results (AGENTS.md 6.5). `E5AdvisorCaller` and `run_e5_seed` support `C2`
+(organizer-only), `C3` (advisor plus organizer with `ASK_ORGANIZER` signal routing and
+peer message delivery) and `C3_REPLAY` (cached replay parity with zero additional LLM
+calls). `C4` still raises `UnsupportedConfigurationError` until the fleet planner exists.
