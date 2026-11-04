@@ -27,7 +27,8 @@ Status: written on 2026-11-02 from public documentation and third-party pages fo
 | Vertex AI | Method `generateContent`, body fields `contents`, `systemInstruction`, `generationConfig` (`maxOutputTokens`, `temperature`) | confirmed | [Gemini API in Vertex AI](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference) |
 | Vertex AI | `usageMetadata` with `promptTokenCount`, `candidatesTokenCount`, `totalTokenCount` | confirmed | [UsageMetadata reference](https://docs.cloud.google.com/ruby/docs/reference/google-cloud-ai_platform-v1/0.56.0/Google-Cloud-AIPlatform-V1-GenerateContentResponse-UsageMetadata) |
 | Vertex AI | Full REST URL and OAuth token flow from a service account | not read in this pass | none |
-| Prices | Per-token prices of every route | unconfirmed, see `src/waggle/llm/prices.toml` | maintainer, PENDING rows 4 and 10 |
+| Prices | Meta Standard tier: $1.25 in, $4.25 out per M tokens | maintainer-confirmed | maintainer decision 2026-11-03; public pricing pages agree |
+| Prices | Baseten and Modal per-token prices | unconfirmed, see `src/waggle/llm/prices.toml` | maintainer, PENDING rows 4 and 10 |
 
 Access date for every link: 2026-11-02.
 
@@ -35,7 +36,7 @@ Access date for every link: 2026-11-02.
 
 | Route | Implemented | Notes |
 |---|---|---|
-| `meta` | Chat Completions over HTTPS with Bearer auth | Usage field names and price are unconfirmed, so a response without `usage` is rejected and the price gate blocks real calls until the maintainer verifies it. |
+| `meta` | Chat Completions over HTTPS with Bearer auth | Usage field names are unconfirmed, so a response without `usage` is rejected. The price is verified ($1.25 in, $4.25 out per M tokens, Standard tier), so the price gate passes for this route. |
 | `baseten` | Chat Completions with Bearer auth | The auth header is the unconfirmed part. If the first cloud smoke test returns 401, check this row first. |
 | `modal` | Chat Completions with `Modal-Key` and `Modal-Secret` headers | `MODAL_ENDPOINT_URL` is read as the OpenAI-style base URL (the part before `/chat/completions`). |
 | `vertex` | Not implemented | Needs a service account OAuth token, which needs RSA signing that the standard library does not have. A route to `vertex` fails closed with a `ConfigError` (no provider registered). Implementing it needs a dependency decision from the maintainer. |
@@ -63,7 +64,7 @@ The Baseten base URL is fixed in code to the documented `https://inference.baset
 
 ## Prices
 
-`src/waggle/llm/prices.toml` holds USD per million tokens for each provider, and a `verified` flag. Every entry ships with `verified = false` and no number. Until the maintainer fills the numbers and sets `verified = true`, `estimate_cost` raises `ConfigError`, so the client makes no call. Cost per call is computed from the response `usage` and these prices, never from a value the server reports as a price.
+`src/waggle/llm/prices.toml` holds USD per million tokens for each provider, and a `verified` flag. Each entry ships with `verified = false` and no number until the maintainer fills it. `meta` is verified at $1.25 in and $4.25 out per M tokens (Standard tier, maintainer decision 2026-11-03); `baseten` and `modal` are still unverified. For an unverified entry `estimate_cost` raises `ConfigError`, so the client makes no call on that route. Cost per call is computed from the response `usage` and these prices, never from a value the server reports as a price.
 
 ## Failure behavior
 
