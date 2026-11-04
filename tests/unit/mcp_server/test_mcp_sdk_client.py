@@ -59,9 +59,19 @@ def test_official_sdk_client_completes_handshake_list_and_calls() -> None:
 
 
 def test_server_process_exits_2_and_names_the_missing_setting_without_its_value() -> None:
+    env = _server_env()
+    for name in (
+        "WAGGLE_MCP_TOKEN",
+        "WAGGLE_MCP_EXTENT",
+        "WAGGLE_MCP_RATE_MAX_CALLS",
+        "WAGGLE_MCP_RATE_WINDOW_S",
+        "WAGGLE_MCP_TIMEOUT_S",
+        "DATABASE_URL",
+    ):
+        env.pop(name, None)
     proc = subprocess.run(
         [sys.executable, "-m", "waggle.mcp_server"],
-        env=_server_env(),
+        env=env,
         capture_output=True,
         text=True,
         timeout=30,
