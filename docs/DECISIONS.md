@@ -1032,3 +1032,26 @@ client. The adapter returns raw text and never parses it: `parse_plan` and the
 rollout validator still decide, and a provider error propagates so the loop counts
 the round and escalates at the bound. No caller outside tests exists yet; the E10
 harness and any production crisis caller remain separate work.
+
+## ADR-092: Simulator-supplied viewer overlays, map geometry and live stream parser
+
+Status: implemented with unit tests (`tests/unit/sim/test_sim_frame.py`,
+`web/test/frame_schema.test.ts`, `web/test/world_schema.test.ts`,
+`web/test/overlays.test.ts`, `web/test/live_client.test.ts`), not evaluated.
+
+Decision: `waggle.sim.frame.export_frame` and `parse_frame` accept an optional
+`FrameOverlays` structure carrying simulator-computed `envelopes` (polygon,
+`margin_m`, `nearest_id`), `lidar_shadows` (polygon, `sample_stride`),
+`ghost_paths` (`variant_index`, `robot_id`, `passed`, `points`, `k`, `horizon_s`,
+`snapshot_hash`) and an optional `extra` object. Unknown keys outside `extra`
+are rejected by both `waggle.sim.frame.parse_frame` and `web/src/frame_schema.ts`.
+When `overlays` is omitted, `export_frame` emits `{}` and preserves existing
+fixtures and replay hashes unchanged.
+
+In `web/src/`, `world_schema.ts` validates `export_world` sidecar JSON bound to
+the replay header `world_hash`, `overlays.ts` formats provenance labels and
+visibility toggles as pure functions, `live_client.ts` parses `/ws/live` world,
+frame and error messages without computing state, and `scene.ts` renders the
+map polygons and the three overlay groups (`envelopeGroup`, `shadowGroup`,
+`ghostGroup`) directly from the validated simulator coordinates. No safety
+threshold, fencing check, MCP boundary or retry rule is modified.

@@ -1,6 +1,6 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D, replacing the stale November 2 estimate of 80%. The merged viewer gallery contributes less than one project point at this precision; viewer code is about 68% including PR 163. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. PR 163 is merged in main 8cfb8fb. E8 reporting is implemented in an isolated branch; its broader collection block is about 75% and E9 remains 0%. The bounded E8 reporting task is 100%. This addition is below one project point at the current precision, so the project judgment remains 83%. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 86% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner, validator stage D, PR 163 (viewer gallery), PR 164 (E8 reporting) and PR 165 (crisis planner adapter ADR-090). Branch feat/viewer-overlays (ADR-092) implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client, bringing viewer code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -23,7 +23,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (branch feat/crisis-planner-adapter); E10 harness and production crisis caller remain |
 | P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 85% | C0/C1/replay exist; C2/C3/C4 are explicitly refused |
 | P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
-| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 68% | Gallery/model task 100%; maintainer visual review remains |
+| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 95% | Implemented on feat/viewer-overlays (ADR-092); maintainer visual review remains |
 | P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 80% | Revision 14, loader, diagnosis/sheet/tool port and mock runner exist |
 | P2 | Add Vertex and real transcription/vision integration and UI | A, M | 75% | Voice-intent and mock E7 exist; provider/logging block separately about 93% |
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 75% | Package registry and forwarder check already exist; future migration needs review |
@@ -164,4 +164,5 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 122 | P1 | PR 163 context conflicts: retain main tasks and viewer handoff, merge main without rewriting history; never merge the PR as an agent | A | done: PR 163 merged in main 8cfb8fb | - |
 | 123 | P2 | Delete obsolete docs/context-wave3 remotely, never merge (endpoint diff removes 6325 lines). Ticket race patch is already in main as 8ae51e3; feat/maintenance-tickets needs no PR | M | remote cleanup pending; preserve all worktrees with unmerged work | - |
 | 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | done: PR 164 merged in main ba2abcf; broader production exports and calibration remain | 100% |
-| 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done on branch feat/crisis-planner-adapter; maintainer merges the PR; E10 harness and production caller remain | 100% |
+| 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done: PR 165 merged in main c7098a7; E10 harness and production caller remain | 100% |
+| 126 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-092) | A | done on branch feat/viewer-overlays; maintainer visual review and merge remain | 100% |

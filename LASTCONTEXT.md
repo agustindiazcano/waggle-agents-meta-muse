@@ -1,19 +1,20 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. PR 163 (8cfb8fb) and PR 164 (ba2abcf, E8 reporting) are
-merged in main. This branch (feat/crisis-planner-adapter, ADR-090) adds the LLM
-proposer adapter for the crisis loop (`LlmPlanProposer` and `planner-v1` prompt in
-`waggle.llm`, with 9 adapter tests; mock provider only, no paid call) and merges
-origin/main at ba2abcf without rewriting history. The maintainer merges the PR,
-not the agent. Other agents work in separate worktrees (viewer, global custody,
-Meshy assets, E3 labels, organizer); this branch touches none of those areas.
+Updated: 2026-11-04. PR 163 (8cfb8fb), PR 164 (ba2abcf, E8 reporting) and PR 165
+(c7098a7, crisis planner adapter ADR-090) are merged in main. This branch
+(feat/viewer-overlays, ADR-092) adds the simulator-supplied safety overlays
+contract (`envelopes`, `lidar_shadows`, `ghost_paths`, `extra`) to
+`waggle.sim.frame` and `web/src/frame_schema.ts`, static map geometry validation
+and rendering (`world_schema.ts`, `scene.ts`), pure overlay provenance and
+visibility toggles (`overlays.ts`), and the `/ws/live` stream parser and client
+(`live_client.ts`, `main.ts`). The maintainer merges the PR, not the agent.
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04,
-margin about 3 points. This judgment stays at the same rounded value: the bounded
-E8 reporting task is 100% written with tests, while the broader E8 collection
-block is about 75% because database export automation remains. Measurements,
-calibration, documents and delivery do not count. No new published number or
-README result changed.
+Code progress of the project (estimate by eye, code only): 86% on 2026-11-04,
+margin about 3 points. With PR 165 merged and the viewer map geometry, safety
+overlays and live stream client implemented with tests on this branch, viewer
+code rises from 68% to about 95% (visual review in a browser remains with the
+maintainer). Measurements, calibration, documents and delivery do not count.
+No new published number or README result changed.
 
 ## Current state
 
