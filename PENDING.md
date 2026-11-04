@@ -1,6 +1,6 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D, replacing the stale November 2 estimate of 80%. The unmerged viewer gallery contributes less than one project point at this precision; viewer code is about 68% including PR 163. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. Earlier local browser validation failed because Chromium was missing; this task resolves PR 163 context conflicts. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D, replacing the stale November 2 estimate of 80%. The merged viewer gallery contributes less than one project point at this precision; viewer code is about 68% including PR 163. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. PR 163 is merged in main 8cfb8fb. E8 reporting is implemented in an isolated branch; its broader collection block is about 75% and E9 remains 0%. The bounded E8 reporting task is 100%. This addition is below one project point at the current precision, so the project judgment remains 83%. See LASTCONTEXT.md.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -9,14 +9,14 @@ Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer
 This replaces the pasted November 2 analysis. The numbered table retains historical
 requests and descriptions for traceability; its current status column and this
 active list take precedence over past statements that a module does not exist.
-Only main code with green CI and the gallery head with green cloud checks count.
+Main includes PR 163. Task estimates count code and tests; exact E8 checks are reported in its PR.
 Dirty global logistics drafts, experiments, results, documents and delivery do not.
 The percentage is a judgment over the existing project scope, not an average of
 historical task rows. G-GLOBAL remains outside the denominator until authorized.
 
 | Priority | Pending work | Owner | Code % | Evidence or completion condition |
 |---|---|---|---|---|
-| P1 | Finish PR 163 conflict resolution and obtain green checks on its updated head | A, M | - | Agent pushes after local CI; maintainer reviews and merges |
+| P2 | Review the E8 reporting PR and cloud benchmark artifacts | A, M | - | Main includes PR 163; maintainer merges E8 after green checks |
 | P1 | Verify balances, expiry, rate limits, model ids, console caps and cloud secrets; verify Baseten/Modal prices | M | - | Rows 4, 5, 7, 10, 11, 12, 32; no secret inspection in this audit |
 | P1 | Review E3/E4/E5 labels, attack fixtures, real catalog, zones, machine data and recordings | M | - | Rows 54, 87, 94, 98; a pending label is not a result |
 | P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 50% | E4 harness remains scripted-only; no paid call authorized here |
@@ -28,7 +28,8 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Add Vertex and real transcription/vision integration and UI | A, M | 75% | Voice-intent and mock E7 exist; provider/logging block separately about 93% |
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 75% | Package registry and forwarder check already exist; future migration needs review |
 | P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 30% | Rows 37 and 39; no new experiment evidence in this audit |
-| P2 | Complete E8 extension and E9 mutation/regression campaign | A | 0% | Experiment definitions alone do not count as runner implementation |
+| P2 | Complete E8 production collection and calibration | A, M | 75% | Report runner, cloud control benchmark and extrapolation implemented; database export automation remains; measurements pending |
+| P2 | Implement E9 mutation/regression campaign | A | 0% | Experiment definitions alone do not count as runner implementation |
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |
@@ -158,8 +159,9 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 119 | P3 | Antigravity was used for two implementation tasks on 2026-11-02 at the maintainer's request and audited by the main agent; the procedure and the session-only exact-command rules are in `ANTIGRAVITY.md` and the skill `delegate-antigravity`. Row 105 stays open: say whether a standing yes covers such tasks, or the agent asks each time | M | superseded by standing permission in AGENTS.md section 20 and ANTIGRAVITY.md | - |
 
 
-| 120 | P2 | Gallery, 17 GLBs and three modular previews, hash-checked offline importer and browser contract tests (ADR-089, PR 163) | A | code complete; PR 163 includes main conflict resolution; inspect latest CI before maintainer merge | 100% |
+| 120 | P2 | Gallery, 17 GLBs and three modular previews, hash-checked offline importer and browser contract tests (ADR-089, PR 163) | A | done: PR 163 merged in main 8cfb8fb; visual review remains separate | 100% |
 | 121 | P2 | Visually review all 20 gallery entries, worker hands/textures, clips, pickup timing, equipment proportions and rack layout; preserve binary pack and dirty asset worktrees | M | pending visual review | - |
-| 122 | P1 | PR 163 context conflicts: retain main tasks and viewer handoff, merge main without rewriting history; never merge the PR as an agent | A | resolution prepared; exact check results and mergeability reported in the task chat and PR | - |
+| 122 | P1 | PR 163 context conflicts: retain main tasks and viewer handoff, merge main without rewriting history; never merge the PR as an agent | A | done: PR 163 merged in main 8cfb8fb | - |
 | 123 | P2 | Delete obsolete docs/context-wave3 remotely, never merge (endpoint diff removes 6325 lines). Ticket race patch is already in main as 8ae51e3; feat/maintenance-tickets needs no PR | M | remote cleanup pending; preserve all worktrees with unmerged work | - |
-| 124 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done on branch feat/crisis-planner-adapter; maintainer merges the PR; E10 harness and production caller remain | 100% |
+| 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | done: PR 164 merged in main ba2abcf; broader production exports and calibration remain | 100% |
+| 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done on branch feat/crisis-planner-adapter; maintainer merges the PR; E10 harness and production caller remain | 100% |

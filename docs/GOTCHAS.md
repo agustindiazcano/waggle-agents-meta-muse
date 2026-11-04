@@ -82,6 +82,10 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 
 ## Coordination
 
+### E8 exports must preserve mode and source provenance
+- Symptom: cached rows, mock latencies or mixed model routes look like additional provider measurements, or an empty export produces a report without observations.
+- What to do: export metadata from `llm_calls` separately by mode and retain the run commit and prompt versions. The E8 parser rejects empty samples and unknown fields. Extrapolation requires a single provider/model/role combination; split mixed routes before running it. Reports keep repeats and status counts explicit. See [the E8 runner](E8_RUNNER.md).
+
 ### A progress timeout does not establish a deadlock
 - Symptom: a robot waiting for a corridor grant has no measured movement and is counted as deadlocked, even though another robot can still finish and release the route.
 - What to do: the E2 simulator component reports `stalled_unfinished_robots` under its explicit displacement and tick window. Keep cycle-proven deadlocks unmeasured until a wait-cycle detector exists. Also distinguish sampled zone occupancy from the independent continuous collision detector. Tests check known occupancy counts, per-run denominators, Wilson intervals and explicit unmeasured scope.
