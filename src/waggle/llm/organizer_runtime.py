@@ -4,10 +4,14 @@ Builds screened organizer context, calls the LLM with the ``organizer`` role, va
 against the strict organizer schema, enforces per-task turn/message/loop limits, records yield
 holds in the caution log, and forwards tool calls through an injected MCP dispatch port under the
 robot's own authenticated identity. Degrades safely on timeout, budget denial or provider error.
+
+Turn/message state is per simulation runtime. This is not a distributed rate limiter;
+production replicas require durable orchestration before enabling external tool dispatch.
 """
 
 import asyncio
 import hashlib
+import json
 import logging
 import math
 from collections.abc import Coroutine, Mapping
@@ -69,9 +73,16 @@ def _run_async[T](coro: Coroutine[object, object, T]) -> T:
         return pool.submit(asyncio.run, coro).result()
 
 
-def organizer_request_id(robot_id: str, tick: int) -> str:
-    """Build a deterministic request id derived from robot id and simulation tick."""
-    return f"organizer-{robot_id}-{tick}"
+def organizer_request_id(
+    robot_id: str, tick: int, *, run_id: str | None = None, task_id: str | None = None
+) -> str:
+    """Build a bounded id; runtime calls always include run and task scope."""
+    if run_id is None and task_id is None:
+        return f"organizer-{robot_id}-{tick}"
+    if run_id is None or task_id is None:
+        raise ValueError("run and task scope must be supplied together")
+    payload = json.dumps([ORGANIZER_PROMPT_HASH, run_id, task_id, robot_id, tick])
+    return "organizer-" + hashlib.sha256(payload.encode()).hexdigest()[:48]
 
 
 def render_organizer_prompt(context_text: str) -> str:
@@ -91,7 +102,11 @@ class McpToolDispatch(Protocol):
         arguments: Mapping[str, ArgScalar],
         request_id: str,
     ) -> Mapping[str, object]:
-        """Dispatch ``tool`` for ``robot_id``; raise on boundary or backend failure."""
+        """Dispatch for the authenticated robot; return ok=True only on success.
+
+        Normalize a boundary/backend refusal to ok=False or raise. The runtime
+        never interprets an arbitrary returned object as a successful receipt.
+        """
         ...
 
 
@@ -154,7 +169,7 @@ class OrganizerRuntime:
         self._max_messages = max_messages
         self._classifier = classifier
         self._tool_dispatch = tool_dispatch
-        self._states: dict[tuple[str, str], OrganizerTaskState] = {}
+        self._states: dict[tuple[str, str, str], OrganizerTaskState] = {}
         self._cached_results: dict[str, OrganizerResult] = {}
         self._outbound_messages: list[tuple[str, str, str]] = []
         self.last_rendered_prompt: str = ""
@@ -195,7 +210,7 @@ class OrganizerRuntime:
         latency_ticks: int = 0,
     ) -> OrganizerResult:
         """Run one organizer evaluation step with strict schema, loop and boundary checks."""
-        request_id = organizer_request_id(facts.robot_id, tick)
+        request_id = organizer_request_id(facts.robot_id, tick, run_id=run_id, task_id=task_id)
         active_limits = speed_limits_at(
             self._caution_log, facts.robot_id, tick, class_max=class_max
         )
@@ -204,7 +219,7 @@ class OrganizerRuntime:
             prev = self._cached_results[request_id]
             return replace(prev, status="cached", limits=active_limits, cached=True)
 
-        state = self._states.setdefault((facts.robot_id, task_id), OrganizerTaskState())
+        state = self._states.setdefault((run_id, facts.robot_id, task_id), OrganizerTaskState())
         try:
             check_turn_allowed(self._limits, state, now_tick=tick)
         except OrganizerRejected as exc:
@@ -359,6 +374,15 @@ class OrganizerRuntime:
                 limits=active_limits,
                 decision=decision,
                 reason="tool_dispatch_failed",
+                request_id=request_id,
+            )
+        if not isinstance(outcome, Mapping) or outcome.get("ok") is not True:
+            return OrganizerResult(
+                status="tool_error",
+                limits=active_limits,
+                decision=decision,
+                tool_outcome=outcome if isinstance(outcome, Mapping) else None,
+                reason="tool_dispatch_refused",
                 request_id=request_id,
             )
         res = OrganizerResult(
