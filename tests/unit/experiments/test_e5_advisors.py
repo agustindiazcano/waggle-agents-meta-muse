@@ -30,7 +30,16 @@ SHORT_TICKS = 25
 
 VALID_SLOW = '{"action":"slow","speed_cap":0.2,"duration_ticks":50,"code":null}'
 VALID_NONE = '{"action":"none","speed_cap":null,"duration_ticks":null,"code":null}'
+VALID_ASK_YIELD = '{"action":"ask_organizer","speed_cap":null,"duration_ticks":null,"code":"yield"}'
 WIDENING = '{"action":"slow","speed_cap":5.0,"duration_ticks":50,"code":null}'
+ORG_YIELD = (
+    '{"action":"yield_hold","duration_ticks":20,"tool":null,'
+    '"arguments":null,"recipient":null,"status":null}'
+)
+ORG_NONE = (
+    '{"action":"none","duration_ticks":null,"tool":null,'
+    '"arguments":null,"recipient":null,"status":null}'
+)
 
 CAUTION_CFG = CautionConfig(max_window_ticks=100, h_max_ticks=50, n_max_holds=3)
 INPUT_LIMITS = AdvisorInputLimits(
@@ -152,10 +161,55 @@ def test_c1_replay_matches_digest_and_counts_of_c1_run() -> None:
     assert record_replay["widening_ticks"] == 0
 
 
-@pytest.mark.parametrize("cfg", ["C2", "C3", "C4"])
-def test_c2_c3_and_c4_raise_typed_error(cfg: str) -> None:
+def test_c2_organizer_only_and_c3_combined_and_c3_replay_match() -> None:
     runner = _make_runner()
-    spec = RunSpec(config=cfg, scenario="S01", seed=SEED_S01, ticks=SHORT_TICKS)
+    spec_c0 = RunSpec(config="C0", scenario="S01", seed=SEED_S01, ticks=SHORT_TICKS)
+    spec_c2 = RunSpec(
+        config="C2",
+        scenario="S01",
+        seed=SEED_S01,
+        ticks=SHORT_TICKS,
+        provider_script={"organizer": ORG_YIELD},
+    )
+    spec_c3 = RunSpec(
+        config="C3",
+        scenario="S01",
+        seed=SEED_S01,
+        ticks=SHORT_TICKS,
+        provider_script={"advisor": VALID_ASK_YIELD, "organizer": ORG_YIELD},
+    )
+    record_c0 = runner.run_one(spec_c0)
+    record_c2 = runner.run_one(spec_c2)
+    record_c3 = runner.run_one(spec_c3)
+
+    assert record_c2["widening_ticks"] == 0
+    assert record_c2["organizer_calls"] > 0
+    assert record_c2["advisor_calls"] == 0
+    assert record_c2["cautions_issued"] > 0
+    assert record_c2["distance_m"] < record_c0["distance_m"]
+
+    assert record_c3["widening_ticks"] == 0
+    assert record_c3["advisor_calls"] > 0
+    assert record_c3["organizer_calls"] > 0
+    assert record_c3["cautions_issued"] > 0
+
+    spec_c3_replay = RunSpec(
+        config="C3_REPLAY",
+        scenario="S01",
+        seed=SEED_S01,
+        ticks=SHORT_TICKS,
+        replay_log=record_c3["caution_log_jsonl"],
+    )
+    record_c3_replay = runner.run_one(spec_c3_replay)
+    assert record_c3_replay["event_log_digest"] == record_c3["event_log_digest"]
+    assert record_c3_replay["final_hash"] == record_c3["final_hash"]
+    assert record_c3_replay["distance_m"] == record_c3["distance_m"]
+    assert record_c3_replay["widening_ticks"] == 0
+
+
+def test_c4_fleet_planner_raises_typed_error() -> None:
+    runner = _make_runner()
+    spec = RunSpec(config="C4", scenario="S01", seed=SEED_S01, ticks=SHORT_TICKS)
     with pytest.raises(UnsupportedConfigurationError):
         runner.run_one(spec)
 

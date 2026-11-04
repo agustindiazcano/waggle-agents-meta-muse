@@ -9,16 +9,16 @@ not the agent. Other agents work in separate worktrees (viewer, global custody,
 Meshy assets, E3 labels, organizer); this branch touches none of those areas.
 
 E9 update (2026-11-04): branch exp/e9-planted-defects in worktree
-../waggle-e9-planted-defects adds the planted-defect campaign (ADR-091):
+../waggle-e9-planted-defects adds the planted-defect campaign (ADR-092):
 4 defects, copy-only runner, baseline check, result writer; first run
 4 of 4 killed, in results/e9/dev/planted.json. Cloud mutation arm remains.
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04,
-margin about 3 points. This judgment stays at the same rounded value: the bounded
-E8 reporting task is 100% written with tests, while the broader E8 collection
-block is about 75% because database export automation remains. Measurements,
-calibration, documents and delivery do not count. No new published number or
-README result changed.
+Code progress of the project (estimate by eye, code only): 85% on 2026-11-04,
+margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089) and
+PR 164 (E8 reporting at ba2abcf), and this branch adds the per-robot organizer
+schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY wiring (ADR-090),
+raising advisors/E5 code from 85% to 95%. Measurements, calibration, documents
+and delivery do not count. No new published number or README result changed.
 
 ## Current state
 
@@ -33,13 +33,16 @@ README result changed.
   E8 never treats those placeholders as measured durations. Extrapolation uses
   successful-call latency and the observed error-row fraction, explicitly labeled
   as an assumption. Cached and denied rows are counted separately.
-- The crisis LLM proposer adapter exists on feat/crisis-planner-adapter (ADR-090);
-  its E10 harness and production caller remain. E4 production court/cross-family
-  routes, E5 organizer and service wiring, E6 database-backed diagnosis, MCP SDK
-  validation, real multimodal providers, package integrity and E9 remain. No paid
-  call, migration, held-out run or safety change was performed in this task.
+- The crisis LLM proposer adapter is merged in main (`c7098a7`, PR 165, ADR-090);
+  its E10 harness and production caller remain. This branch (`feat/organizer-e5`,
+  ADR-091) adds `waggle.governance.organizer`, `waggle.llm.organizer_runtime`
+  (`organizer-v1`) and E5 `C2`, `C3` and `C3_REPLAY`. E5 `C4` remains refused
+  until the fleet planner exists. E4 production court/cross-family routes, E6
+  database-backed diagnosis, MCP SDK validation, real multimodal providers,
+  package integrity and E9 remain. No paid call, migration, held-out run or
+  safety change was performed in this task.
 - LLM provider/logging code is about 93%; court/E4 50%; voice/vision 75%; package
-  model 75%; catalog/technician lease 90%; advisors/E5 85%; maintenance/E6 80%;
+  model 75%; catalog/technician lease 90%; advisors/E5 95%; maintenance/E6 80%;
   rollout/crisis 90%; E2 harness 97%; replay generator 100%. Estimates by eye only.
 - Provider balances, caps, secrets, labels, catalog, zones and recordings still
   require the maintainer. G-GLOBAL remains unauthorized, outside the denominator.
