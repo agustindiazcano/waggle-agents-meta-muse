@@ -101,7 +101,10 @@ SCHEMAS: Mapping[str, Mapping[str, str]] = {
         "idempotency_key": "id",
         "ticket_id": "id",
     },
-    "dispatch_tech": {"ticket_id": "id", "zone_id": "id"},
+    "dispatch_tech": {"ticket_id": "id", "zone_id": "id", "technician": "id"},
+    "close_ticket": {"ticket_id": "id"},
+    "consume_reservation": {"idempotency_key": "id"},
+    "release_reservation": {"idempotency_key": "id"},
     "open_ticket": {"machine_id": "id", "idempotency_key": "id", "summary": "text"},
     "create_purchase_order": {
         "part_number": "id",

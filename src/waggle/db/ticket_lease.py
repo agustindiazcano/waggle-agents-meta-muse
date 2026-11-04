@@ -184,6 +184,21 @@ class TicketLeaseRepository:
             )
         return CloseOutcome(True, True, result.reason.value)
 
+    def zone_of(self, ticket_id: str) -> str | None:
+        """The zone a ticket was dispatched to, or None for a missing or undispatched ticket.
+
+        Read only, to choose which zone to observe before a close. The close itself locks the
+        ticket and trusts the stored zone, so a stale answer here only makes the close deny.
+        """
+        _id(ticket_id, "ticket id")
+        with self._database.transaction() as connection:
+            row = connection.execute(
+                "SELECT zone_id FROM maintenance_tickets "
+                "WHERE ticket_id=%s AND status='dispatched'",
+                (ticket_id,),
+            ).fetchone()
+        return None if row is None else cast(str | None, row[0])
+
     def reopen_expired(
         self, now_tick: int, observations: tuple[ZoneObservation, ...]
     ) -> tuple[str, ...]:

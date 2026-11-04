@@ -4,6 +4,10 @@
 authenticated robot id, never an argument. The tick and the occupancy evidence come from
 injected trusted sources, never from the request. Every other tool raises ToolUnavailable until
 its trusted backend exists, so the boundary returns an error result and nothing moves.
+
+``dispatch_tech``, ``close_ticket``, ``consume_reservation`` and ``release_reservation`` need the
+lease and settlement ports (ADR-074). A forwarder built without them has no fallback to a dispatch
+that takes no lease: the tool is unavailable. The lease token never leaves the server.
 """
 
 from collections.abc import Mapping
@@ -16,10 +20,13 @@ from waggle.db.corridors import IdempotencyConflict
 from waggle.db.inventory import PartStock, ReservationResult, UnknownPart
 from waggle.db.motion import EnqueueResult, MotionRefused, NewOrder
 from waggle.db.procurement import OrderResult
+from waggle.db.settlement import ReservationSettled, SettlementResult, UnknownReservation
+from waggle.db.ticket_lease import CloseOutcome, DispatchOutcome
 from waggle.db.tickets import TicketResult, UnknownMachine, UnknownTicket, UnknownZone
 from waggle.mcp_server.identity import Identity
 
 _MOTION_TOOLS = frozenset({"move_waypoint", "pick_package", "deliver_package"})
+_SETTLEMENT_TOOLS = frozenset({"consume_reservation", "release_reservation"})
 
 
 class ToolDenied(Exception):
@@ -73,8 +80,50 @@ class TicketPort(Protocol):
         """Open the ticket for a failure event once."""
         ...
 
-    def dispatch(self, ticket_id: str, zone_id: str, dispatcher: str) -> TicketResult:
-        """Send a technician to a zone for an open ticket, once."""
+
+class LeasePort(Protocol):
+    """The dispatch, close and zone operations of ``TicketLeaseRepository``."""
+
+    def dispatch(
+        self,
+        ticket_id: str,
+        zone_id: str,
+        dispatcher: str,
+        technician: str,
+        now_tick: int,
+        observations: tuple[ZoneObservation, ...],
+    ) -> DispatchOutcome:
+        """Send the technician to a zone, holding the zone lease for them, once."""
+        ...
+
+    def close(
+        self, ticket_id: str, closer: str, now_tick: int, observations: tuple[ZoneObservation, ...]
+    ) -> CloseOutcome:
+        """Release the lease, settle the reservations and close the ticket, together."""
+        ...
+
+    def zone_of(self, ticket_id: str) -> str | None:
+        """The zone of a dispatched ticket, or None."""
+        ...
+
+
+class TechnicianPort(Protocol):
+    """The technician check of the identity store."""
+
+    def is_technician(self, robot_id: str) -> bool:
+        """Whether the robot has an active ``tech_repair`` identity."""
+        ...
+
+
+class SettlementPort(Protocol):
+    """The two operations of ``SettlementRepository``."""
+
+    def consume(self, key: str) -> SettlementResult:
+        """Confirm the reserved part was used."""
+        ...
+
+    def release(self, key: str) -> SettlementResult:
+        """Give the reserved units back."""
         ...
 
 
@@ -134,6 +183,9 @@ class FencedForwarder:
         procurement: ProcurementPort | None = None,
         motion: MotionPort | None = None,
         packages: PackagePort | None = None,
+        leases: LeasePort | None = None,
+        technicians: TechnicianPort | None = None,
+        settlement: SettlementPort | None = None,
     ) -> None:
         self._corridors = corridors
         self._tasks = tasks
@@ -144,6 +196,9 @@ class FencedForwarder:
         self._procurement = procurement
         self._motion = motion
         self._packages = packages
+        self._leases = leases
+        self._technicians = technicians
+        self._settlement = settlement
 
     def forward(
         self, identity: Identity, tool: str, args: Mapping[str, object], timeout_s: float
@@ -161,8 +216,12 @@ class FencedForwarder:
             return self._queue_motion(self._motion, identity, tool, args)
         if tool == "open_ticket" and self._tickets is not None:
             return self._open_ticket(self._tickets, identity, args)
-        if tool == "dispatch_tech" and self._tickets is not None:
-            return self._dispatch_tech(self._tickets, identity, args)
+        if tool == "dispatch_tech" and self._leases is not None and self._technicians is not None:
+            return self._dispatch_tech(self._leases, self._technicians, identity, args)
+        if tool == "close_ticket" and self._leases is not None:
+            return self._close_ticket(self._leases, identity, args)
+        if tool in _SETTLEMENT_TOOLS and self._settlement is not None:
+            return self._settle(self._settlement, tool, args)
         if tool == "create_purchase_order" and self._procurement is not None:
             return self._purchase_order(self._procurement, identity, args)
         raise ToolUnavailable(tool)
@@ -214,16 +273,63 @@ class FencedForwarder:
             raise ToolDenied("ticket not available") from None
         return {"ticket_id": result.ticket_id, "created": result.created}
 
-    @staticmethod
     def _dispatch_tech(
-        tickets: TicketPort, identity: Identity, args: Mapping[str, object]
+        self,
+        leases: LeasePort,
+        technicians: TechnicianPort,
+        identity: Identity,
+        args: Mapping[str, object],
     ) -> Mapping[str, object]:
+        """Take the zone lease for the named technician. The lease token stays on the server."""
         ticket_id, zone_id = str(args["ticket_id"]), str(args["zone_id"])
+        technician = str(args["technician"])
+        if not technicians.is_technician(technician):
+            raise ToolDenied("dispatch not available")
+        tick = self._ticks.now_tick()
+        observations = self._occupancy.observe((zone_id,), tick)
         try:
-            tickets.dispatch(ticket_id, zone_id, identity.robot_id)
+            outcome = leases.dispatch(
+                ticket_id, zone_id, identity.robot_id, technician, tick, observations
+            )
         except (UnknownTicket, UnknownZone, IdempotencyConflict):
             raise ToolDenied("dispatch not available") from None
-        return {"dispatched": True, "ticket_id": ticket_id, "zone_id": zone_id}
+        return {
+            "dispatched": outcome.dispatched,
+            "ticket_id": ticket_id,
+            "zone_id": zone_id,
+            "reason": outcome.reason,
+        }
+
+    def _close_ticket(
+        self, leases: LeasePort, identity: Identity, args: Mapping[str, object]
+    ) -> Mapping[str, object]:
+        """Close a dispatched ticket. The zone to observe is the one stored on the ticket."""
+        ticket_id = str(args["ticket_id"])
+        zone_id = leases.zone_of(ticket_id)
+        if zone_id is None:
+            raise ToolDenied("close not available")
+        tick = self._ticks.now_tick()
+        observations = self._occupancy.observe((zone_id,), tick)
+        try:
+            outcome = leases.close(ticket_id, identity.robot_id, tick, observations)
+        except UnknownTicket:
+            raise ToolDenied("close not available") from None
+        return {"closed": outcome.closed, "reason": outcome.reason}
+
+    @staticmethod
+    def _settle(
+        settlement: SettlementPort, tool: str, args: Mapping[str, object]
+    ) -> Mapping[str, object]:
+        key = str(args["idempotency_key"])
+        try:
+            if tool == "consume_reservation":
+                result = settlement.consume(key)
+            else:
+                result = settlement.release(key)
+        except (UnknownReservation, ReservationSettled):
+            # One text for both failures, so the denial never says which one it was.
+            raise ToolDenied("settlement not available") from None
+        return {"status": result.status, "changed": result.changed}
 
     @staticmethod
     def _purchase_order(

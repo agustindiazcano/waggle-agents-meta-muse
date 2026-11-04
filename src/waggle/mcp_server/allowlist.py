@@ -13,7 +13,16 @@ ALLOWLIST: Mapping[str, frozenset[str]] = {
     "parts_runner": frozenset({"move_waypoint", "release_zone", "get_task", "get_inventory"}),
     "tech_repair": frozenset({"move_waypoint", "release_zone", "get_task", "open_ticket"}),
     "maintenance": frozenset(
-        {"reserve_part", "dispatch_tech", "create_purchase_order", "open_ticket", "get_inventory"}
+        {
+            "reserve_part",
+            "dispatch_tech",
+            "create_purchase_order",
+            "open_ticket",
+            "get_inventory",
+            "close_ticket",
+            "consume_reservation",
+            "release_reservation",
+        }
     ),
 }
 

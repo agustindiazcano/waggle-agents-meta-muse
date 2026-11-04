@@ -39,7 +39,14 @@ def test_unknown_chassis_or_tool_is_denied() -> None:
 
 def test_motion_chassis_never_get_maintenance_only_tools() -> None:
     for chassis in MOTION:
-        for tool in ("reserve_part", "dispatch_tech", "create_purchase_order"):
+        for tool in (
+            "reserve_part",
+            "dispatch_tech",
+            "create_purchase_order",
+            "close_ticket",
+            "consume_reservation",
+            "release_reservation",
+        ):
             assert not is_allowed(chassis, tool)
     for tool in ("move_waypoint", "pick_package", "deliver_package", "release_zone"):
         assert not is_allowed("maintenance", tool)
@@ -157,6 +164,42 @@ def test_part_tools_require_a_ticket_id_and_refuse_a_machine_id(tool: str) -> No
     assert reason(tool, "maintenance", {**base, "ticket_id": 5}) == "bad_type"
     assert reason(tool, "maintenance", {**base, "ticket_id": "a b"}) == "bad_value"
     assert reason(tool, "maintenance", {**base, "ticket_id": "t" * 65}) == "out_of_bounds"
+
+
+def test_the_lease_and_settlement_tools_belong_to_the_maintenance_chassis_only() -> None:
+    for tool in ("close_ticket", "consume_reservation", "release_reservation"):
+        assert is_allowed("maintenance", tool)
+        assert not is_allowed("tech_repair", tool)
+
+
+def test_dispatch_tech_requires_a_technician_id() -> None:
+    base = {"ticket_id": "tkt-0123456789abcdef", "zone_id": "z1", "technician": "tech-0"}
+    assert ok("dispatch_tech", "maintenance", base)
+    without = {k: v for k, v in base.items() if k != "technician"}
+    assert reason("dispatch_tech", "maintenance", without) == "missing_field"
+    assert reason("dispatch_tech", "maintenance", {**base, "technician": 5}) == "bad_type"
+    assert reason("dispatch_tech", "maintenance", {**base, "technician": "a b"}) == "bad_value"
+    assert (
+        reason("dispatch_tech", "maintenance", {**base, "technician": "t" * 65}) == "out_of_bounds"
+    )
+    assert reason("dispatch_tech", "maintenance", {**base, "token": 1}) == "unknown_field"
+
+
+def test_close_ticket_takes_only_a_ticket_id() -> None:
+    assert ok("close_ticket", "maintenance", {"ticket_id": "tkt-0123456789abcdef"})
+    assert reason("close_ticket", "maintenance", {}) == "missing_field"
+    assert reason("close_ticket", "maintenance", {"ticket_id": "t", "token": 3}) == "unknown_field"
+    assert reason("close_ticket", "maintenance", {"ticket_id": 5}) == "bad_type"
+    assert reason("close_ticket", "maintenance", {"ticket_id": "a b"}) == "bad_value"
+
+
+@pytest.mark.parametrize("tool", ["consume_reservation", "release_reservation"])
+def test_settlement_tools_take_only_an_idempotency_key(tool: str) -> None:
+    assert ok(tool, "maintenance", {"idempotency_key": "evt-1"})
+    assert reason(tool, "maintenance", {}) == "missing_field"
+    assert reason(tool, "maintenance", {"idempotency_key": "k", "quantity": 1}) == "unknown_field"
+    assert reason(tool, "maintenance", {"idempotency_key": "k" * 65}) == "out_of_bounds"
+    assert reason(tool, "maintenance", {"idempotency_key": "a b"}) == "bad_value"
 
 
 def test_free_text_is_bounded_and_free_of_control_characters() -> None:

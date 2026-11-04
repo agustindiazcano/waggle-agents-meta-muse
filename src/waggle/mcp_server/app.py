@@ -22,7 +22,9 @@ from waggle.db.occupancy import TrustedStateRepository
 from waggle.db.packages import PackageRegistry
 from waggle.db.procurement import ProcurementRepository
 from waggle.db.schema import LATEST_REVISION, current_revision
+from waggle.db.settlement import SettlementRepository
 from waggle.db.tasks import TaskRepository
+from waggle.db.ticket_lease import TicketLeaseRepository
 from waggle.db.tickets import TicketRepository
 from waggle.mcp_server.boundary import Boundary
 from waggle.mcp_server.bounds import MapExtent
@@ -113,6 +115,9 @@ def build_forwarder(database: Database) -> FencedForwarder:
         procurement=ProcurementRepository(database),
         motion=MotionOrderRepository(database),
         packages=PackageRegistry(database),
+        leases=TicketLeaseRepository(database),
+        technicians=PostgresIdentityStore(database),
+        settlement=SettlementRepository(database),
     )
 
 

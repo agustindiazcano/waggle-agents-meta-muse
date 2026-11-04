@@ -6,7 +6,7 @@ from waggle.db.compatibility import IncompatiblePart
 from waggle.db.corridors import IdempotencyConflict
 from waggle.db.inventory import UnknownPart
 from waggle.db.procurement import OrderResult
-from waggle.db.tickets import TicketResult, UnknownMachine, UnknownTicket, UnknownZone
+from waggle.db.tickets import TicketResult, UnknownMachine, UnknownTicket
 from waggle.mcp_server.forwarder import FencedForwarder, ToolDenied, ToolUnavailable
 from waggle.mcp_server.identity import Identity
 
@@ -18,19 +18,12 @@ class FakeTickets:
     def __init__(self, error: Exception | None = None) -> None:
         self.error = error
         self.opened: list[tuple[str, str, str, str]] = []
-        self.dispatched: list[tuple[str, str, str]] = []
 
     def open_ticket(self, key: str, machine_id: str, summary: str, opener: str) -> TicketResult:
         if self.error:
             raise self.error
         self.opened.append((key, machine_id, summary, opener))
         return TicketResult("tkt-abc", True)
-
-    def dispatch(self, ticket_id: str, zone_id: str, dispatcher: str) -> TicketResult:
-        if self.error:
-            raise self.error
-        self.dispatched.append((ticket_id, zone_id, dispatcher))
-        return TicketResult(ticket_id, True)
 
 
 class FakeProcurement:
@@ -77,25 +70,6 @@ def test_open_ticket_uses_the_authenticated_robot_as_opener() -> None:
 def test_open_ticket_denies_unknown_machine_and_key_reuse(error: Exception) -> None:
     with pytest.raises(ToolDenied):
         _forwarder(FakeTickets(error)).forward(MAINT, "open_ticket", OPEN, 5)
-
-
-def test_dispatch_tech_records_the_dispatcher() -> None:
-    tickets = FakeTickets()
-    out = _forwarder(tickets).forward(
-        MAINT, "dispatch_tech", {"ticket_id": "tkt-abc", "zone_id": "zone-1"}, 5
-    )
-    assert out == {"dispatched": True, "ticket_id": "tkt-abc", "zone_id": "zone-1"}
-    assert tickets.dispatched == [("tkt-abc", "zone-1", "maint-0")]
-
-
-@pytest.mark.parametrize(
-    "error", [UnknownTicket("t"), UnknownZone("z"), IdempotencyConflict("other zone")]
-)
-def test_dispatch_tech_denies_unknown_references_and_a_second_zone(error: Exception) -> None:
-    with pytest.raises(ToolDenied):
-        _forwarder(FakeTickets(error)).forward(
-            MAINT, "dispatch_tech", {"ticket_id": "tkt-abc", "zone_id": "zone-1"}, 5
-        )
 
 
 TICKET = "tkt-0000000000000001"
