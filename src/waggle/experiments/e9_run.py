@@ -109,6 +109,7 @@ def write_result(outcomes: Sequence[DefectOutcome], path: Path, *, commit: str, 
     body = {
         "experiment": "E9",
         "kind": "planted_defects",
+        "seed_set": "dev",
         "commit": commit,
         "date": date,
         "planted": len(outcomes),

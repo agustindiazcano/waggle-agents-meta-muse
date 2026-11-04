@@ -94,6 +94,7 @@ def test_write_result_records_counts_and_survivors(tmp_path: Path) -> None:
     path = write_result(outcomes, tmp_path / "e9.json", commit="abc", date="2026-11-04")
     body = json.loads(path.read_text(encoding="utf-8"))
     assert body["commit"] == "abc"
+    assert body["seed_set"] == "dev"
     assert body["planted"] == 2
     assert body["killed"] == 1
     assert body["survived"] == ["b"]
