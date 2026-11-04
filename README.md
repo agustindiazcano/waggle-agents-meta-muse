@@ -63,6 +63,7 @@ It is implemented, not evaluated for provider latency, provider cost or real fle
 
 - numpy 2.5.4 (pinned): the only runtime dependency of the simulator and control, used by `waggle.sim`, `waggle.control` and `waggle.validation` for state arrays and seeded random streams. Approved by the maintainer.
 - fastapi 0.162.0 and uvicorn[standard] 0.54.0 (pinned): runtime dependencies of `waggle.api` only, which streams simulator frames over a read-only WebSocket. Import contracts forbid `waggle.sim`, `waggle.control` and `waggle.validation` from importing them. Approved by the maintainer (ADR-029). httpx is a dev dependency, used only by the Starlette test client.
+- mcp 2.3.0 (pinned): dev dependency only, the official MCP Python SDK client used by `tests/unit/mcp_server/test_mcp_sdk_client.py` to run the line transport against a real client. Never imported by runtime code.
 
 ## Scope and limits
 
@@ -170,7 +171,7 @@ Names only live in `.env.example`. Values go in `.env`, which git ignores.
 | Variable | Description | Default |
 |---|---|---|
 | `META_API_KEY`, `META_API_BASE_URL` | Meta Model API access | none |
-| `META_MODEL_ID`, `META_VOICE_MODEL_ID` | Model ids, read from the API model list (`GET /v1/models`) | none |
+| `META_MODEL_ID`, `META_WONDER_MODEL_ID`, `META_VOICE_MODEL_ID` | Model ids, read from the API model list (`GET /v1/models`) | none |
 | `META_USE_CONTRIBUTOR_TIER` | Use the cheaper contributor tier. Allowed only because all data is synthetic | false |
 | `BASETEN_API_KEY`, `BASETEN_MODEL_ID` | Baseten access and the Muse Spark Open 1026 id | none |
 | `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`, `MODAL_ENDPOINT_URL` | Modal access and endpoint | none |

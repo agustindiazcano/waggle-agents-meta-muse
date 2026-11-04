@@ -22,9 +22,10 @@
       aside { width: 280px; padding: 8px 12px; overflow: auto; background: #1c222c; font-size: 13px; }
       aside h2 { font-size: 13px; margin: 8px 0 4px; }
       aside ul { margin: 0; padding-left: 16px; }
-      #controls { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #1c222c; }
+      #controls { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #1c222c; flex-wrap: wrap; }
       #scrub { flex: 1; }
       #hashbar { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; }
+      button[aria-pressed="true"] { outline: 1px solid #4aa3ff; }
       .muted { color: #9aa3b2; }
     </style>
   </head>
@@ -32,6 +33,7 @@
     <header>
       <h1>Waggle Hive viewer</h1>
       <label>Replay file <input id="file" type="file" accept=".jsonl,.json,.txt" /></label>
+      <label>Map file <input id="world-file" type="file" accept=".json" /></label>
       <button id="gallery-toggle" type="button">Models gallery</button>
       <span id="scope-note" class="muted">Replay draws recorded frames and decides nothing.</span>
     </header>
@@ -54,6 +56,9 @@
         <div id="canvas"></div>
         <aside>
           <div id="meta" class="muted"></div>
+          <div id="world-status" class="muted">Map geometry: none loaded</div>
+          <h2>Safety overlays</h2>
+          <ul id="overlays"></ul>
           <h2>Zones</h2>
           <ul id="zones"></ul>
           <h2>Events</h2>
@@ -65,6 +70,9 @@
         <label>Inspect <select id="entity" aria-label="Entity to inspect"></select></label>
         <button id="focus" type="button">Focus</button>
         <button id="fit" type="button">Fit all</button>
+        <button id="toggle-envelopes" type="button" aria-pressed="true">Envelopes</button>
+        <button id="toggle-shadows" type="button" aria-pressed="true">Lidar shadows</button>
+        <button id="toggle-ghosts" type="button" aria-pressed="true">Rollout ghosts</button>
         <span class="muted">Drag: orbit; right-drag: pan; wheel: zoom</span>
         <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame" />
         <span id="tick"></span>

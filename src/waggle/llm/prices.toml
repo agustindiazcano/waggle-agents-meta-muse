@@ -9,7 +9,7 @@
 #   input_per_mtok = 0.0
 #   output_per_mtok = 0.0
 
-# Standard tier (Muse Spark), maintainer decision 2026-11-03.
+# Standard tier (Muse Spark / Muse Wonder), maintainer decision 2026-11-03.
 [meta]
 verified = true
 input_per_mtok = 1.25

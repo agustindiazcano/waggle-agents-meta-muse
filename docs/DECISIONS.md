@@ -1012,3 +1012,126 @@ requires the binary pack and checks decoding and clip names. Playwright 1.64.1 i
 development only (ADR-029). `viewer.yml` runs checks without the binary pack.
 Artistic quality, map geometry, overlays, live mode and role/action replay fields
 remain outside this gallery change.
+
+## ADR-090: Crisis planner adapter in waggle.llm
+
+Status: implemented with unit tests (9 in the adapter file, plus the validation and
+court suites); mock provider only, no paid call, no result file, not evaluated.
+Closes the proposer gap named in ADR-086.
+
+Decision: `waggle.llm.crisis_adapter.LlmPlanProposer` satisfies the `PlanProposer`
+protocol of `waggle.validation.crisis_loop` without that package importing the LLM
+side. It is bound at construction to one mission id and one `PlanContext`, renders
+the versioned `planner-v1` prompt (`planner_v1.txt`, hash recorded in the module)
+listing only the trusted robot, item and zone ids with their speed limits, and
+passes validator feedback as data in the prompt. The request id is a digest of the
+prompt hash and the canonical mission, context and feedback, so a repeated round
+is served from the client cache and a new feedback round is a real call through
+the `planner` route, with budget, retries and the call log applied by the shared
+client. The adapter returns raw text and never parses it: `parse_plan` and the
+rollout validator still decide, and a provider error propagates so the loop counts
+the round and escalates at the bound. No caller outside tests exists yet; the E10
+harness and any production crisis caller remain separate work.
+
+## ADR-091: Organizer schema, runtime, loop boundaries and E5 C2/C3/C3_REPLAY
+
+Status: implemented, not evaluated. Follows `docs/ADVISORS_DESIGN.md` sections 6, 8, 9,
+12, 13 and 14.
+
+Decision: `waggle.governance.organizer` defines the strict JSON schema for the per-robot
+organizer (`action` in `none`, `yield_hold`, `call_tool`, `send_message`, extra keys
+forbidden), `OrganizerLimits` (max 5 turns per task, max 3 outbound messages per task,
+2.0 s minimum interval between turns, and consecutive identical action-signature loop
+detection), and `build_organizer_input`, which validates inbound inter-robot messages
+with `parse_robot_message`, verifies `recipient == robot_id`, runs `classify_input`,
+`sanitize` and `fence` with source `ROBOT_MESSAGE`, and withholds any message whose
+screening fails or flags injection.
+
+`waggle.llm.organizer_runtime.OrganizerRuntime` loads `organizer_v1.txt` (`organizer-v1`),
+enforces turn and loop limits before calling `LlmClient` on the `organizer` role, caches
+decisions by `request_id`, submits `yield_hold` cautions to `CautionLog`, queues
+schema-validated outbound messages, and dispatches `call_tool` through an injected
+`McpToolDispatch` using the robot's own `robot_id` while catching exceptions as error
+results (AGENTS.md 6.5). `E5AdvisorCaller` and `run_e5_seed` support `C2`
+(organizer-only), `C3` (advisor plus organizer with `ASK_ORGANIZER` signal routing and
+peer message delivery) and `C3_REPLAY` (cached replay parity with zero additional LLM
+calls). `C4` still raises `UnsupportedConfigurationError` until the fleet planner exists.
+
+## ADR-092: E9 planted-defect campaign
+
+Status: implemented with unit tests (9 in the E9 test file); first campaign run
+locally on development code, 4 of 4 planted defects killed. No held-out seeds,
+no paid call. The mutation-tool arm of E9 (cloud only) remains unimplemented.
+
+Decision: `waggle.experiments.e9_defects` holds the hand-written defect list of
+EXPERIMENTS.md E9 as exact source replacements (margin lowered, arbiter taking
+the largest cap, stale scan accepted, lease token comparison inverted), each
+declaring its expected detector test nodes before the run.
+`waggle.experiments.e9_run` copies src, tests and pyproject.toml to a temporary
+directory, applies one defect to the copy only, and runs the detectors there.
+A defect is killed only when a detector fails on the mutated copy and passes
+on an unmutated copy; a failing baseline is reported as detector_broken, never
+as a kill. Survivors and broken detectors are listed in the result JSON in
+full. Production source is never patched, so no safety check, fencing
+comparison or threshold changes in the real tree.
+
+## ADR-093: Simulator-supplied viewer overlays, map geometry and live stream parser
+
+Status: implemented with unit tests (`tests/unit/sim/test_sim_frame.py`,
+`web/test/frame_schema.test.ts`, `web/test/world_schema.test.ts`,
+`web/test/overlays.test.ts`, `web/test/live_client.test.ts`), not evaluated.
+
+Decision: `waggle.sim.frame.export_frame` and `parse_frame` accept an optional
+`FrameOverlays` structure carrying simulator-computed `envelopes` (polygon,
+`margin_m`, `nearest_id`), `lidar_shadows` (polygon, `sample_stride`),
+`ghost_paths` (`variant_index`, `robot_id`, `passed`, `points`, `k`, `horizon_s`,
+`snapshot_hash`) and an optional `extra` object. Unknown keys outside `extra`
+are rejected by both `waggle.sim.frame.parse_frame` and `web/src/frame_schema.ts`.
+When `overlays` is omitted, `export_frame` emits `{}` and preserves existing
+fixtures and replay hashes unchanged.
+
+In `web/src/`, `world_schema.ts` validates `export_world` sidecar JSON bound to
+the replay header `world_hash`, `overlays.ts` formats provenance labels and
+visibility toggles as pure functions, `live_client.ts` parses `/ws/live` world,
+frame and error messages without computing state, and `scene.ts` renders the
+map polygons and the three overlay groups (`envelopeGroup`, `shadowGroup`,
+`ghostGroup`) directly from the validated simulator coordinates. No safety
+threshold, fencing check, MCP boundary or retry rule is modified.
+
+## ADR-094: Dedicated META_WONDER_MODEL_ID route for planning-tier orchestrator roles
+
+Status: implemented with unit tests (`tests/unit/llm/test_routing.py`,
+`tests/unit/test_providers_docs.py`), not evaluated on paid calls.
+
+Decision: In `src/waggle/llm/routes.toml`, the planning-tier orchestrator and
+reasoning roles (`director`, `planner`, `diagnosis`) read their model identifier
+from `META_WONDER_MODEL_ID` on the `meta` provider route, while `court_1` and
+`vision` continue to read `META_MODEL_ID` and `voice` reads
+`META_VOICE_MODEL_ID`. Model identifiers remain strictly externalized to
+environment variables and GitHub Actions repository variables (never hardcoded
+in `routes.toml`), and no safety threshold, fencing check, court rule or spend
+cap is modified.
+
+## ADR-095: Report robot-pair separation violations in plan rollouts
+
+Status: implemented with regression tests, not evaluated by an experiment sweep.
+
+Context: the simulator detector exposes robot contact flags, while its separation
+flags apply to humans. The plan rollout consumed contact flags for robot pairs
+and could accept two noncontact robots with a footprint gap below the configured
+separation margin. A regression first reproduced acceptance at a known 0.25 m
+gap under a 0.5 m margin, with and without humans in the scene.
+
+Decision: the rollout reuses the independent detector's public robot_robot_gap
+function over each tick's start and end poses. A circumscribed-disc broad phase
+includes both translations before excluding distant pairs. A gap strictly below
+the existing RolloutConfig.separation_margin_m yields SEPARATION_VIOLATION with
+both robot ids, the tick-end time and midpoint, the swept gap and SEPARATION_MIN.
+The gap describes the first violating interval, not the minimum over the full
+horizon; the midpoint is a diagnostic tick-end location, not an exact impact point.
+Each pair is reported once for separation, independently of collision reporting.
+
+Consequences: Stage C and all Stage D variants reject this additional unsafe
+case without changing the simulator detector, its experiment counters, trajectories,
+fast-layer thresholds or acceptance margins. Existing reflex, lease, ordering and
+terminal-state gaps of Stage C remain. This correction does not close E10.

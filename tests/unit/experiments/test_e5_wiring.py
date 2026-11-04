@@ -30,6 +30,7 @@ LIMITS = AdvisorInputLimits(
 ENV = {
     MODE_VAR: "mock",
     "META_MODEL_ID": "m1",
+    "META_WONDER_MODEL_ID": "m1-wonder",
     "META_VOICE_MODEL_ID": "m2",
     "BASETEN_MODEL_ID": "m3",
     "MODAL_GLIMMER_MODEL_ID": "m4",

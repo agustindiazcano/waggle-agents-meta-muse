@@ -12,6 +12,7 @@ from waggle.llm.task_caps import TaskCaps
 
 MODEL_ENV = {
     "META_MODEL_ID": "meta-text",
+    "META_WONDER_MODEL_ID": "meta-wonder",
     "META_VOICE_MODEL_ID": "meta-voice",
     "BASETEN_MODEL_ID": "baseten-open",
     "MODAL_GLIMMER_MODEL_ID": "modal-glimmer",

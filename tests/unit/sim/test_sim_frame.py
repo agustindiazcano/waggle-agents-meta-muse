@@ -148,12 +148,60 @@ def test_parse_frame_round_trips_and_rejects_unknown_input() -> None:
     missing = {k: v for k, v in out.items() if k != "tick"}
     with pytest.raises(frame.FrameError, match="missing field"):
         frame.parse_frame(frame.encode_frame(missing))
-    with pytest.raises(frame.FrameError, match="overlays"):
-        frame.parse_frame(frame.encode_frame({**out, "overlays": {"envelopes": []}}))
+    with pytest.raises(frame.FrameError, match="unknown field in overlays"):
+        frame.parse_frame(frame.encode_frame({**out, "overlays": {"bogus": []}}))
     with pytest.raises(frame.FrameError, match="too large"):
         frame.parse_frame(frame.encode_frame(out), max_bytes=50)
     with pytest.raises(frame.FrameError):
         frame.parse_frame("not json")
+
+
+def test_overlays_export_round_trips_and_validates_fields() -> None:
+    sim = make()
+    snap_hash = sim.state_hash()
+    overlays = frame.FrameOverlays(
+        envelopes=(
+            frame.EnvelopeOverlay(
+                robot_id="robot_0",
+                polygon=((0.0, 0.0), (1.2345678, 0.0), (1.2345678, 0.8), (0.0, 0.8)),
+                margin_m=0.45,
+                nearest_id="human_0",
+            ),
+        ),
+        lidar_shadows=(
+            frame.LidarShadowOverlay(
+                robot_id="robot_0",
+                polygon=((1.0, 1.0), (3.0, 1.0), (2.5, 2.5)),
+                sample_stride=4,
+            ),
+        ),
+        ghost_paths=(
+            frame.GhostPathOverlay(
+                variant_index=0,
+                robot_id="robot_0",
+                passed=True,
+                points=((0.0, 0.0), (1.0, 0.5), (2.0, 1.0)),
+                k=5,
+                horizon_s=45.0,
+                snapshot_hash=snap_hash,
+            ),
+        ),
+        extra={"note": "dev"},
+    )
+    out = frame.export_frame(sim, RUN, overlays=overlays)
+    assert frame.parse_frame(frame.encode_frame(out)) == out
+    assert out["overlays"]["envelopes"][0]["polygon"][1] == [
+        round(1.2345678, frame.DECIMALS),
+        0.0,
+    ]
+    assert out["overlays"]["lidar_shadows"][0]["sample_stride"] == 4
+    assert out["overlays"]["ghost_paths"][0]["k"] == 5
+    assert out["overlays"]["extra"] == {"note": "dev"}
+
+    bad_env = json.loads(frame.encode_frame(out))
+    bad_env["overlays"]["envelopes"][0]["unknown_key"] = 1
+    with pytest.raises(frame.FrameError, match=r"unknown field in overlays\.envelopes"):
+        frame.parse_frame(json.dumps(bad_env))
 
 
 def test_world_message_has_its_own_version_and_a_stable_hash() -> None:

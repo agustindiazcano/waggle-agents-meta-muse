@@ -1,6 +1,11 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 83% on 2026-11-04, margin about 3 points. Main now includes technician MCP wiring, schema revision 14, E5 wiring, E6 mock runner and validator stage D, replacing the stale November 2 estimate of 80%. The merged viewer gallery contributes less than one project point at this precision; viewer code is about 68% including PR 163. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. PR 163 is merged in main 8cfb8fb. E8 reporting is implemented in an isolated branch; its broader collection block is about 75% and E9 remains 0%. The bounded E8 reporting task is 100%. This addition is below one project point at the current precision, so the project judgment remains 83%. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
+margin about 4 points, retained from the main implementation audit at 7b99bbf.
+This branch fixes rollout robot-pair separation false accepts (ADR-095), task
+code 100%. A bounded correctness fix does not justify a whole-point increase.
+Code percentages are judgments, not coverage or experimental results.
+Experiments, calibration, documents, delivery and G-GLOBAL are excluded.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -20,19 +25,29 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P1 | Verify balances, expiry, rate limits, model ids, console caps and cloud secrets; verify Baseten/Modal prices | M | - | Rows 4, 5, 7, 10, 11, 12, 32; no secret inspection in this audit |
 | P1 | Review E3/E4/E5 labels, attack fixtures, real catalog, zones, machine data and recordings | M | - | Rows 54, 87, 94, 98; a pending label is not a result |
 | P1 | Add production E4/court route and real cross-family composition; preserve false-approval reporting | A | 50% | E4 harness remains scripted-only; no paid call authorized here |
-| P1 | Complete E10 proposer adapter and production crisis integration | A | 80% | Belief, K variants and deterministic crisis loop already exist |
-| P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 85% | C0/C1/replay exist; C2/C3/C4 are explicitly refused |
+| P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (PR 165 merged in main); E10 harness and production crisis caller remain |
+| P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 95% | C0/C1/C1_REPLAY/C2/C3/C3_REPLAY exist (ADR-091); C4 and production DB call-log wiring remain |
 | P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
-| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 68% | Gallery/model task 100%; maintainer visual review remains |
+| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 95% | Implemented on feat/viewer-overlays (ADR-093); maintainer visual review remains |
 | P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 80% | Revision 14, loader, diagnosis/sheet/tool port and mock runner exist |
 | P2 | Add Vertex and real transcription/vision integration and UI | A, M | 75% | Voice-intent and mock E7 exist; provider/logging block separately about 93% |
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 75% | Package registry and forwarder check already exist; future migration needs review |
 | P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 30% | Rows 37 and 39; no new experiment evidence in this audit |
 | P2 | Complete E8 production collection and calibration | A, M | 75% | Report runner, cloud control benchmark and extrapolation implemented; database export automation remains; measurements pending |
-| P2 | Implement E9 mutation/regression campaign | A | 0% | Experiment definitions alone do not count as runner implementation |
+| P2 | Implement E9 mutation/regression campaign | A | 40% | Planted-defect arm done in ADR-092 (branch exp/e9-planted-defects), 4 of 4 killed; cloud mutation-tool arm remains |
 | P2 | Dispatch cloud E2 chaos development sweep and later reviewed evaluations | M | - | Harness code about 97%; no run contributes to code progress |
 | P3 | Delete obsolete docs/context-wave3 remotely; remove only safe merged local worktrees | M | - | Never merge stale context branch or discard unmerged work |
 | P3 | README result tables, demo/video, live VM and submission | M, A | - | Delivery is outside code progress; cite actual result files only |
+
+## Current branch update (supersedes stale implementation text above)
+
+Main includes PRs 163 to 174. CourtRuntime, CrisisRuntime, viewer overlays,
+SDK fake-backed client tests, E8 database export, E1 diagnosis and scripted E4
+runner are merged. Production integration and experiment gaps remain.
+
+| Priority | Task | Owner | Code % | Status |
+|---|---|---|---|---|
+| P1 | Reject robot-pair separation violations in plan rollouts | A | 100% | fix/rollout-separation-check, ADR-095; regression failed first; 30 rollout tests passed; full gate status belongs in the PR test plan |
 
 ## Historical task ledger with current status
 
@@ -42,13 +57,13 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 2 | P1 | Confirm `ci.yml` runs green on GitHub | M | done: main 9cfb142 cloud CI success, run 41777534335 | - |
 | 3 | P1 | Review the 11 stacked branches and merge them in order with merge commits | M | done: historical stack integrated; PR 163 is the only open PR at audit | - |
 | 4 | P1 | Verify balances, expiry dates and rate limits in each provider console (Meta, Baseten, Modal, Vertex) | M | pending | - |
-| 5 | P1 | Set provider caps in the consoles and in `.env`; rename Gemini variables to the Vertex and Modal names in `.env.example` by hand | M | pending | - |
-| 6 | P2 | Verify Muse Glimmer availability and price per hour on Modal and Baseten (a first search found hosted endpoints elsewhere, none on those two) | M | pending | - |
-| 7 | P2 | Verify model ids through the Meta model list (`GET /v1/models`) and fill `META_MODEL_ID`, `META_VOICE_MODEL_ID` in `.env` | M | pending | - |
+| 5 | P1 | Set provider caps in the consoles and in `.env`; rename Gemini variables to the Vertex and Modal names in `.env.example` by hand | M | done in GitHub Actions variables (`META_SPEND_CAP_USD=135.0`, `BASETEN_SPEND_CAP_USD=90.0`, `MODAL_SPEND_CAP_USD=90.9`); console hard caps and local `.env` remain | - |
+| 6 | P2 | Verify Muse Glimmer availability and price per hour on Modal and Baseten (a first search found hosted endpoints elsewhere, none on those two) | M | `MODAL_GLIMMER_MODEL_ID=meta-models/Muse-Glimmer-30B` and `MODAL_ENDPOINT_URL=https://inference.us-west.modal.direct/v1` (workspace `ac-BQSGYNtST9xpA7WA5Cef1y`) set in GitHub Actions; `prices.toml` verification pending | - |
+| 7 | P2 | Verify model ids through the Meta model list (`GET /v1/models`) and fill `META_MODEL_ID`, `META_VOICE_MODEL_ID` in `.env` | M | `META_MODEL_ID=muse-spark-1.3`, `META_WONDER_MODEL_ID=muse-wonder-1.0` and `META_API_BASE_URL=https://api.meta.ai/v1` set in GitHub Actions; `META_VOICE_MODEL_ID` and local `.env` remain | - |
 | 8 | P2 | Read the Muse Model License text and confirm the attribution wording used in README and `web/index.html` | M | pending | - |
-| 9 | P2 | Choose the runtime HTTP client dependency (OpenAI SDK or httpx). Check that Baseten and a Modal endpoint are OpenAI-compatible. Agent asks before adding it | M | pending | - |
-| 10 | P2 | Verify price and latency of Muse Spark Open versus Muse Spark in the consoles, and the Baseten rate limit for 10 concurrent robots | M | pending | - |
-| 11 | P2 | Add GitHub Actions secrets for the heavy workflow | M | pending | - |
+| 9 | P2 | Choose the runtime HTTP client dependency (OpenAI SDK or httpx). Check that Baseten and a Modal endpoint are OpenAI-compatible. Agent asks before adding it | M | pending (stdlib `HttpProvider` active per ADR-070) | - |
+| 10 | P2 | Verify price and latency of Muse Spark Open versus Muse Spark in the consoles, and the Baseten rate limit for 10 concurrent robots | M | `BASETEN_MODEL_ID=meta-models/muse-spark-open` set in GitHub Actions; `prices.toml` verification for Baseten and Modal pending | - |
+| 11 | P2 | Add GitHub Actions secrets for the heavy workflow | M | done: `META_API_KEY`, `BASETEN_API_KEY`, `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` set in GitHub Actions secrets | - |
 | 12 | P2 | Claim Meta Model API credits (deadline Nov 4, 9 PM ET), request Baseten and Modal credits | M | pending | - |
 | 13 | P3 | Show the "Built with Muse Spark Open" attribution card in the final video | M | pending | - |
 | 14 | P3 | Fill judging rubric weights in `SUBMISSION.md` | M | pending | - |
@@ -152,7 +167,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 112 | P2 | Done on 2026-11-02 and merged (PR 142 to 145, 150): revisions 11, 12 and 13, the alert loop, validator stage C, the failure log generator, the advisor runtime. The next code blocks are rows 113 to 116 and the Python SDK client test (row 81). Revisions touch `schema.py`: one after the other | A | done: schema through revision 14 and rows 113 to 116 merged; real-client test still pending | 100% |
 | 113 | P2 | Technician MCP lease, close and settlement tools (ADR-081) | A | merged in main; broader crash integration remains | 100% |
 | 114 | P2 | E6 chain: revision 14, diagnosis, manual sheet, mock runner, tool port and history loader (ADRs 084, 085, 088) | A | merged in main; production database-backed diagnosis remains outside the mock chain | 100% |
-| 115 | P2 | Stage D belief, human sampler, K variants, all-pass aggregation and crisis loop (ADRs 082, 086) | A | merged; production LLM proposer adapter still absent | 90% |
+| 115 | P2 | Stage D belief, human sampler, K variants, all-pass aggregation and crisis loop (ADRs 082, 086) | A | merged; LLM proposer adapter added by ADR-090 on feat/crisis-planner-adapter; production caller still absent | 90% |
 | 116 | P2 | E5 runner, caution file persistence, runtime caller and client factory integration (ADRs 083, 087) | A | merged; production service and database call-log wiring remain | 95% |
 | 117 | P3 | Delete the merged remote branches (`feat/technician-lease-settlement`, `feat/package-registry`, `feat/llm-call-log`, `feat/maintenance-alert-loop`, `feat/rollout-validator-stage`, `feat/failure-log-generator`, `feat/advisor-runtime`, `chore/merge-wave-3`, `docs/antigravity-delegation` and the older merged ones), and say if the local `feat/rollout-validator-stage` may be deleted with `git branch -D` | M | pending | - |
 | 118 | P3 | G-GLOBAL decision. Estimate asked on 2026-11-02: the network layer of `docs/MULTI_WAREHOUSE_PLAN.md` would add about 22 to 23% of the current project size in code (range 20 to 28%): G1 about 2%, G2 4%, G3 5%, G4 4%, G5 2%, G6 5%, G7 is evaluations and not code. Four cells instead of three add about 1 point. Overall progress would read about 65% over the larger total. Not authorized and not started; the readiness conditions of section 0 and the open decisions of section 14 of that plan apply, and delivery time from Nov 3 is reserved | M | decision pending | - |
@@ -163,5 +178,11 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 121 | P2 | Visually review all 20 gallery entries, worker hands/textures, clips, pickup timing, equipment proportions and rack layout; preserve binary pack and dirty asset worktrees | M | pending visual review | - |
 | 122 | P1 | PR 163 context conflicts: retain main tasks and viewer handoff, merge main without rewriting history; never merge the PR as an agent | A | done: PR 163 merged in main 8cfb8fb | - |
 | 123 | P2 | Delete obsolete docs/context-wave3 remotely, never merge (endpoint diff removes 6325 lines). Ticket race patch is already in main as 8ae51e3; feat/maintenance-tickets needs no PR | M | remote cleanup pending; preserve all worktrees with unmerged work | - |
+| 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | done: PR 164 merged in main ba2abcf; broader production exports and calibration remain | 100% |
+| 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done: PR 165 merged in main c7098a7; E10 harness and production caller remain | 100% |
+| 126 | P1 | Organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY (ADR-091) | A | done: PR 166 merged in main d18991a; C4 fleet planner and live cloud evaluation remain | 100% |
+| 127 | P2 | E9 planted-defect campaign (ADR-092): registry of 4 defects, copy-only runner, baseline check, result writer; first run 4 of 4 killed on dev code | A | done: PR 167 merged in main 21e1b54; cloud mutation-tool arm remains | 100% |
+| 128 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-093) | A | done: PR 169 merged in main 5b9a19d; maintainer visual review remains | 100% |
+| 129 | P2 | Route `director`, `planner` and `diagnosis` to `META_WONDER_MODEL_ID` while keeping `META_MODEL_ID` for `court_1` and `vision` (ADR-094) | A | done on branch feat/meta-wonder-routing; maintainer review and merge remain | 100% |
 
-| 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | code complete in exp/e8-latency-runner; exact validation and PR in task chat; broader production exports and calibration remain | 100% |
+| 130 | P1 | Reject robot-pair separation false accepts in Stage C/D rollouts (ADR-095) | A | implemented on fix/rollout-separation-check; see PR test plan for full gates | 100% |
