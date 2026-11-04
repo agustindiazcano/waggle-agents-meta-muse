@@ -3,7 +3,8 @@
 Updated: 2026-11-04. README cleanup and banner prepared in .worktrees/readme-cleanup,
 branch docs/readme-cleanup, based on docs/readme-brand-header and main 96158a2.
 The maintainer explicitly requested no tests for this documentation-only task
-and requested a PR when finished. Publish the combined change against main.
+and requested a PR when finished. Published against main as PR 191:
+https://github.com/agustindiazcano/waggle-agents-meta-muse/pull/191
 
 Code progress of the project (estimate by eye, code only): 95% on 2026-11-04,
 margin about 2 points, using the current PENDING.md audit. Delivery scope is 98%
@@ -47,7 +48,7 @@ Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first.
 The cleaned README and banner live in .worktrees/readme-cleanup on
 docs/readme-cleanup, including the commits from docs/readme-brand-header.
 The maintainer explicitly requested no tests and a PR for this documentation-only
-task. Publish the combined change against main, inspect PR status first, and do
+task. PR 191 is open against main; inspect its status before further work and do
 not rerun tests. No runtime code or historical measurement changed. The HTML
 source, local Meta symbol, attribution and 1600 by 500 capture are in docs/assets.
 The earlier banner work passed 42 focused docs/style checks; cleanup was reviewed
