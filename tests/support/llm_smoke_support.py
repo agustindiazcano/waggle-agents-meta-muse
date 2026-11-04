@@ -17,7 +17,9 @@ MODEL_ENV_BY_ROUTE = {
     "modal": "MODAL_GLIMMER_MODEL_ID",
 }
 SMOKE_PROMPT = "Reply with the single word: ok"
-SMOKE_MAX_OUTPUT_TOKENS = 16
+# Reasoning models (muse-spark-1.3, muse-wonder-1.0) consume reasoning_tokens inside
+# max_tokens before emitting message.content (16 tokens hits finish_reason="length").
+SMOKE_MAX_OUTPUT_TOKENS = 256
 SMOKE_COST_LIMIT_USD = 0.02
 
 
