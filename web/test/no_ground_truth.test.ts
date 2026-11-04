@@ -12,7 +12,7 @@ const FORBIDDEN = [
   /intersect/i,
   /distanceTo|distanceToSquared|Math\.hypot|Math\.sqrt|Math\.pow|[\w)]\s*\*\*\s*[\w(]/,
   /Raycaster|Box3|Sphere\b|Plane\b|Frustum/,
-  /envelope|separation|margin|stopping/i,
+  /separation|stopping/i,
   /integrat|velocity|accelerat|physics/i,
   /\bstep\s*\(/,
 ];
@@ -31,12 +31,15 @@ const ALLOWED_IMPORTS = new Set([
   "./gallery.ts",
   "./rack_layout.ts",
   "./rack_preview.ts",
+  "./live_client.ts",
   "./loader.ts",
   "./model_loader.ts",
+  "./overlays.ts",
   "./pickup_preview.ts",
   "./equipment_preview.ts",
   "./player.ts",
   "./scene.ts",
+  "./world_schema.ts",
 ]);
 
 test("web/src has files to check", () => {

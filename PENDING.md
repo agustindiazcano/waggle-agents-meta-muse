@@ -1,6 +1,6 @@
 # Waggle Hive: Pending
 
-Code progress of the project (estimate by eye, code only): 85% on 2026-11-04, margin about 3 points. Main includes PR 163 (viewer gallery and asset import, ADR-089) and PR 164 (E8 reporting at ba2abcf, raising E8 code to 75%), and this branch adds the per-robot organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY wiring (ADR-090), raising advisors/E5 code from 85% to 95%. The E9 planted-defect arm is done on exp/e9-planted-defects (ADR-092). Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
+Code progress of the project (estimate by eye, code only): 87% on 2026-11-04, margin about 3 points. Main now includes PR 163 (viewer gallery, ADR-089), PR 164 (E8 reporting at ba2abcf), PR 165 (crisis planner adapter, ADR-090 at c7098a7), PR 166 (organizer E5 C2/C3/C3_REPLAY, ADR-091 at d18991a, raising advisors/E5 code to 95%) and PR 167 (E9 planted-defect arm, ADR-092 at 21e1b54), and this branch (`feat/viewer-overlays`, ADR-093) implements the viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client, raising viewer code to about 95%. Experiments, runs, docs and delivery do not count. The Code % column is a judgment of task code written, not a result; `-` means no code. See LASTCONTEXT.md.
 
 Priority: P1 blocking, P2 next, P3 later, P4 backlog. Owner: M is the maintainer, A is the agent.
 
@@ -23,7 +23,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P1 | Complete E10 proposer adapter and production crisis integration | A | 90% | Adapter done in ADR-090 (PR 165 merged in main); E10 harness and production crisis caller remain |
 | P1 | Implement E5 organizer configurations and production advisor service/log wiring | A | 95% | C0/C1/C1_REPLAY/C2/C3/C3_REPLAY exist (ADR-091); C4 and production DB call-log wiring remain |
 | P2 | Validate MCP with a real SDK client | A, M | 0% | Transport is implemented; no conformity claim before client run |
-| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 68% | Gallery/model task 100%; maintainer visual review remains |
+| P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 95% | Implemented on feat/viewer-overlays (ADR-093); maintainer visual review remains |
 | P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 80% | Revision 14, loader, diagnosis/sheet/tool port and mock runner exist |
 | P2 | Add Vertex and real transcription/vision integration and UI | A, M | 75% | Voice-intent and mock E7 exist; provider/logging block separately about 93% |
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 75% | Package registry and forwarder check already exist; future migration needs review |
@@ -165,5 +165,6 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | 123 | P2 | Delete obsolete docs/context-wave3 remotely, never merge (endpoint diff removes 6325 lines). Ticket race patch is already in main as 8ae51e3; feat/maintenance-tickets needs no PR | M | remote cleanup pending; preserve all worktrees with unmerged work | - |
 | 124 | P2 | E8 production control code-latency runner, strict call-log summaries, finite-burst extrapolation and cloud workflow | A | done: PR 164 merged in main ba2abcf; broader production exports and calibration remain | 100% |
 | 125 | P1 | LLM proposer adapter for the crisis loop (ADR-090): `LlmPlanProposer` and `planner-v1` prompt in `waggle.llm`, 9 adapter tests plus validation/court suites, mock only | A | done: PR 165 merged in main c7098a7; E10 harness and production caller remain | 100% |
-| 126 | P1 | Organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY (ADR-091) | A | implemented in feat/organizer-e5; C4 fleet planner and live cloud evaluation remain | 100% |
-| 127 | P2 | E9 planted-defect campaign (ADR-092): registry of 4 defects, copy-only runner, baseline check, result writer; first run 4 of 4 killed on dev code | A | done on branch exp/e9-planted-defects; maintainer merges the PR; cloud mutation-tool arm remains | 100% |
+| 126 | P1 | Organizer schema, runtime, loop/message boundaries and E5 C2/C3/C3_REPLAY (ADR-091) | A | done: PR 166 merged in main d18991a; C4 fleet planner and live cloud evaluation remain | 100% |
+| 127 | P2 | E9 planted-defect campaign (ADR-092): registry of 4 defects, copy-only runner, baseline check, result writer; first run 4 of 4 killed on dev code | A | done: PR 167 merged in main 21e1b54; cloud mutation-tool arm remains | 100% |
+| 128 | P2 | Viewer map geometry, safety overlays (`envelopes`, `lidar_shadows`, `ghost_paths`) and `/ws/live` client (ADR-093) | A | done on branch feat/viewer-overlays; maintainer visual review and merge remain | 100% |

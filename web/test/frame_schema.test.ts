@@ -93,11 +93,57 @@ test("missing field in a frame is rejected", () => {
   expectError(() => parseFrameLine(JSON.stringify(f)), /missing field/);
 });
 
-test("non-empty overlays are rejected, empty overlays accepted", () => {
+test("valid overlays are accepted and unknown keys outside overlays.extra are rejected", () => {
   const f = frame(1);
-  f["overlays"] = { envelopes: [] };
-  expectError(() => parseFrameLine(JSON.stringify(f)), /overlays/);
-  assert.equal(parseFrameLine(JSON.stringify(frame(1))).overlays instanceof Object, true);
+  f["overlays"] = {
+    envelopes: [
+      {
+        robot_id: "robot_0",
+        polygon: [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+        ],
+        margin_m: 0.45,
+        nearest_id: "human_0",
+      },
+    ],
+    lidar_shadows: [
+      {
+        robot_id: "robot_0",
+        polygon: [
+          [1, 1],
+          [3, 1],
+          [2, 2],
+        ],
+        sample_stride: 4,
+      },
+    ],
+    ghost_paths: [
+      {
+        variant_index: 0,
+        robot_id: "robot_0",
+        passed: true,
+        points: [
+          [0, 0],
+          [2, 1],
+        ],
+        k: 5,
+        horizon_s: 45,
+        snapshot_hash: HASH,
+      },
+    ],
+    extra: { custom_tag: "ok" },
+  };
+  const parsed = parseFrameLine(JSON.stringify(f));
+  assert.equal(parsed.overlays.envelopes?.length, 1);
+  assert.equal(parsed.overlays.lidar_shadows?.length, 1);
+  assert.equal(parsed.overlays.ghost_paths?.length, 1);
+  assert.deepEqual(parsed.overlays.extra, { custom_tag: "ok" });
+
+  const bad = frame(1);
+  bad["overlays"] = { unknown_top_key: [] };
+  expectError(() => parseFrameLine(JSON.stringify(bad)), /unknown field in overlays/);
 });
 
 test("a frame over the size cap is rejected", () => {

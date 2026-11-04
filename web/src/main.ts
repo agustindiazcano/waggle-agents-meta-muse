@@ -2,12 +2,21 @@
 // with textContent. The state hash shown is the one the file records for the frame.
 
 import type { Frame, Replay } from "./frame_schema.ts";
+import { parseLiveMessage } from "./live_client.ts";
 import { loadReplayBlob } from "./loader.ts";
 import { focusTarget } from "./focus_target.ts";
 import { openGallery } from "./gallery.ts";
 import { advance, initialPlayer, seek, togglePlay } from "./player.ts";
 import type { PlayerState } from "./player.ts";
+import {
+  DEFAULT_OVERLAY_VISIBILITY,
+  describeOverlays,
+  toggleOverlayLayer,
+  type OverlayLayer,
+  type OverlayVisibility,
+} from "./overlays.ts";
 import { Scene } from "./scene.ts";
+import { parseWorld } from "./world_schema.ts";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -21,14 +30,20 @@ const errorBox = el<HTMLElement>("error");
 const viewer = el<HTMLElement>("viewer");
 const canvasHost = el<HTMLElement>("canvas");
 const filePicker = el<HTMLInputElement>("file");
+const worldFilePicker = el<HTMLInputElement>("world-file");
 const playButton = el<HTMLButtonElement>("play");
 const slider = el<HTMLInputElement>("scrub");
 const entitySelect = el<HTMLSelectElement>("entity");
 const focusButton = el<HTMLButtonElement>("focus");
 const fitButton = el<HTMLButtonElement>("fit");
+const toggleEnvelopesButton = el<HTMLButtonElement>("toggle-envelopes");
+const toggleShadowsButton = el<HTMLButtonElement>("toggle-shadows");
+const toggleGhostsButton = el<HTMLButtonElement>("toggle-ghosts");
 const hashValue = el<HTMLElement>("hash");
 const tickValue = el<HTMLElement>("tick");
 const metaValue = el<HTMLElement>("meta");
+const worldStatus = el<HTMLElement>("world-status");
+const overlayList = el<HTMLElement>("overlays");
 const zoneList = el<HTMLElement>("zones");
 const eventList = el<HTMLElement>("events");
 const gallery = el<HTMLElement>("gallery");
@@ -39,6 +54,7 @@ let galleryInitialized = false;
 let scene: Scene | null = null;
 let replay: Replay | null = null;
 let player: PlayerState = initialPlayer();
+let overlayVisibility: OverlayVisibility = DEFAULT_OVERLAY_VISIBILITY;
 let lastTime = 0;
 
 function showError(message: string): void {
@@ -73,6 +89,12 @@ function show(frame: Frame): void {
   focusButton.disabled = options.length === 0;
   hashValue.textContent = frame.state_hash;
   tickValue.textContent = `tick ${frame.tick}, sim time ${frame.sim_time.toFixed(3)} s`;
+  const summary = describeOverlays(frame.overlays);
+  fillList(
+    overlayList,
+    [summary.envelopesLabel, summary.shadowsLabel, summary.ghostsLabel],
+    "no overlays in this frame",
+  );
   fillList(
     zoneList,
     frame.zones.map(
@@ -134,10 +156,38 @@ function open(next: Replay): void {
 async function openBlob(blob: Blob): Promise<void> {
   const result = await loadReplayBlob(blob);
   if (result.ok) {
+    scene?.setWorld(null);
+    worldStatus.textContent = "Map geometry: none loaded";
     open(result.replay);
   } else {
     showError(result.error);
   }
+}
+
+async function openWorldBlob(blob: Blob): Promise<void> {
+  if (replay === null) {
+    showError("open a replay file before loading map geometry");
+    return;
+  }
+  try {
+    const raw: unknown = JSON.parse(await blob.text());
+    const world = parseWorld(raw, replay.header.world_hash);
+    if (scene === null) {
+      scene = new Scene(canvasHost);
+    }
+    scene.setWorld(world);
+    scene.fit(replay.frames);
+    worldStatus.textContent = `Map geometry: ${world.name}`;
+    render();
+  } catch (err) {
+    showError(err instanceof Error ? err.message : "invalid map file");
+  }
+}
+
+function flipOverlay(layer: OverlayLayer, button: HTMLButtonElement): void {
+  overlayVisibility = toggleOverlayLayer(overlayVisibility, layer);
+  button.setAttribute("aria-pressed", String(overlayVisibility[layer]));
+  scene?.setOverlayVisibility(overlayVisibility);
 }
 
 filePicker.addEventListener("change", () => {
@@ -145,6 +195,25 @@ filePicker.addEventListener("change", () => {
   if (file !== undefined) {
     void openBlob(file);
   }
+});
+
+worldFilePicker.addEventListener("change", () => {
+  const file = worldFilePicker.files?.[0];
+  if (file !== undefined) {
+    void openWorldBlob(file);
+  }
+});
+
+toggleEnvelopesButton.addEventListener("click", () => {
+  flipOverlay("envelopes", toggleEnvelopesButton);
+});
+
+toggleShadowsButton.addEventListener("click", () => {
+  flipOverlay("shadows", toggleShadowsButton);
+});
+
+toggleGhostsButton.addEventListener("click", () => {
+  flipOverlay("ghosts", toggleGhostsButton);
 });
 
 galleryButton.addEventListener("click", () => {
@@ -218,9 +287,51 @@ async function loadDemo(): Promise<void> {
   }
 }
 
-if (new URLSearchParams(window.location.search).get("demo") === "1") {
+function connectLive(scenarioId: string): void {
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const url = `${proto}//${window.location.host}/ws/live?scenario=${encodeURIComponent(scenarioId)}`;
+  const ws = new WebSocket(url);
+  gallery.hidden = true;
+  errorBox.hidden = true;
+  viewer.hidden = false;
+  if (scene === null) {
+    scene = new Scene(canvasHost);
+  }
+  scopeNote.textContent = "Live stream draws simulator frames and decides nothing.";
+  metaValue.textContent = `live scenario ${scenarioId}`;
+  let fitted = false;
+  ws.addEventListener("message", (ev) => {
+    try {
+      const msg = parseLiveMessage(String(ev.data));
+      if (msg.kind === "world") {
+        scene?.setWorld(msg.world);
+        worldStatus.textContent = `Map geometry: ${msg.world.name}`;
+      } else if (msg.kind === "frame") {
+        if (!fitted) {
+          scene?.fit([msg.frame]);
+          fitted = true;
+        }
+        show(msg.frame);
+      } else {
+        showError(`live stream error: ${msg.code}`);
+      }
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "invalid live message");
+      ws.close();
+    }
+  });
+  ws.addEventListener("error", () => {
+    showError("live WebSocket connection failed");
+  });
+}
+
+const searchParams = new URLSearchParams(window.location.search);
+const liveScenario = searchParams.get("live");
+if (liveScenario !== null && liveScenario.length > 0) {
+  connectLive(liveScenario);
+} else if (searchParams.get("demo") === "1") {
   void loadDemo();
-} else if (new URLSearchParams(window.location.search).get("gallery") === "1") {
+} else if (searchParams.get("gallery") === "1") {
   galleryButton.click();
 }
 requestAnimationFrame(frame_loop);

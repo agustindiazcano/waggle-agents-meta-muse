@@ -45,6 +45,38 @@ export interface FrameEvent {
   text: string;
 }
 
+export type OverlayPoint = [number, number];
+
+export interface EnvelopeOverlay {
+  robot_id: string;
+  polygon: OverlayPoint[];
+  margin_m: number;
+  nearest_id: string | null;
+}
+
+export interface LidarShadowOverlay {
+  robot_id: string;
+  polygon: OverlayPoint[];
+  sample_stride: number;
+}
+
+export interface GhostPathOverlay {
+  variant_index: number;
+  robot_id: string;
+  passed: boolean;
+  points: OverlayPoint[];
+  k: number;
+  horizon_s: number;
+  snapshot_hash: string;
+}
+
+export interface FrameOverlays {
+  envelopes?: EnvelopeOverlay[];
+  lidar_shadows?: LidarShadowOverlay[];
+  ghost_paths?: GhostPathOverlay[];
+  extra?: Record<string, unknown>;
+}
+
 export interface Frame {
   schema_version: number;
   tick: number;
@@ -56,7 +88,7 @@ export interface Frame {
   humans: Human[];
   zones: Zone[];
   machines: Machine[];
-  overlays: Record<string, never>;
+  overlays: FrameOverlays;
   events: FrameEvent[];
 }
 
@@ -128,6 +160,18 @@ const HUMAN_FIELDS = ["id", "x", "y", "heading"];
 const ZONE_FIELDS = ["id", "polygon_id", "occupant", "token"];
 const MACHINE_FIELDS = ["id", "state", "temperature", "severity"];
 const EVENT_FIELDS = ["kind", "text"];
+const OVERLAY_KEYS = ["envelopes", "lidar_shadows", "ghost_paths", "extra"];
+const ENVELOPE_FIELDS = ["robot_id", "polygon", "margin_m", "nearest_id"];
+const LIDAR_SHADOW_FIELDS = ["robot_id", "polygon", "sample_stride"];
+const GHOST_PATH_FIELDS = [
+  "variant_index",
+  "robot_id",
+  "passed",
+  "points",
+  "k",
+  "horizon_s",
+  "snapshot_hash",
+];
 
 function isObject(value: unknown): value is Obj {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -195,6 +239,82 @@ function parseJson(text: string, what: string): unknown {
   } catch {
     throw new ReplayError(`${what} is not valid JSON`);
   }
+}
+
+function parsePointList(value: unknown, minPoints: number, what: string): OverlayPoint[] {
+  const rows = list(value, what);
+  if (rows.length < minPoints) {
+    throw new ReplayError(`${what} must have at least ${minPoints} points`);
+  }
+  return rows.map((row): OverlayPoint => {
+    const pair = list(row, what);
+    if (pair.length !== 2) {
+      throw new ReplayError(`${what} point must be a [x, y] pair`);
+    }
+    return [num(pair[0], `${what}.x`), num(pair[1], `${what}.y`)];
+  });
+}
+
+function validateOverlays(value: unknown): FrameOverlays {
+  if (!isObject(value)) {
+    throw new ReplayError("overlays must be an object");
+  }
+  for (const key of Object.keys(value)) {
+    if (!OVERLAY_KEYS.includes(key)) {
+      throw new ReplayError(`unknown field in overlays: ${key}`);
+    }
+  }
+  const out: FrameOverlays = {};
+  if ("envelopes" in value) {
+    out.envelopes = list(value["envelopes"], "overlays.envelopes").map((item): EnvelopeOverlay => {
+      const env = exact(item, ENVELOPE_FIELDS, "overlays.envelopes");
+      const nearest = env["nearest_id"];
+      return {
+        robot_id: str(env["robot_id"], "envelopes.robot_id"),
+        polygon: parsePointList(env["polygon"], 3, "envelopes.polygon"),
+        margin_m: num(env["margin_m"], "envelopes.margin_m"),
+        nearest_id: nearest === null ? null : str(nearest, "envelopes.nearest_id"),
+      };
+    });
+  }
+  if ("lidar_shadows" in value) {
+    out.lidar_shadows = list(value["lidar_shadows"], "overlays.lidar_shadows").map(
+      (item): LidarShadowOverlay => {
+        const sh = exact(item, LIDAR_SHADOW_FIELDS, "overlays.lidar_shadows");
+        return {
+          robot_id: str(sh["robot_id"], "lidar_shadows.robot_id"),
+          polygon: parsePointList(sh["polygon"], 3, "lidar_shadows.polygon"),
+          sample_stride: int(sh["sample_stride"], "lidar_shadows.sample_stride", 1),
+        };
+      },
+    );
+  }
+  if ("ghost_paths" in value) {
+    out.ghost_paths = list(value["ghost_paths"], "overlays.ghost_paths").map(
+      (item): GhostPathOverlay => {
+        const gp = exact(item, GHOST_PATH_FIELDS, "overlays.ghost_paths");
+        if (typeof gp["passed"] !== "boolean") {
+          throw new ReplayError("ghost_paths.passed must be a boolean");
+        }
+        return {
+          variant_index: int(gp["variant_index"], "ghost_paths.variant_index", 0),
+          robot_id: str(gp["robot_id"], "ghost_paths.robot_id"),
+          passed: gp["passed"],
+          points: parsePointList(gp["points"], 2, "ghost_paths.points"),
+          k: int(gp["k"], "ghost_paths.k", 1),
+          horizon_s: num(gp["horizon_s"], "ghost_paths.horizon_s"),
+          snapshot_hash: digest(gp["snapshot_hash"], "ghost_paths.snapshot_hash"),
+        };
+      },
+    );
+  }
+  if ("extra" in value) {
+    if (!isObject(value["extra"])) {
+      throw new ReplayError("overlays.extra must be an object");
+    }
+    out.extra = { ...value["extra"] };
+  }
+  return out;
 }
 
 export function validateFrame(data: unknown): Frame {
@@ -268,10 +388,7 @@ export function validateFrame(data: unknown): Frame {
     }
     return { kind: kind as EventKind, text: str(e["text"], "events.text") };
   });
-  const overlays = top["overlays"];
-  if (!isObject(overlays) || Object.keys(overlays).length !== 0) {
-    throw new ReplayError("overlays must be empty: this viewer cannot draw overlays yet");
-  }
+  const overlays = validateOverlays(top["overlays"]);
   return {
     schema_version: SCHEMA_VERSION,
     tick: int(top["tick"], "tick", 0),
@@ -283,7 +400,7 @@ export function validateFrame(data: unknown): Frame {
     humans,
     zones,
     machines,
-    overlays: {},
+    overlays,
     events,
   };
 }
