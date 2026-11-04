@@ -17,7 +17,27 @@ const FORBIDDEN = [
   /\bstep\s*\(/,
 ];
 
-const ALLOWED_IMPORTS = new Set(["three", "./frame_schema.ts", "./loader.ts", "./player.ts", "./scene.ts"]);
+const ALLOWED_IMPORTS = new Set([
+  "three",
+  "three/addons/loaders/GLTFLoader.js",
+  "three/addons/controls/OrbitControls.js",
+  "three/addons/utils/SkeletonUtils.js",
+  "./asset_motion.ts",
+  "./camera_fit.ts",
+  "./camera_navigation.ts",
+  "./frame_schema.ts",
+  "./focus_target.ts",
+  "./gallery_manifest.ts",
+  "./gallery.ts",
+  "./rack_layout.ts",
+  "./rack_preview.ts",
+  "./loader.ts",
+  "./model_loader.ts",
+  "./pickup_preview.ts",
+  "./equipment_preview.ts",
+  "./player.ts",
+  "./scene.ts",
+]);
 
 test("web/src has files to check", () => {
   assert.ok(files.length >= 4);
@@ -40,4 +60,8 @@ for (const name of files) {
 
 test("the detector flags a sample with a collision check", () => {
   assert.equal(FORBIDDEN.some((p) => p.test("if (a.distanceTo(b) < r) collide()")), true);
+});
+
+test("the import allowlist rejects unlisted modules", () => {
+  assert.equal(ALLOWED_IMPORTS.has("three/addons/physics.js"), false);
 });

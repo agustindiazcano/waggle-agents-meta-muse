@@ -20,6 +20,9 @@ build/
 
 # Node
 node_modules/
+web/public/models/*.glb
+web/test-results/
+web/playwright-report/
 
 # Editors and OS
 .idea/

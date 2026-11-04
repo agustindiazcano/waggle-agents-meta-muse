@@ -1,0 +1,117 @@
+{
+  "industrial_tank": {
+    "prompt": "Single industrial vertical cylindrical steel storage tank for a warehouse factory, domed top, three reinforcing rings, short support legs, side ladder and external pipe with a valve, small red amber green indicator tower, matte gray metal and dark fittings. Full object, clean industrial game asset, no text, no logos, no ground, no background, no people. Reference dimensions about 2.4 meters wide and 3 meters tall.",
+    "stages": [
+      {
+        "stage": "preview",
+        "state": "SUCCEEDED",
+        "expected_credits": 20,
+        "task_id": "01a1a4bb-50f9-73a2-9e18-96b54af7b681",
+        "consumed_credits": 20
+      },
+      {
+        "stage": "refine",
+        "state": "SUCCEEDED",
+        "expected_credits": 10,
+        "task_id": "01a1a4bd-2cc1-72d6-b1cf-a662186ec6f2",
+        "consumed_credits": 10
+      }
+    ],
+    "file": "industrial_tank.glb",
+    "file_bytes": 9605080,
+    "sha256": "30d2efb706da78cacf142d9354a2672adb94b4e3cbfbc2970e51092415ea1c43",
+    "clips": []
+  },
+  "industrial_press": {
+    "prompt": "Single industrial hydraulic workshop press for a warehouse factory, wide gray steel rectangular base, two upright columns supporting a thick top crossbeam, central vertical hydraulic ram above an open work bed, safety yellow accents, small red amber green indicator tower. Open gap between columns clearly visible, physically plausible game asset, no people, no text, no logos, no ground, no background. About 2.6 meters wide and 2.2 meters tall.",
+    "stages": [
+      {
+        "stage": "preview",
+        "state": "SUCCEEDED",
+        "expected_credits": 20,
+        "task_id": "01a1a4bb-5d98-762b-ab79-14bcf0036975",
+        "consumed_credits": 20
+      },
+      {
+        "stage": "refine",
+        "state": "SUCCEEDED",
+        "expected_credits": 10,
+        "task_id": "01a1a4bd-3f7b-7546-99d4-d78b95488081",
+        "consumed_credits": 10
+      }
+    ],
+    "file": "industrial_press.glb",
+    "file_bytes": 9132924,
+    "sha256": "8e572fc021183ec1f027125cc2dec6b2099b3c9876b69d470d4d2fbd66c54143",
+    "clips": []
+  },
+  "delivery_truck": {
+    "prompt": "Single medium warehouse delivery box truck, complete vehicle, white enclosed rectangular cargo box, compact blue cab, black tires on two axles, rear cargo doors closed, simple industrial realistic game asset, unbranded. No trailer, no people, no text, no logos, no road, no ground, no background. Whole truck including wheels, front cab and rear box visible, plausible proportions.",
+    "stages": [
+      {
+        "stage": "preview",
+        "state": "SUCCEEDED",
+        "expected_credits": 20,
+        "task_id": "01a1a4c1-8ac2-778f-bf72-505eecb9e4f4",
+        "consumed_credits": 20
+      },
+      {
+        "stage": "refine",
+        "state": "SUCCEEDED",
+        "expected_credits": 10,
+        "task_id": "01a1a4c3-2927-70be-baec-ee2b66d040f7",
+        "consumed_credits": 10
+      }
+    ],
+    "file": "delivery_truck.glb",
+    "file_bytes": 10930664,
+    "sha256": "7aa9c78c8985af770d13d799200cea375762a89742b6c1392659efeff88614aa",
+    "clips": []
+  },
+  "fire_extinguisher": {
+    "prompt": "Single wall mounted portable fire extinguisher for an industrial warehouse, red cylindrical metal body, black rubber hose on one side, black squeeze handle with a small safety pin, brass valve and circular pressure gauge, dark mounting bracket, simple pale instruction label with no writing. Complete recognizable object, clean realistic game asset, no text, no logos, no wall, no people, no ground, no background.",
+    "stages": [
+      {
+        "stage": "preview",
+        "state": "SUCCEEDED",
+        "expected_credits": 20,
+        "task_id": "01a1a4c1-cab3-7783-9ef3-dde551a2502f",
+        "consumed_credits": 20
+      },
+      {
+        "stage": "refine",
+        "state": "SUCCEEDED",
+        "expected_credits": 10,
+        "task_id": "01a1a4c2-d49d-76a2-b40a-129e68dfb408",
+        "consumed_credits": 10
+      }
+    ],
+    "file": "fire_extinguisher.glb",
+    "file_bytes": 8315556,
+    "sha256": "7cea9273834c6861ea4e68fc398e8f2d38c270d4b5176f9357b40d515a7e9352",
+    "clips": []
+  },
+  "tree": {
+    "prompt": "Single small leafy deciduous tree for landscaping outside an industrial warehouse, natural brown branching trunk, rounded irregular green canopy made of visible leaf clusters, full tree including trunk base, believable proportions and moderately stylized realistic game asset. No pot, no grass patch, no fruit, no text, no people, no ground, no background.",
+    "stages": [
+      {
+        "stage": "preview",
+        "state": "SUCCEEDED",
+        "expected_credits": 20,
+        "task_id": "01a1a4c5-b1e6-7617-b5fb-649aaf3149cf",
+        "consumed_credits": 20
+      },
+      {
+        "stage": "refine",
+        "state": "SUCCEEDED",
+        "expected_credits": 10,
+        "task_id": "01a1a4c7-5374-7177-a304-8e547e29424f",
+        "consumed_credits": 10
+      }
+    ],
+    "file": "tree.glb",
+    "file_bytes": 12744924,
+    "sha256": "d4c6a5eba3909f3fa2cbf5db9f6ef27e86569db564de169481fae20d07ee2059",
+    "clips": []
+  }
+}

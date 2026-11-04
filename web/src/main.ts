@@ -3,6 +3,8 @@
 
 import type { Frame, Replay } from "./frame_schema.ts";
 import { loadReplayBlob } from "./loader.ts";
+import { focusTarget } from "./focus_target.ts";
+import { openGallery } from "./gallery.ts";
 import { advance, initialPlayer, seek, togglePlay } from "./player.ts";
 import type { PlayerState } from "./player.ts";
 import { Scene } from "./scene.ts";
@@ -21,11 +23,18 @@ const canvasHost = el<HTMLElement>("canvas");
 const filePicker = el<HTMLInputElement>("file");
 const playButton = el<HTMLButtonElement>("play");
 const slider = el<HTMLInputElement>("scrub");
+const entitySelect = el<HTMLSelectElement>("entity");
+const focusButton = el<HTMLButtonElement>("focus");
+const fitButton = el<HTMLButtonElement>("fit");
 const hashValue = el<HTMLElement>("hash");
 const tickValue = el<HTMLElement>("tick");
 const metaValue = el<HTMLElement>("meta");
 const zoneList = el<HTMLElement>("zones");
 const eventList = el<HTMLElement>("events");
+const gallery = el<HTMLElement>("gallery");
+const galleryButton = el<HTMLButtonElement>("gallery-toggle");
+const scopeNote = el<HTMLElement>("scope-note");
+let galleryInitialized = false;
 
 let scene: Scene | null = null;
 let replay: Replay | null = null;
@@ -49,6 +58,19 @@ function fillList(host: HTMLElement, rows: string[], empty: string): void {
 }
 
 function show(frame: Frame): void {
+  const selected = entitySelect.value;
+  const options = [
+    ...frame.robots.map((entity) => ({ value: `robot:${entity.id}`, label: `Robot ${entity.id}` })),
+    ...frame.humans.map((entity) => ({ value: `human:${entity.id}`, label: `Human ${entity.id}` })),
+  ];
+  entitySelect.replaceChildren(...options.map(({ value, label }) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    return option;
+  }));
+  if (options.some((option) => option.value === selected)) entitySelect.value = selected;
+  focusButton.disabled = options.length === 0;
   hashValue.textContent = frame.state_hash;
   tickValue.textContent = `tick ${frame.tick}, sim time ${frame.sim_time.toFixed(3)} s`;
   fillList(
@@ -91,6 +113,9 @@ function frame_loop(now: number): void {
 }
 
 function open(next: Replay): void {
+  gallery.hidden = true;
+  galleryButton.textContent = "Models gallery";
+  scopeNote.textContent = "Replay draws recorded frames and decides nothing.";
   errorBox.hidden = true;
   viewer.hidden = false;
   replay = next;
@@ -122,6 +147,31 @@ filePicker.addEventListener("change", () => {
   }
 });
 
+galleryButton.addEventListener("click", () => {
+  const showGallery = gallery.hidden;
+  if (showGallery && player.playing) player = togglePlay(player);
+  gallery.hidden = !showGallery;
+  viewer.hidden = showGallery || replay === null;
+  galleryButton.textContent = showGallery ? "Back to replay" : "Models gallery";
+  scopeNote.textContent = showGallery
+    ? "Model previews are independent from the replay."
+    : "Replay draws recorded frames and decides nothing.";
+  if (showGallery && !galleryInitialized) {
+    galleryInitialized = true;
+    openGallery(
+      gallery,
+      el<HTMLElement>("gallery-canvas"),
+      el<HTMLSelectElement>("gallery-model"),
+      el<HTMLSelectElement>("gallery-clip"),
+      el<HTMLElement>("gallery-status"),
+      el<HTMLElement>("rack-controls"),
+      el<HTMLInputElement>("rack-bays"),
+      el<HTMLInputElement>("rack-levels"),
+    );
+  }
+  if (!showGallery) render();
+});
+
 playButton.addEventListener("click", () => {
   if (replay === null) {
     return;
@@ -141,6 +191,20 @@ slider.addEventListener("input", () => {
   render();
 });
 
+focusButton.addEventListener("click", () => {
+  const frame = current();
+  if (frame === null || scene === null) return;
+  const separator = entitySelect.value.indexOf(":");
+  const kind = entitySelect.value.slice(0, separator);
+  if (kind !== "human" && kind !== "robot") return;
+  const target = focusTarget(frame, kind, entitySelect.value.slice(separator + 1));
+  if (target !== null) scene.focus(target.x, target.y);
+});
+
+fitButton.addEventListener("click", () => {
+  if (replay !== null && scene !== null) scene.fit(replay.frames);
+});
+
 async function loadDemo(): Promise<void> {
   try {
     const response = await fetch("./demo.jsonl");
@@ -156,5 +220,7 @@ async function loadDemo(): Promise<void> {
 
 if (new URLSearchParams(window.location.search).get("demo") === "1") {
   void loadDemo();
+} else if (new URLSearchParams(window.location.search).get("gallery") === "1") {
+  galleryButton.click();
 }
 requestAnimationFrame(frame_loop);
