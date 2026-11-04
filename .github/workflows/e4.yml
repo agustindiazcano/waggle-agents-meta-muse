@@ -1,0 +1,64 @@
+name: Waggle Hive E4 scripted court runs
+
+# COURT_DESIGN branch 8, scripted mode only (AGENTS.md section 3). Reviewers are
+# ScriptedProvider answers from a scripts file: no network, no spend, no secrets.
+# The CLI always loads the development split and refuses pending cases and the
+# synthetic placeholder, so a missing or unreviewed set fails closed. Live and
+# held-out runs need the maintainer's caps and authorization and are not here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "E4 configuration"
+        required: true
+        default: "C_three"
+        type: choice
+        options:
+          - A_single
+          - B_two
+          - C_three
+          - D_cross_family
+          - baseline_no_court
+      cases:
+        description: "Reviewed development review set (repository path)"
+        required: true
+        default: "data/e4/review_set.json"
+      scripts:
+        description: "Scripted reviewer answers (repository path)"
+        required: true
+        default: "data/e4/scripts.json"
+      repeats:
+        description: "Repeats per case (labeled as repeats, not samples)"
+        required: true
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      CONFIG: ${{ inputs.config }}
+      CASES: ${{ inputs.cases }}
+      SCRIPTS: ${{ inputs.scripts }}
+      REPEATS: ${{ inputs.repeats }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked
+      - name: Run scripted E4
+        run: >-
+          uv run python -m waggle.experiments.e4_run
+          --config "$CONFIG" --cases "$CASES" --scripts "$SCRIPTS"
+          --repeats "$REPEATS" --out-dir results/e4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e4-${{ inputs.config }}-${{ github.sha }}
+          path: results/e4/*.json
+          if-no-files-found: error
