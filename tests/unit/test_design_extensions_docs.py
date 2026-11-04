@@ -88,9 +88,12 @@ def test_threat_model_has_t14_to_t16() -> None:
         assert re.search(rf"^\| {tid} \|", text, re.M), tid
 
 
-def test_readme_marks_new_elements_not_implemented() -> None:
+def test_readme_distinguishes_implemented_sensing_from_pending_evaluation() -> None:
     text = _read("README.md")
-    assert text.count(MARK) >= 3
+    row = next(line for line in text.splitlines() if line.startswith("| Simulator and sensing |"))
+    assert "simulated 2D lidar" in row
+    assert "no physical robot validation" in row
+    assert MARK not in row
     assert "lidar is simulated" in text.lower()
     assert "not in the control loop" in text.lower()
 

@@ -1,7 +1,10 @@
 # Waggle Hive: Last context
 
-Updated: 2026-11-04. Branch fix/rollout-separation-check in
-../waggle-rollout-fast-control, based on origin/main 7b99bbf (PR 174).
+Updated: 2026-11-04. PR 177 (`docs/readme-project`) incorporates origin/main
+`a264b5b`, including PR 175 and PR 176. Resolved conflicts in LASTCONTEXT.md,
+PENDING.md and docs/GOTCHAS.md by retaining the newer main audit, both task
+records and both gotchas. Only documentation conflicts were edited. The
+maintainer reviews and merges PRs.
 
 Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
 margin about 4 points, as reviewed in the previous main audit. This bounded
@@ -21,6 +24,16 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
   fast-layer threshold, fencing, audit, MCP rule or trajectory was modified.
 
 ## Done last
+
+- Rewrote README in PR 177 with the project workflow, implementation status,
+  model roles, development results and hackathon requirement/evidence matrix.
+  Accepted participant rules and final delivery checks are not claimed complete.
+- Preserved the main rollout fix and audit below while resolving PR 177 conflicts.
+  PENDING.md keeps rollout task 130 and README task 131. Both GOTCHAS entries remain.
+- No further tests were run, as requested by the maintainer for this README task.
+  Earlier documentation checks passed 181 tests; lint and strict types passed.
+  Full local CI was interrupted. The historical demo replay passed digest-only
+  verification but differed at tick 4 on full resimulation; its fixture is unchanged.
 
 - Tests first: 3 failed and 2 passed on the new proximity cases before the fix.
   Afterwards the rollout test file passed 30 tests; focused strict Mypy passed.
@@ -48,14 +61,14 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 ## Prompt for the next session
 
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
-git status, branches and worktrees, and fetch origin. Review
-fix/rollout-separation-check in ../waggle-rollout-fast-control, based on main
-7b99bbf. It fixes robot-pair proximity false accepts using the existing swept
-geometry and unchanged separation margin (ADR-095). Tests reproduced the false
-acceptance first; 30 rollout tests then passed. Check full CI and publishing
-status before pushing or opening the PR. Project code remains about 88% plus/minus
-4 points, a judgment; the bounded fix is 100%. Do not duplicate already merged
-CourtRuntime, CrisisRuntime, SDK fake-backed test, E8 export or scripted E4 runner.
-Preserve all unmerged worktrees and assets. Never merge docs/context-wave3.
-No paid call, held-out run, migration or safety-threshold change is authorized
-by this handoff. The maintainer reviews and merges PRs.
+status, branches and worktrees, and fetch origin. PR 177 (`docs/readme-project`)
+now incorporates main a264b5b and resolves all three documentation conflicts.
+Check its mergeability and cloud CI before the maintainer merges. Do not run
+more tests for the README task; the maintainer explicitly stopped that work.
+Project code remains about 88% plus/minus 4 points from the main audit; this
+README task adds no product code. Preserve ADR-095 rollout separation semantics,
+all pending tasks, both gotchas and all unmerged worktrees/assets. Do not duplicate
+merged CourtRuntime, CrisisRuntime, SDK fake-backed test, E8 export or scripted
+E4 runner. The example replay is historical and not a current resimulation pass.
+Never merge docs/context-wave3. No paid call, held-out run, migration, secret access
+or safety-threshold change is authorized by this handoff. Agents never merge PRs.

@@ -130,3 +130,7 @@ Known traps. Each entry has a symptom and what to do. Prefer a test or a check t
 ### Robot contact flags do not include robot-pair separation
 - Symptom: a plan rollout reports no collision even when robot footprints are closer than the configured separation margin.
 - What to do: consume robot_robot_gap over the complete tick interval and compare it strictly against the existing margin. The detector's separation flags are for humans; robot contact flags alone cannot establish robot-pair separation. The rollout regression covers noncontact proximity, equality at the margin, idle and moving robots, and scenes with humans. A reported first-violation gap is not a minimum over the entire rollout.
+
+### An example replay can pass integrity checks and fail resimulation
+- Symptom: `uv run replay-verify web/public/demo.jsonl` reports a frame mismatch at tick 4, while `--digest-only` passes.
+- What to do: distinguish recorded playback and file integrity from equivalence to the current simulator. The `fixture0` demo is historical; show the digest-only command for playback setup and disclose the resimulation mismatch. Do not regenerate the fixture or relabel it as a measured experiment to hide the mismatch.

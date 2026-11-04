@@ -2,8 +2,9 @@
 
 Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
 margin about 4 points, retained from the main implementation audit at 7b99bbf.
-This branch fixes rollout robot-pair separation false accepts (ADR-095), task
-code 100%. A bounded correctness fix does not justify a whole-point increase.
+The rollout robot-pair separation fix (ADR-095) is merged in PR 176, task
+code 100%. The README documentation task and its conflict resolution add no
+product code and do not change the main audit estimate.
 Code percentages are judgments, not coverage or experimental results.
 Experiments, calibration, documents, delivery and G-GLOBAL are excluded.
 
@@ -186,3 +187,4 @@ runner are merged. Production integration and experiment gaps remain.
 | 129 | P2 | Route `director`, `planner` and `diagnosis` to `META_WONDER_MODEL_ID` while keeping `META_MODEL_ID` for `court_1` and `vision` (ADR-094) | A | done on branch feat/meta-wonder-routing; maintainer review and merge remain | 100% |
 
 | 130 | P1 | Reject robot-pair separation false accepts in Stage C/D rollouts (ADR-095) | A | implemented on fix/rollout-separation-check; see PR test plan for full gates | 100% |
+| 131 | P2 | Rewrite README around project behavior, current implementation, measured evidence and hackathon requirements | A | PR 177 updated with main a264b5b; conflicts resolved preserving the main audit and both gotchas; 181 documentation/style checks pass; digest-only replay passes; full resimulation differs at tick 4; local full CI stopped at maintainer request; cloud CI and maintainer PR review remain | - |
