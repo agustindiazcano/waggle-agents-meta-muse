@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from waggle.replay.demo import scene_frames, write_scene
+from waggle.experiments.demo_capture import scene_frames, write_scene
 from waggle.replay.replay_format import read_replay
 from waggle.sim.frame import parse_frame, world_hash
 from waggle.sim.scenarios import load_map
