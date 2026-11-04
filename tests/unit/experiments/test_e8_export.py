@@ -41,7 +41,10 @@ class FakeConnection:
         """Record the query and return fixed rows."""
         self.sql = sql
         self.params = params
-        return FakeCursor(self._rows)
+        rows = self._rows
+        if len(params) > 1:
+            rows = [row for row in rows if row[1] in params[1:]]
+        return FakeCursor(rows)
 
 
 class FakeDatabase:
@@ -156,6 +159,7 @@ def test_export_rejects_invalid_inputs(
 
 def test_export_cli_uses_injected_database(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output = tmp_path / "calls-export.json"
+    monkeypatch.setattr("waggle.experiments.e8_run._commit", lambda: "report-commit")
     monkeypatch.setattr(
         "waggle.experiments.e8_run._database_from_environ",
         lambda: FakeDatabase(list(ROWS)),
@@ -182,3 +186,85 @@ def test_export_cli_uses_injected_database(tmp_path: Path, monkeypatch: pytest.M
     report = tmp_path / "report.json"
     assert main(["calls", "--input", str(output), "--output", str(report)]) == 0
     assert json.loads(report.read_text(encoding="utf-8"))["llm_calls"]["total_rows"] == 3
+
+
+def test_fetch_selects_tasks_with_parameters() -> None:
+    task_id = "task-1' OR TRUE --"
+    selected = ("selected", task_id, "advisor", "meta", "model-1", "ok", 1, 1, 0.5, 0.01, None)
+    database = FakeDatabase([*ROWS, selected])
+    records = fetch_call_records(database, mode="mock", task_ids=[task_id, "task-1"])
+    assert "WHERE mode = %s AND task_id IN (%s, %s) ORDER BY call_id" in database.connection.sql
+    assert task_id not in database.connection.sql
+    assert database.connection.params == ("mock", task_id, "task-1")
+    assert [record.request_id for record in records] == ["req-1", "req-3", "selected"]
+
+
+@pytest.mark.parametrize("task_ids", [[], [""], [" "], ["a" * 257], ["task-1", "task-1"], "task-1"])
+def test_invalid_task_selection_does_not_query(task_ids: list[str] | str) -> None:
+    database = FakeDatabase(list(ROWS))
+    with pytest.raises(ValueError, match="task_ids"):
+        fetch_call_records(database, mode="mock", task_ids=task_ids)
+    assert database.connection.sql == ""
+
+
+def test_export_task_selection_round_trips(tmp_path: Path) -> None:
+    output = tmp_path / "selected.json"
+    export_calls(
+        FakeDatabase(list(ROWS)),
+        mode="mock",
+        commit="abc123",
+        prompt_versions={"advisor": "v1"},
+        output=output,
+        task_ids=["task-1"],
+    )
+    records, metadata = load_calls(output)
+    assert [record.request_id for record in records] == ["req-1", "req-3"]
+    assert metadata["commit"] == "abc123"
+    counts = summarize_calls(records)["status_counts"]
+    assert isinstance(counts, dict)
+    assert counts["error"] == 0
+
+
+@pytest.mark.parametrize("task_ids", [["missing"], ["task-1", "missing"]])
+def test_missing_selected_task_creates_no_export(tmp_path: Path, task_ids: list[str]) -> None:
+    output = tmp_path / "absent.json"
+    with pytest.raises(ValueError):
+        export_calls(
+            FakeDatabase(list(ROWS)),
+            mode="mock",
+            commit="abc123",
+            prompt_versions={"advisor": "v1"},
+            output=output,
+            task_ids=task_ids,
+        )
+    assert not output.exists()
+
+
+def test_export_cli_selects_tasks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    extra = ("req-4", "task-2", "advisor", "meta", "model-1", "ok", 1, 1, 0.5, 0.01, None)
+    database = FakeDatabase([*ROWS, extra])
+    monkeypatch.setattr("waggle.experiments.e8_run._database_from_environ", lambda: database)
+    output = tmp_path / "selected.json"
+    assert (
+        main(
+            [
+                "export",
+                "--mode",
+                "mock",
+                "--commit",
+                "abc123",
+                "--prompt-version",
+                "advisor=v1",
+                "--task-id",
+                "task-1",
+                "--task-id",
+                "task-2",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+    records, _ = load_calls(output)
+    assert [record.request_id for record in records] == ["req-1", "req-3", "req-4"]
+    assert database.connection.params == ("mock", "task-1", "task-2")
