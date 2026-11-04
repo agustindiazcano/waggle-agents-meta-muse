@@ -48,8 +48,8 @@ Project: Waggle Hive, a safety and reliability control plane for LLM-directed wa
 7. Path filters are allowed only where safe. The link, style and import-contract tests always run.
 8. Cloud first (maintainer decision). Never run the full test suite locally. The maintainer machine is slow; full test suites run in the cloud on the pushed branch in GitHub Actions. Locally, run only what finishes very fast (the test file being written, lint and format on the changed files). Push the task branch and let GitHub run the checks and read the result there.
 9. Parallelize test execution whenever possible (in cloud workflows and local runners). Do not wait on a long local run: a multi-minute local run is forbidden; push the branch and let the cloud CI execute the test suite in parallel.
-10. Held-out seeds follow section 9 whatever the place: they run once per configuration, in the cloud, and the maintainer commits the result.
-11. Pre-push checks verify secrets (gitleaks), no `.env` or held-out result files, and fast unit checks. Full regression and integration suites run in GitHub Actions on the pushed branch.
+10. Development sweeps use dev seeds and run in the cloud. Held-out seeds follow section 9 whatever the place: they run once per configuration, in the cloud, and the maintainer commits the result.
+11. The pre-push check verifies secrets (gitleaks), no `.env` or held-out result files, and fast unit checks. Full regression and integration suites run in GitHub Actions on the pushed branch.
 
 ## 4. Hard rules
 

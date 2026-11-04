@@ -31,6 +31,13 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 
 ## Done last
 
+- Reproduced PR 178 push CI failure in test_agents_section_3_is_cloud_first:
+  AGENTS.md section 3 omitted dev seeds and the exact pre-push check wording.
+  Restored the explicit cloud-only development sweep rule and pre-push wording;
+  the existing regression test is unchanged. Session brief, style and docs
+  consistency checks passed: 48 tests in 3.41s. Cloud CI remains pending.
+  This documentation task adds no code; project estimate remains 88% +/-4.
+
 - Resolved PR 178 conflicts against main 54aa19e. Only documentation was edited.
   Focused E4, CLI, style and documentation consistency checks passed: 55 tests
   in 8.91s using the existing environment after a new environment hit disk
@@ -77,7 +84,8 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
 Continue Waggle Hive. Read AGENTS.md, LASTCONTEXT.md and PENDING.md first, inspect
 status, branches and worktrees, and fetch origin. PR 178 (`exp/e4-live-runner`)
 incorporates main 54aa19e, including merged PR 177, with documentation conflicts
-resolved. Check mergeability and cloud CI before maintainer review. Live E4
+resolved. The cloud-first documentation regression was reproduced and fixed;
+check the latest cloud CI before maintainer review. Live E4
 A/B/C exists (ADR-096); D needs a verified non-Muse route. Real E4 evaluation,
 E10 harness and production crisis wiring remain pending. Project code remains
 about 88% plus/minus 4 points; court/E4 about 95%, estimated by eye. Preserve
