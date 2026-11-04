@@ -10,7 +10,7 @@ import psycopg
 
 from waggle.db.connection import Database, Row
 
-LATEST_REVISION = 13
+LATEST_REVISION = 14
 _MIGRATION_LOCK = 19730401
 _DDL: tuple[LiteralString, ...] = (
     """CREATE TABLE waggle_schema (
@@ -298,6 +298,26 @@ _LLM_CALLS_DDL: tuple[LiteralString, ...] = (
     """CREATE INDEX llm_calls_spend ON llm_calls (provider) WHERE status = 'ok'""",
 )
 
+_FAILURE_HISTORY_DDL: tuple[LiteralString, ...] = (
+    """CREATE TABLE failure_history (
+        case_id text PRIMARY KEY CHECK (case_id ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        machine_class text NOT NULL CHECK (machine_class IN ('conveyor', 'pump', 'lift')),
+        mode text NOT NULL
+            CHECK (mode IN ('BEARING_WEAR', 'LUBRICATION_LOSS', 'MISALIGNMENT')),
+        onset_to_failure_ticks bigint NOT NULL CHECK (onset_to_failure_ticks >= 1),
+        peak_temperature_c double precision NOT NULL
+            CHECK (peak_temperature_c >= 0 AND peak_temperature_c < 'Infinity'),
+        peak_vibration_rms double precision NOT NULL
+            CHECK (peak_vibration_rms >= 0 AND peak_vibration_rms < 'Infinity'),
+        peak_current_a double precision NOT NULL
+            CHECK (peak_current_a >= 0 AND peak_current_a < 'Infinity'),
+        part_number text NOT NULL CHECK (part_number ~ '^[A-Za-z0-9_.-]{1,64}$'),
+        source text NOT NULL CHECK (length(source) BETWEEN 1 AND 64),
+        created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+    )""",
+    """CREATE INDEX failure_history_mode ON failure_history (mode)""",
+)
+
 _MIGRATIONS = {
     1: _DDL,
     2: _TASK_DDL,
@@ -312,6 +332,7 @@ _MIGRATIONS = {
     11: _TECHNICIAN_DDL,
     12: _PACKAGE_DDL,
     13: _LLM_CALLS_DDL,
+    14: _FAILURE_HISTORY_DDL,
 }
 
 
