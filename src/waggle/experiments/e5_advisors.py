@@ -5,10 +5,13 @@ Implemented, not evaluated, on a scripted provider. The scripted answers prove n
 a real model.
 
 Configurations:
-- C0: Safety advisor off (fast layer alone).
-- C1: Safety advisor on (scripted provider and recorded caution log).
+- C0: Safety advisor off, organizer off (fast layer alone).
+- C1: Safety advisor on, organizer off (scripted provider and recorded caution log).
 - C1_REPLAY: Deterministic replay of the recorded caution log from C1.
-Configurations C2, C3, and C4 require the organizer, which is not implemented, and are refused
+- C2: Safety advisor off, organizer on.
+- C3: Safety advisor on, organizer on.
+- C3_REPLAY: Deterministic replay of the recorded caution log from C3.
+Configuration C4 requires the optional fleet planner, which is not implemented, and is refused
 with UnsupportedConfigurationError.
 """
 
@@ -36,6 +39,7 @@ from waggle.governance.caution import CautionConfig
 from waggle.governance.caution_file import load_caution_log
 from waggle.governance.caution_log import CautionLog
 from waggle.governance.classifier import GuardClassifier, MockClassifier
+from waggle.governance.organizer import OrganizerLimits
 from waggle.llm.advisor_runtime import (
     ADVISOR_PROMPT_HASH,
     ADVISOR_PROMPT_VERSION,
@@ -47,6 +51,7 @@ from waggle.llm.client import LlmClient
 from waggle.llm.client_factory import build_client
 from waggle.llm.errors import ConfigError, ProviderError
 from waggle.llm.models import Completion, LlmRequest
+from waggle.llm.organizer_runtime import McpToolDispatch, OrganizerRuntime
 from waggle.llm.provider_config import select_mode
 from waggle.llm.providers import MockProvider, Provider, ScriptedProvider
 from waggle.llm.routing import load_routes
@@ -57,9 +62,14 @@ logger = logging.getLogger("waggle.experiments.e5")
 
 SEEDS_PATH: Final = Path("data/seeds.json")
 TARGET_LAYER: Final = "fast-layer extra-cap input and organizer boundary"
-RUNNABLE_CONFIGS: Final = frozenset({"C0", "C1", "C1_REPLAY"})
-ORGANIZER_CONFIGS: Final = frozenset({"C2", "C3", "C4"})
+RUNNABLE_CONFIGS: Final = frozenset({"C0", "C1", "C1_REPLAY", "C2", "C3", "C3_REPLAY"})
+REPLAY_CONFIGS: Final = frozenset({"C1_REPLAY", "C3_REPLAY"})
+UNSUPPORTED_CONFIGS: Final = frozenset({"C4"})
 VALID_NONE_JSON: Final = '{"action":"none","speed_cap":null,"duration_ticks":null,"code":null}'
+VALID_ORGANIZER_NONE_JSON: Final = (
+    '{"action":"none","duration_ticks":null,"tool":null,'
+    '"arguments":null,"recipient":null,"status":null}'
+)
 _MODEL_ENV: Final[dict[str, str]] = {
     "META_MODEL_ID": "meta-model",
     "META_VOICE_MODEL_ID": "meta-voice",
@@ -133,7 +143,10 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
     raw = spec.provider_script
     inner: Provider
     if isinstance(raw, str):
-        inner = ScriptedProvider("baseten", by_role={"advisor": raw})
+        inner = ScriptedProvider(
+            "baseten",
+            by_role={"advisor": raw, "organizer": VALID_ORGANIZER_NONE_JSON},
+        )
     elif isinstance(raw, Mapping):
         by_role: dict[str, Any] = {}
         by_request: dict[str, Any] = {}
@@ -142,17 +155,30 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
             by_request = dict(raw.get("by_request", {}))
         else:
             for k, v in raw.items():
-                if k in ("advisor", "guard", "director", "court_1", "court_2", "court_3"):
+                if k in (
+                    "advisor",
+                    "organizer",
+                    "guard",
+                    "director",
+                    "court_1",
+                    "court_2",
+                    "court_3",
+                ):
                     by_role[k] = v
                 else:
                     by_request[k] = v
         if "advisor" not in by_role and not by_request:
             by_role["advisor"] = VALID_NONE_JSON
+        if "organizer" not in by_role and not by_request:
+            by_role["organizer"] = VALID_ORGANIZER_NONE_JSON
         inner = ScriptedProvider("baseten", by_role=by_role, by_request=by_request)
     elif isinstance(raw, ScriptedProvider):
         inner = raw
     else:
-        inner = ScriptedProvider("baseten", by_role={"advisor": VALID_NONE_JSON})
+        inner = ScriptedProvider(
+            "baseten",
+            by_role={"advisor": VALID_NONE_JSON, "organizer": VALID_ORGANIZER_NONE_JSON},
+        )
 
     if spec.failure_window is not None:
         return _WindowFailingProvider(inner, spec.failure_window, lambda: current_tick_holder[0])
@@ -160,7 +186,7 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
 
 
 class E5Runner:
-    """Configures and runs E5 experiment configurations (C0, C1, C1_REPLAY)."""
+    """Configures and runs E5 experiment configurations (C0, C1, C1_REPLAY, C2, C3, C3_REPLAY)."""
 
     def __init__(
         self,
@@ -175,6 +201,8 @@ class E5Runner:
         base_config: E1Config | None = None,
         client_environ: Mapping[str, str] | None = None,
         call_log: CallLog | None = None,
+        organizer_limits: OrganizerLimits | None = None,
+        tool_dispatch: McpToolDispatch | None = None,
     ) -> None:
         if not math.isfinite(near_threshold_m) or near_threshold_m <= 0.0:
             raise ValueError("near_threshold_m must be finite and positive")
@@ -200,6 +228,15 @@ class E5Runner:
         self.near_threshold_m = near_threshold_m
         self._client_environ = client_environ
         self._call_log = call_log
+        self.organizer_limits = organizer_limits or OrganizerLimits(
+            max_prompt_chars=input_limits.max_prompt_chars,
+            min_interval_ticks=max(1, rate_limit_ticks),
+            max_turns_per_task=input_limits.max_calls_per_task,
+            max_messages_per_task=input_limits.max_messages,
+            max_identical_repeats=caution_config.n_max_holds,
+            h_max_ticks=caution_config.h_max_ticks,
+        )
+        self._tool_dispatch = tool_dispatch
 
     def _make_client(self, provider: Provider) -> LlmClient:
         """Client over the scripted provider for the baseten route. Fallbacks are always off.
@@ -241,10 +278,10 @@ class E5Runner:
         if spec.seed not in seeds:
             raise ValueError(f"unknown seed {spec.seed} for scenario {spec.scenario}")
 
-        # Refuse C2, C3, C4 or unknown configurations
-        if spec.config in ORGANIZER_CONFIGS:
+        # Refuse C4 (fleet planner) or unknown configurations
+        if spec.config in UNSUPPORTED_CONFIGS:
             raise UnsupportedConfigurationError(
-                f"Configuration {spec.config} requires the organizer, which is not implemented"
+                f"Configuration {spec.config} requires the fleet planner, which is not implemented"
             )
         if spec.config not in RUNNABLE_CONFIGS:
             raise UnsupportedConfigurationError(f"unknown configuration {spec.config}")
@@ -256,27 +293,42 @@ class E5Runner:
         caution_log: CautionLog
         bridge: AdvisorBridge | None = None
         runtime: AdvisorRuntime | None = None
+        org_runtime: OrganizerRuntime | None = None
         current_tick_holder = [0]
 
         if spec.config == "C0":
             caution_log = CautionLog(self.caution_config)
-        elif spec.config == "C1_REPLAY":
+        elif spec.config in REPLAY_CONFIGS:
             caution_log = self._replay_log(spec)
             bridge = AdvisorBridge(caution_log, robot_ids)
         else:
             caution_log = CautionLog(self.caution_config)
             bridge = AdvisorBridge(caution_log, robot_ids)
             provider = _build_provider(spec, current_tick_holder)
-            runtime = AdvisorRuntime(
-                client=self._make_client(provider),
-                caution_log=caution_log,
-                config=self.caution_config,
-                timeout_s=self.timeout_s,
-                max_response_chars=self.max_response_chars,
-                rate_limit_ticks=self.rate_limit_ticks,
-                classifier=self.classifier,
-                input_limits=self.input_limits,
-            )
+            client = self._make_client(provider)
+            if spec.config in ("C1", "C3"):
+                runtime = AdvisorRuntime(
+                    client=client,
+                    caution_log=caution_log,
+                    config=self.caution_config,
+                    timeout_s=self.timeout_s,
+                    max_response_chars=self.max_response_chars,
+                    rate_limit_ticks=self.rate_limit_ticks,
+                    classifier=self.classifier,
+                    input_limits=self.input_limits,
+                )
+            if spec.config in ("C2", "C3"):
+                org_runtime = OrganizerRuntime(
+                    client=client,
+                    caution_log=caution_log,
+                    caution_config=self.caution_config,
+                    limits=self.organizer_limits,
+                    timeout_s=self.timeout_s,
+                    max_response_chars=self.max_response_chars,
+                    max_messages=self.input_limits.max_messages,
+                    classifier=self.classifier,
+                    tool_dispatch=self._tool_dispatch,
+                )
 
         sim, det = scenarios.build_engine(
             scenario, streams_for(self.base_config, len(scenario.robots))
@@ -292,13 +344,14 @@ class E5Runner:
         distance = 0.0
         caller = (
             None
-            if runtime is None
+            if (runtime is None and org_runtime is None)
             else AdvisorCaller(
                 runtime,
                 robot_ids=robot_ids,
                 run_id=f"run-{spec.scenario}-{spec.seed}",
                 near_threshold_m=self.near_threshold_m,
                 trigger_ticks=spec.trigger_ticks,
+                organizer=org_runtime,
             )
         )
 
@@ -334,6 +387,8 @@ class E5Runner:
             "cautions_issued": len(caution_log.events),
             "cautions_rejected": {} if caller is None else dict(caller.rejected),
             "advisor_calls": 0 if caller is None else caller.advisor_calls,
+            "organizer_calls": 0 if caller is None else caller.organizer_calls,
+            "messages_sent": 0 if org_runtime is None else len(org_runtime.outbound_messages),
             "event_log_digest": caution_log.digest(),
             "caution_log_jsonl": caution_log.to_jsonl(),
         }
