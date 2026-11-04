@@ -37,6 +37,7 @@ def test_shipped_verified_prices_build(route: str) -> None:
 @pytest.mark.parametrize("route", sorted(MODEL_ENV_BY_ROUTE))
 def test_unverified_prices_are_refused(route: str, monkeypatch: pytest.MonkeyPatch) -> None:
     import llm_smoke_support
+
     from waggle.llm.provider_config import Price
 
     monkeypatch.setattr(
