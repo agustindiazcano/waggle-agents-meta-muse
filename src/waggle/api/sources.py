@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from waggle.api.config import ApiConfig
-from waggle.replay import replay_format
+from waggle.replay import overlay_data, replay_format
 from waggle.sim import frame, scenarios
 
 
@@ -52,14 +52,19 @@ def live_items(config: ApiConfig, scenario_id: str) -> Generator[Item]:
 
 def _live_gen(config: ApiConfig, scenario: scenarios.Scenario) -> Generator[Item]:
     sim, _detector = scenarios.build_engine(scenario)
-    world = frame.export_world(scenarios.load_map(scenario.map_name))
+    box = scenarios.load_map(scenario.map_name)
+    world = frame.export_world(box)
     yield Item("meta", None, frame.encode_frame({"type": "world", **world}))
     run = frame.RunInfo(config.commit, config.live_seed, scenario.id, "live")
     for _ in range(scenario.duration_ticks):
         sim.step()
         tick = sim.state.tick
         try:
-            text = frame.encode_frame(frame.export_frame(sim, run))
+            text = frame.encode_frame(
+                frame.export_frame(
+                    sim, run, overlays=overlay_data.build_overlays(sim, scenario, box)
+                )
+            )
         except frame.FrameTooLarge:
             text = None
         yield Item("frame", tick, text)

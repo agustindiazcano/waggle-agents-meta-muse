@@ -14,7 +14,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TextIO
 
-from waggle.replay import replay_format
+from waggle.replay import overlay_data, replay_format
 from waggle.sim import frame, scenarios
 
 USAGE = "usage: replay-verify [--digest-only] FILE"
@@ -48,7 +48,8 @@ def _rerun(replay: replay_format.Replay) -> list[str]:
     except ValueError as error:
         return [f"cannot rebuild the scenario: {error}"]
     sim, _ = scenarios.build_engine(scenario)
-    if frame.world_hash(scenarios.load_map(scenario.map_name)) != header["world_hash"]:
+    box = scenarios.load_map(scenario.map_name)
+    if frame.world_hash(box) != header["world_hash"]:
         return ["world hash does not match the scenario map"]
     problems: list[str] = []
     for recorded in replay.frames:
@@ -58,7 +59,10 @@ def _rerun(replay: replay_format.Replay) -> list[str]:
             return [f"tick {recorded['tick']}: earlier than the simulator position"]
         run = recorded["run"]
         info = frame.RunInfo(run["commit"], run["seed"], run["scenario_id"], run["source"])
-        again = frame.export_frame(sim, info)
+        overlays = (
+            overlay_data.build_overlays(sim, scenario, box) if recorded.get("overlays") else None
+        )
+        again = frame.export_frame(sim, info, overlays=overlays)
         if frame.encode_frame(again) != frame.encode_frame(recorded):
             problems.append(f"tick {recorded['tick']}: frame differs from the re-run")
             break
