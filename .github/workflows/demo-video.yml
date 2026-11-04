@@ -50,7 +50,7 @@ jobs:
           npm ci
           npx playwright install --with-deps chrome
       - name: Record shot
-        if: inputs.shot == 'all' || inputs.shot == matrix.n
+        if: github.event_name == 'push' || inputs.shot == 'all' || inputs.shot == format('{0}', matrix.n)
         env:
           WAGGLE_PLAYWRIGHT_PACKAGE: ${{ github.workspace }}/web/package.json
           WAGGLE_BROWSER_CHANNEL: chrome
@@ -59,7 +59,7 @@ jobs:
           node demo/capture.mjs shot ${{ matrix.start }} ${{ matrix.seconds }} output/shot-${{ matrix.n }}.mp4 1920 1080 audio
           ls -la output
       - name: Upload shot artifact
-        if: inputs.shot == 'all' || inputs.shot == matrix.n
+        if: github.event_name == 'push' || inputs.shot == 'all' || inputs.shot == format('{0}', matrix.n)
         uses: actions/upload-artifact@v4
         with:
           name: shot-${{ matrix.n }}
