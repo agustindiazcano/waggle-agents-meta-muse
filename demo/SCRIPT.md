@@ -4,16 +4,27 @@ Voice: Windows System.Speech, Microsoft Zira Desktop (synthetic, no paid call).
 Subtitles: demo/subtitles.srt, same lines and timings.
 All ids are presentation mocks: ORD-1042, PKG-8841, TRK-07, TRK-12, T-331, R-B04.
 
-| Shot | Time | Duration | Picture | Narration |
-|---|---|---|---|---|
-| 1 | 0:00-0:15 | 15 s | Global network, three warehouses, urgent order arrives | Three warehouses. Thirty robots. One urgent order. / ORD-1042: transfer PKG-8841 from WH-A to WH-C. Priority: urgent. |
-| 2 | 0:15-0:35 | 20 s | Coordinator to organizer to advisor zoom | One global coordinator assigns the transfer to three cell organizers. / Each organizer directs ten robots. Thirty advisors add caution; deterministic code decides. |
-| 3 | 0:35-1:05 | 30 s | Pickup, human crossing, fast-layer stop, resume | WH-B organizer assigns pickup. PKG-8841 attaches to carrier R-B04. / A human crosses the aisle. The fast layer commands a stop. No model is in this loop. / Clear. Motion resumes inside the allowed envelope. |
-| 4 | 1:05-1:30 | 25 s | Package label override attempt rejected | A package label tries to add an override instruction. / Screening, strict schema and tool permissions reject it. The order is unchanged. |
-| 5 | 1:30-2:00 | 30 s | Overheating alert, ticket, ghost routes, court review | Machine M-B2 reports overheating. Ticket, diagnosis and part reservation open. / Simulated route variants are reviewed. One safe alternative is selected. |
-| 6 | 2:00-2:35 | 35 s | Truck delay, global reassignment, delivery | Truck TRK-07 is delayed. The coordinator reassigns the transfer to TRK-12. / PKG-8841 is loaded, moved and delivered. ORD-1042 is complete. |
-| 7 | 2:35-2:45 | 10 s | Engineering evidence card | Measured evidence, from committed result files. Development seeds only. |
-| 8 | 2:45-3:00 | 15 s | Fleet return, closing card, attribution | Waggle Hive. Models propose. Deterministic code disposes. |
+Narration script (maintainer version, 2026-11-04). Model roles: guard is Meta
+Muse Glimmer (Modal); advisor and organizer are Meta Muse Spark Open
+(Baseten); director, planner and diagnosis are Meta Muse Wonder (Meta);
+the court is three independent reviewers, Meta Muse Spark, Meta Muse
+Spark Open and Meta Muse Glimmer. Hard safety (fast layer, fencing, MCP)
+is deterministic code with no model. The global coordinator between
+warehouses (custody G1-G7) is designed, not implemented: in the film it is a
+labeled mock.
+
+| Scene | Time | Picture | Narration |
+|---|---|---|---|
+| 1 | 0:00-0:25 | The warehouse: three cells, thirty robots, envelopes and lidar shadows | Three cells, thirty robots, trucks and packages. Every robot carries its advisor: Meta Muse Spark Open, a fast model that can only ask for caution, never accelerate. No message reaches a model without the guard filter: Meta Muse Glimmer screens every input first. |
+| 2 | 0:25-0:50 | The plan: director and planner propose, ghost paths K=5 | When replanning is needed, the director and the planner, Meta Muse Wonder, the most capable model, propose routes. Five simulated route variants, K equals 5, are checked before any motion is allowed. |
+| 3 | 0:50-1:30 | The court: three reviewers vote; E4-DEV-05 injection denied; E4-DEV-04 human in bay, deny | Nothing executes without a verdict. Three independent reviewers vote: Meta Muse Spark, Meta Muse Spark Open, and Meta Muse Glimmer. Case E4-DEV-05: a package label tries a prompt injection. The court denies it. A false approval would be the dangerous error. Case E4-DEV-04: a human in the bay. Deny. The court can stop a plan; it can never invent motion. |
+| 4 | 1:30-2:10 | The organizer: tasks C0 to C4, MCP identity, token, zone and audit | One organizer per warehouse, Meta Muse Spark Open, assigns tasks C0 to C4 with its own MCP identity. Every tool call checks token, zone and audit. What the court did not approve, the organizer cannot request. The fast safety layer is deterministic code at 100 hertz. Fencing and the MCP boundary are code, with no model inside. |
+| 5 | 2:10-2:45 | Crisis E10 and predictive maintenance E6; labeled: demonstrated in simulation | If a human blocks the only aisle, crisis replanning E10 proposes a new route, reviewed the same way. Predictive maintenance E6 diagnoses vibration and opens a ticket before the failure. Demonstrated in simulation. |
+| 6 | 2:45-3:00 | Global coordinator (mock, labeled) and closing banner | Between warehouses, a global coordinator will move custody by truck. Today it is a labeled mock: global logistics is designed, not implemented. Waggle Hive. Models propose. Deterministic code disposes. |
+
+The synthetic WAV narration still carries the previous script. Re-record or
+regenerate it from this table before the final montage; the maintainer
+records the final audio.
 
 Cloud capture (preferred): GitHub Actions workflow "Waggle Hive demo video
 shots" (.github/workflows/demo-video.yml, workflow_dispatch, input shot=all
