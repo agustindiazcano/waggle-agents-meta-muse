@@ -70,8 +70,10 @@ def test_experiments_doc_states_the_layout() -> None:
 def test_readme_documents_tools_and_the_weak_control() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "tools/" in readme.split("## Run")[0]
-    assert "weak control" in readme
-    assert "branch protection" in readme
+    assert "docs/VALIDATION_NOTES.md" in readme
+    notes = (ROOT / "docs/VALIDATION_NOTES.md").read_text(encoding="utf-8")
+    assert "weak control" in notes
+    assert "branch protection" in notes
 
 
 def test_pending_lists_branch_protection() -> None:

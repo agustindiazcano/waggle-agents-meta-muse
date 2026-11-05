@@ -100,7 +100,8 @@ def test_experiments_fix_the_seed_split() -> None:
 
 
 def test_readme_states_the_reproduction_scope() -> None:
-    text = _read("README.md").lower()
+    assert "docs/VALIDATION_NOTES.md" in _read("README.md")
+    text = _read("docs/VALIDATION_NOTES.md").lower()
     assert "same platform and numpy version" in text
     assert "cloud run" in text and "linux" in text
 
@@ -110,7 +111,9 @@ def test_adr_021_states_2d_floor_plane_and_3d_rendering() -> None:
     for term in ("floor plane", "Height is not modeled", "Three.js", "FPV"):
         assert term in adr, term
     readme = _read("README.md")
-    assert "floor plane" in readme and "Height is not modeled" in readme
+    assert "2D robotics simulation" in readme
+    notes = _read("docs/VALIDATION_NOTES.md")
+    assert "floor plane" in notes and "Height is not modeled" in notes
 
 
 def test_robot_table_has_kinematic_parameters() -> None:

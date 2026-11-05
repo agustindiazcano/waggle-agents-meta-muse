@@ -153,9 +153,12 @@ def test_readme_marks_crisis_implementation_and_remaining_validation() -> None:
     row = next(line for line in readme.splitlines() if line.startswith("| Crisis replanning |"))
     assert "LLM proposer adapter" in row
     assert "E10 harness and production caller" in row
-    assert row.endswith("| Live evaluation |")
+    assert "Snapshot forks" in row
+    notes = _read("docs/VALIDATION_NOTES.md")
+    assert "docs/VALIDATION_NOTES.md" in readme
+    assert "live E10 outcomes are implemented, not evaluated" in notes
     assert "designed, not implemented" not in row
-    assert "not formal verification" in readme.lower()
+    assert "not formal verification" in notes.lower()
 
 
 def test_pending_asks_for_the_missing_e9_definition() -> None:
