@@ -864,6 +864,8 @@ function groundOnFloor(obj) {
 
 const ambientWorkers = [];
 let workerCrossing = null;
+// Workers are hidden for the video: the GLB rigs render oversized.
+const SHOW_WORKERS = false;
 
 function populateSceneWithAssets() {
   // 1. POPULATE TREES
@@ -925,7 +927,7 @@ function populateSceneWithAssets() {
     const mx1 = new THREE.AnimationMixer(w1);
     const clip1 = rawAssets.worker1.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker1.animations[0];
     if (clip1) mx1.clipAction(clip1).play();
-    mixers.push(mx1); mx1.update(0.05); groundOnFloor(w1);
+    mixers.push(mx1); mx1.update(0.05); groundOnFloor(w1); w1.visible = SHOW_WORKERS;
     ambientWorkers.push({ obj: w1, baseX: -90, baseZ: 15, range: 6, axis: 'x', speed: 0.5 });
   }
 
@@ -936,7 +938,7 @@ function populateSceneWithAssets() {
     const mx2 = new THREE.AnimationMixer(w2);
     const clip2 = rawAssets.worker2.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker2.animations[0];
     if (clip2) mx2.clipAction(clip2).play();
-    mixers.push(mx2); mx2.update(0.05); groundOnFloor(w2);
+    mixers.push(mx2); mx2.update(0.05); groundOnFloor(w2); w2.visible = SHOW_WORKERS;
     workerCrossing = w2;
   }
 
@@ -948,7 +950,7 @@ function populateSceneWithAssets() {
     const mx3 = new THREE.AnimationMixer(w3);
     const clip3 = rawAssets.worker3.animations.find(a => a.name === 'Idle_11') || rawAssets.worker3.animations[0];
     if (clip3) mx3.clipAction(clip3).play();
-    mixers.push(mx3); mx3.update(0.05); groundOnFloor(w3);
+    mixers.push(mx3); mx3.update(0.05); groundOnFloor(w3); w3.visible = SHOW_WORKERS;
   }
 
   if (rawAssets.worker4 && rawAssets.worker4.scene) {
@@ -959,7 +961,7 @@ function populateSceneWithAssets() {
     const mx4 = new THREE.AnimationMixer(w4);
     const clip4 = rawAssets.worker4.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker4.animations[0];
     if (clip4) mx4.clipAction(clip4).play();
-    mixers.push(mx4); mx4.update(0.05); groundOnFloor(w4);
+    mixers.push(mx4); mx4.update(0.05); groundOnFloor(w4); w4.visible = SHOW_WORKERS;
     ambientWorkers.push({ obj: w4, baseX: 95, baseZ: 21, range: 4.5, axis: 'z', speed: 0.45 });
   }
 
@@ -1197,7 +1199,7 @@ function updateSceneAt(t) {
     const workerZ = lerp(-12, 5, crossProgress);
     workerCrossing.position.set(6, FLOOR_FEET_Y + (workerCrossing.userData.dy || 0), workerZ);
     workerCrossing.rotation.y = 0;
-    workerCrossing.visible = (t >= 40 && t < 65);
+    workerCrossing.visible = SHOW_WORKERS && (t >= 40 && t < 65);
   }
 
   ambientWorkers.forEach(w => {
