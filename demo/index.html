@@ -1430,10 +1430,12 @@ function animate() {
 }
 
 // Start
-init3DAssets().then(() => {
+window.__demo = { SUBS, stateAt: (t) => { currentTime = t; updateSceneAt(t); } };
+window.__assetsReady = init3DAssets().then(() => {
   updateSceneAt(0);
   animate();
   console.log('Waggle Hive 3D Presentation initialized in English.');
+  return 'glb';
 });
 </script>
 </body>
