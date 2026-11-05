@@ -1,9 +1,5 @@
 ﻿# Waggle Hive: Pending
 
-README banner task (2026-11-04): HTML source and 1600 by 500 Chrome capture added
-on docs/readme-brand-header. Project code estimate remains 95% plus/minus 2 points
-by eye, code only; this presentation asset does not change it.
-
 Code progress of the project (estimate by eye, code only): 95% on 2026-11-04,
 margin about 2 points, recomputed bottom-up after PRs 180 to 185 merged
 (30,664 source lines, 35,595 test lines measured on main). Scope decisions
@@ -39,7 +35,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Validate MCP with a real SDK client | A, M | 100% | Official SDK client passed on main 2026-11-04 (2 tests, production LineServer, fake dispatcher, no database); no broader conformity claim |
 | P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 100% | Overlays now fed from simulator state in PR 189 (ADR-093 contract); maintainer visual review remains |
 | P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 100% | Production assembly merged in PR 181; real PostgreSQL run remains |
-| P3 | Add real transcription/vision integration and UI (Vertex discarded, ADR-097) | A, M | 85% | Voice-intent, E7 voice mock, vision-v1 schema, vision adapter, label pipeline and E7 vision mock implemented on feat/vision-label (ADR-099, mock only, not evaluated); real Meta vision call, FPV rendering, UI and real E7 run remain pending maintainer caps and label review |
+| P3 | Add real transcription/vision integration and UI (Vertex discarded, ADR-097) | A, M | 75% | Deferred by maintainer decision 2026-11-04; voice-intent and mock E7 exist; vision is the first nice-to-have after the global demo |
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 100% | Revision 15 FK and packages_match equality merged in PR 188; heavy PostgreSQL tests run in the cloud workflow |
 | P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 100% | Diagnosed 2026-11-04 with fresh per-tick traces: S03 is head-on deadlock (corridor locking), S06/S11 are a human stopped on the only route (safe stop, E10 recovery); one ghost estop episode remains and needs a maintainer ADR decision (static-structure filter outside occlusion, human-at-rack test first). No limit was changed |
 | P2 | Complete E8 production collection and calibration | A, M | 75% | Report runner, cloud control benchmark and extrapolation implemented; database export automation remains; measurements pending |
@@ -203,7 +199,7 @@ runner are merged. Production integration and experiment gaps remain.
 | 132 | P2 | Resolve PR 178 documentation conflicts against main 54aa19e | A | resolved: retain main audit, live E4 status, README and rollout tasks, and both warning entries; 55 focused E4/CLI/style/docs checks passed; cloud CI and maintainer review remain | - |
 | 133 | P2 | Fix PR 178 cloud-first documentation regression | A | reproduced missing dev seeds wording; restored explicit cloud sweep and pre-push wording without changing the test; 48 session-brief/style/docs tests passed in 3.41s; cloud CI pending | - |
 
-| 134 | P2 | Produce a three-minute finished-product demo with real scenes and mocks for pending behavior | A, M | handoff in ../waggle-video-demo-plan on docs/video-demo-plan, docs/VIDEO_DEMO_PLAN.md; full 3D global scene required (three cells, thirty robots, trucks, coordinator and reassignment); small persistent banner with Powered by Meta Muse, Agustin Diaz Cano and MS Candidate, Systems Engineering; official Meta floor decals; verify final attribution; five-second MP4 export proof first; all presentation implementation and render still pending; no core code change, estimate retained at 88% +/-4 on 2026-11-04 | - |
+| 134 | P2 | Produce a three-minute finished-product demo with real scenes and mocks for pending behavior | A, M | in progress: maintainer presentation page on feat/video-demo with the six-scene technical narration script, index (1) style cells, GLB trucks and grounded workers; the maintainer records one continuous take on their PC, trims it, and the agent generates the narration audio from demo/SCRIPT.md and merges it into that video; no core code change | - |
 | 135 | P1 | Publish video-plan docs PR against main | A, M | maintainer explicitly requested PR publication with no further tests for this documentation task; earlier 51 docs/style tests passed and plan commit secret scan found no leaks; publication in progress; maintainer reviews and merges | - |
 | 136 | P2 | Add Waggle Hive HTML banner, Meta symbol and rectangular screenshot to README | A, M | published with cleanup in PR 191 against main; visual inspection passed at 1600 by 500; earlier 42 docs/style checks pass; maintainer review and merge remain | - |
 | 137 | P2 | Clean README delivery scaffolding and stale implementation status | A, M | PR 191 merged as 594ac60; CI-only follow-up PR 192 on ci/docs-only-scope implements requested suite skipping under ADR-098; cloud scope jobs passed with Python/viewer skipped; no local tests; review and merge PR 192 remain | - |

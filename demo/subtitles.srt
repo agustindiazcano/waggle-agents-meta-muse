@@ -1,0 +1,56 @@
+﻿1
+00:00:00,000 --> 00:00:08,000
+Three cells, thirty robots, trucks and packages.
+
+2
+00:00:08,000 --> 00:00:17,000
+Every robot carries its advisor: Meta Muse Spark Open, a fast model that can only ask for caution, never accelerate.
+
+3
+00:00:17,000 --> 00:00:25,000
+No message reaches a model without the guard filter: Meta Muse Glimmer screens every input first.
+
+4
+00:00:25,000 --> 00:01:37,000
+When replanning is needed, the director and the planner, Meta Muse Wonder, the most capable model, propose routes.
+
+5
+00:01:37,000 --> 00:01:50,000
+Five simulated route variants, K equals 5, are checked before any motion is allowed.
+
+6
+00:01:50,000 --> 00:01:02,000
+Nothing executes without a verdict. Three independent reviewers vote: Meta Muse Spark, Meta Muse Spark Open, and Meta Muse Glimmer.
+
+7
+00:01:02,000 --> 00:01:18,000
+Case E4-DEV-05: a package label tries a prompt injection. The court denies it. A false approval would be the dangerous error.
+
+8
+00:01:18,000 --> 00:02:30,000
+Case E4-DEV-04: a human in the bay. Deny. The court can stop a plan; it can never invent motion.
+
+9
+00:02:30,000 --> 00:02:45,000
+One organizer per warehouse, Meta Muse Spark Open, assigns tasks C0 to C4 with its own MCP identity.
+
+10
+00:02:45,000 --> 00:02:00,000
+Every tool call checks token, zone and audit. What the court did not approve, the organizer cannot request.
+
+11
+00:02:00,000 --> 00:02:10,000
+The fast safety layer is deterministic code at 100 hertz. Fencing and the MCP boundary are code, with no model inside.
+
+12
+00:02:10,000 --> 00:02:25,000
+If a human blocks the only aisle, crisis replanning E10 proposes a new route, reviewed the same way.
+
+13
+00:02:25,000 --> 00:03:45,000
+Predictive maintenance E6 diagnoses vibration and opens a ticket before the failure. Demonstrated in simulation.
+
+14
+00:03:45,000 --> 00:03:00,000
+Between warehouses, a global coordinator will move custody by truck. Today it is a labeled mock: global logistics is designed, not implemented. Waggle Hive. Models propose. Deterministic code disposes.
+

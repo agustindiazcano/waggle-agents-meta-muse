@@ -1,0 +1,73 @@
+# GitHub Pages deployment for the interactive Waggle Hive site (home + 3D demo).
+# Required repo setting (already enabled by the maintainer on 2026-11-04):
+# Settings > Pages > Source: GitHub Actions (build_type=workflow).
+# Site URL: https://agustindiazcano.github.io/waggle-agents-meta-muse/
+name: Deploy interactive site to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, feat/web-interactive-demo]
+    paths:
+      - "web/**"
+      - "demo/assets/**"
+      - ".github/workflows/pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out with LFS models
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install viewer dependencies
+        working-directory: web
+        run: npm ci
+      - name: Sync demo models into the site
+        working-directory: web
+        run: |
+          mkdir -p public/models
+          cp ../demo/assets/worker-1.glb ../demo/assets/worker-2.glb ../demo/assets/worker-3.glb ../demo/assets/worker-4.glb ../demo/assets/Shipping_Container.glb public/models/
+          ls -la public/models
+      - name: Copy the maintainer demo page into the site
+        working-directory: web
+        run: |
+          mkdir -p public/demo/assets
+          cp ../demo/index.html public/demo/index.html
+          cp -r ../demo/vendor ../demo/utils public/demo/
+          cp ../demo/assets/carrier_bot.glb ../demo/assets/heavy_forklift_bot.glb ../demo/assets/parts_runner_bot.glb ../demo/assets/tech_repair_bot.glb ../demo/assets/tree.glb ../demo/assets/Blue_Delivery_Truck.glb ../demo/assets/Shipping_Container.glb ../demo/assets/worker-1.glb ../demo/assets/worker-2.glb ../demo/assets/worker-3.glb ../demo/assets/worker-4.glb ../demo/assets/meta-logo.svg public/demo/assets/
+          ls -la public/demo public/demo/assets
+      - name: Build site
+        working-directory: web
+        run: npm run build
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

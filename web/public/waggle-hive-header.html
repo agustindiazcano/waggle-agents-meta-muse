@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waggle Hive</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1600px; height: 500px; overflow: hidden; }
+    body { background: #0b111b; color: #f4f6fa; font-family: "Segoe UI", Arial, sans-serif; }
+    main { position: relative; height: 500px; padding: 66px 84px; isolation: isolate; }
+    main::before {
+      content: ""; position: absolute; inset: 0; z-index: -1;
+      background: radial-gradient(ellipse at 86% 47%, #193948 0%, transparent 48%),
+        linear-gradient(115deg, #111c2a, #0b111b 65%);
+    }
+    .grid { position: absolute; inset: 0; z-index: -1; opacity: .13;
+      background-image: linear-gradient(#7192a5 1px, transparent 1px),
+        linear-gradient(90deg, #7192a5 1px, transparent 1px);
+      background-size: 48px 48px; mask-image: linear-gradient(90deg, transparent 35%, black); }
+    .wordmark { display: flex; align-items: center; gap: 28px; margin-top: 40px; }
+    .mark { width: 104px; height: 112px; flex: none; }
+    h1 { margin: 0; font-size: 108px; line-height: 1.1; font-weight: 650;
+      letter-spacing: -6px; }
+    h1 span { color: #ffcf67; font-weight: 350; }
+    .subtitle { margin: 22px 0 0 136px; font-size: 27px; color: #becbd8;
+      letter-spacing: .5px; }
+    .meta { position: absolute; bottom: 54px; left: 86px; display: flex;
+      align-items: center; gap: 15px; }
+    .meta img { width: 53px; height: 35px; object-fit: contain; }
+    .meta strong { font-size: 27px; font-weight: 550; letter-spacing: -.8px; }
+    .meta small { border-left: 1px solid #40505e; padding-left: 20px;
+      margin-left: 9px; color: #8fA4b6; font-size: 14px; letter-spacing: 1px; }
+    .fleet { position: absolute; width: 480px; height: 400px; right: 52px; top: 50px; }
+    .edge { fill: none; stroke: #7ec5cb; stroke-opacity: .22; stroke-width: 1.5; }
+    .route { fill: none; stroke: #ffcf67; stroke-width: 2; stroke-dasharray: 5 9;
+      stroke-linecap: round; opacity: .55; }
+    .cell { fill: #142b36; stroke: #41636d; stroke-width: 1.5; }
+    .robot { fill: #ffcf67; }
+    .sensor { fill: #19323d; }
+    .node { fill: #8ad6dc; }
+  </style>
+</head>
+<body>
+  <main aria-label="Waggle Hive project banner">
+    <div class="grid" aria-hidden="true"></div>
+    <div class="wordmark">
+      <svg class="mark" viewBox="0 0 104 112" aria-label="Waggle Hive hexagon logo">
+        <path d="M52 5 98 31v50l-46 26L6 81V31Z" fill="none"
+          stroke="#ffcf67" stroke-width="5" stroke-linejoin="round"/>
+        <path d="m25 40 12 33 15-24 15 24 12-33" fill="none"
+          stroke="#ffcf67" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="52" cy="26" r="4" fill="#8ad6dc"/>
+      </svg>
+      <h1>Waggle <span>Hive</span></h1>
+    </div>
+    <p class="subtitle">Agentic robot fleets for logistics</p>
+    <div class="meta">
+      <img src="meta-logo.svg" alt="Meta">
+      <strong>Meta</strong>
+      <small>GLOBAL AI DEVELOPER HACKATHON</small>
+    </div>
+    <svg class="fleet" viewBox="0 0 480 400" aria-hidden="true">
+      <defs>
+        <g id="cell"><path class="cell" d="m0-65 56 32.5v65L0 65-56 32.5v-65Z"/></g>
+        <g id="robot">
+          <rect class="robot" x="-22" y="-20" width="44" height="40" rx="12"/>
+          <rect class="sensor" x="-13" y="-10" width="26" height="10" rx="5"/>
+          <circle cx="-7" cy="-5" r="2" fill="#8ad6dc"/>
+          <circle cx="7" cy="-5" r="2" fill="#8ad6dc"/>
+          <path d="M-9 10H9" stroke="#19323d" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </defs>
+      <path class="edge" d="m240 10 167 96v192L240 394 73 298V106Z"/>
+      <path class="edge" d="m240 42 139 80v160l-139 80-139-80V122Z"/>
+      <path class="route" d="M128 136 240 72l112 64v128l-112 64-112-64V136l224 128M128 264l224-128"/>
+      <use href="#cell" x="240" y="200"/>
+      <use href="#cell" x="128" y="136"/>
+      <use href="#cell" x="352" y="136"/>
+      <use href="#cell" x="128" y="264"/>
+      <use href="#cell" x="352" y="264"/>
+      <use href="#robot" x="128" y="136"/>
+      <use href="#robot" x="352" y="136"/>
+      <use href="#robot" x="128" y="264"/>
+      <use href="#robot" x="352" y="264"/>
+      <path d="m240 170 26 15v30l-26 15-26-15v-30Z" fill="#8ad6dc"/>
+      <path d="m225 190 8 22 7-14 7 14 8-22" fill="none" stroke="#17323e"
+        stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle class="node" cx="240" cy="42" r="4"/>
+      <circle class="node" cx="240" cy="362" r="4"/>
+      <circle class="node" cx="73" cy="106" r="4"/>
+      <circle class="node" cx="407" cy="298" r="4"/>
+    </svg>
+  </main>
+</body>
+</html>

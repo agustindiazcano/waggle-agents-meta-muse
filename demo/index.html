@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waggle Hive - 3D Logistics Fleet Presentation</title>
+<style>
+  :root {
+    --bg: #090d14;
+    --panel-bg: rgba(11, 17, 27, 0.92);
+    --border: #1d2c3f;
+    --gold: #ffcf67;
+    --cyan: #8ad6dc;
+    --green: #35d07f;
+    --red: #ff4757;
+    --text: #f4f6fa;
+    --muted: #8fa4b6;
+  }
+  * { box-sizing: border-box; user-select: none; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  
+  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  
+  /* ================= TOP NAVBAR ================= */
+  #navbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 64px;
+    background: #0b111b;
+    border-bottom: 1px solid #1d2c3f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 100;
+  }
+  .nav-left { display: flex; align-items: center; gap: 14px; }
+  .nav-left svg.mark { width: 36px; height: 40px; }
+  .brand-text h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; line-height: 1; color: #fff; }
+  .brand-text h1 span { color: var(--gold); font-weight: 350; }
+  .brand-text p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+
+  .nav-center { display: flex; align-items: center; gap: 10px; }
+  .nav-center img { height: 22px; width: auto; object-fit: contain; }
+  .nav-center strong { font-size: 17px; font-weight: 600; color: #fff; }
+  .nav-center small { border-left: 1px solid rgba(143, 164, 182, 0.4); padding-left: 12px; margin-left: 4px; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; color: var(--cyan); }
+
+  .nav-right { text-align: right; line-height: 1.25; }
+  .nav-right .author { font-size: 16px; font-weight: 600; color: #fff; }
+  .nav-right .role { font-size: 11px; color: var(--gold); letter-spacing: 0.3px; font-weight: 500; }
+
+  /* ================= BOTTOM TIMELINE & SCENE SELECTOR ================= */
+  #controls-dock {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #0b111b;
+    border-top: 1px solid #1d2c3f;
+    padding: 10px 22px 14px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .timeline-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .time-display { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; font-weight: 700; color: var(--cyan); min-width: 95px; }
+  #scrub {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 7px;
+    border-radius: 4px;
+    background: #1b2636;
+    outline: none;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  #scrub::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    border: none;
+  }
+  .playback-buttons { display: flex; align-items: center; gap: 8px; }
+  .btn {
+    background: #152233;
+    color: #e0e8f0;
+    border: 1px solid rgba(113, 146, 165, 0.35);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { background: #20354e; color: #fff; border-color: var(--cyan); }
+  .btn:active { transform: scale(0.97); }
+  .btn-play {
+    background: #25442f;
+    color: #9affb8;
+    border-color: #35d07f;
+    min-width: 82px;
+    justify-content: center;
+  }
+  .btn-play.playing {
+    background: #462525;
+    color: #ffb8b8;
+    border-color: #ff4757;
+  }
+  
+  .scenes-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .scenes-list { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .scene-btn {
+    background: #101925;
+    color: #b0c2d4;
+    border: 1px solid #203144;
+    padding: 5px 11px;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .scene-btn span.num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px; height: 17px;
+    background: #1c2b3e;
+    color: var(--gold);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .scene-btn:hover { background: #1c2b3e; color: #fff; border-color: var(--cyan); }
+  .scene-btn.active {
+    background: #193547;
+    color: #fff;
+    border-color: var(--cyan);
+    box-shadow: 0 0 10px rgba(138, 214, 220, 0.35);
+  }
+  .scene-btn.active span.num { background: var(--gold); color: #000; }
+  .speed-select {
+    background: #101925;
+    color: #8fa4b6;
+    border: 1px solid #203144;
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  
+  /* ================= FLOATING HUD PANELS ================= */
+  .hud-card {
+    position: absolute;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    z-index: 50;
+    pointer-events: none;
+  }
+  #hud-stats {
+    top: 86px; left: 24px;
+    width: 280px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #hud-stats .title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; }
+  #hud-stats .row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+  #hud-stats .val { font-weight: 600; color: #fff; }
+  
+  #hud-event {
+    top: 86px; right: 24px;
+    width: 340px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 5px;
+  }
+  .badge.info { background: #15394b; color: var(--cyan); border: 1px solid rgba(138, 214, 220, 0.4); }
+  .badge.alert { background: #4a1515; color: #ff8585; border: 1px solid rgba(255, 71, 87, 0.4); }
+  .badge.success { background: #133c24; color: #7de2a8; border: 1px solid rgba(53, 208, 127, 0.4); }
+  .badge.warning { background: #413511; color: var(--gold); border: 1px solid rgba(255, 207, 103, 0.4); }
+
+  /* Subtitles */
+  #subtitles {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 75%;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    background: rgba(8, 12, 18, 0.75);
+    backdrop-filter: blur(8px);
+    padding: 8px 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 60;
+    line-height: 1.35;
+    pointer-events: none;
+  }
+  
+  /* Technical Evidence Card (Shot 7) */
+  #evidence-card {
+    position: absolute;
+    inset: 12% 16% 18%;
+    background: rgba(9, 14, 22, 0.96);
+    border: 1px solid rgba(138, 214, 220, 0.35);
+    border-radius: 12px;
+    padding: 30px 40px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 80;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+    backdrop-filter: blur(16px);
+  }
+  #evidence-card h2 { margin: 0 0 6px; font-size: 25px; color: #fff; }
+  #evidence-card p.source { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+  #evidence-card .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  #evidence-card table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  #evidence-card caption { text-align: left; font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .6px; padding-bottom: 6px; }
+  #evidence-card th, #evidence-card td { border: 1px solid #23374d; padding: 6px 9px; text-align: left; color: #dbe6f2; }
+  #evidence-card th { background: #14202f; color: #fff; font-weight: 600; }
+  #evidence-card td.num, #evidence-card th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  #evidence-card .notes { margin-top: 12px; font-size: 11px; line-height: 1.45; color: var(--muted); }
+  
+  /* Closing Card (Shot 8) */
+  #closing-card {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 10, 16, 0.90);
+    backdrop-filter: blur(20px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 80;
+  }
+  #closing-card h1 { font-size: 64px; font-weight: 750; margin: 0 0 10px; color: #fff; letter-spacing: -2px; }
+  #closing-card h1 span { color: var(--gold); font-weight: 350; }
+  #closing-card p.tagline { font-size: 26px; color: #d0e0ee; margin: 0 0 30px; font-weight: 300; }
+  #closing-card .badge-meta { display: inline-flex; align-items: center; gap: 10px; background: rgba(22, 36, 54, 0.8); border: 1px solid rgba(138, 214, 220, 0.3); border-radius: 30px; padding: 10px 24px; font-size: 15px; margin-bottom: 24px; }
+  #closing-card .badge-meta img { height: 24px; }
+  #closing-card .author-box { font-size: 18px; color: #eaf1f7; line-height: 1.4; }
+  #closing-card .author-box small { color: var(--gold); font-size: 14px; }
+  
+  /* UI Toggle visibility */
+  body.clean-mode #navbar,
+  body.clean-mode #controls-dock { opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- TOP NAVBAR WITH PROJECT BRANDING -->
+<header id="navbar">
+  <div class="nav-left">
+    <svg class="mark" viewBox="0 0 104 112" aria-label="Waggle Hive hexagon logo">
+      <path d="M52 5 98 31v50l-46 26L6 81V31Z" fill="none" stroke="#ffcf67" stroke-width="5" stroke-linejoin="round"/>
+      <path d="m25 40 12 33 15-24 15 24 12-33" fill="none" stroke="#ffcf67" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="52" cy="26" r="4" fill="#8ad6dc"/>
+    </svg>
+    <div class="brand-text">
+      <h1>Waggle <span>Hive</span></h1>
+      <p>Agentic robot fleets for logistics</p>
+    </div>
+  </div>
+  
+  <div class="nav-center">
+    <img src="assets/meta-logo.svg" alt="Meta">
+    <strong>Meta</strong>
+    <small>POWERED BY META MUSE</small>
+  </div>
+  
+  <div class="nav-right">
+    <div class="author">Agustin Diaz Cano</div>
+    <div class="role">MS Candidate, Systems Engineering</div>
+  </div>
+</header>
+
+<!-- HUD FLOATING STATS -->
+<div class="hud-card" id="hud-stats">
+  <div class="title">Waggle Hive Telemetry</div>
+  <div class="row"><span>Fleet Size:</span><span class="val">30 Robots &bull; 3 Warehouses</span></div>
+  <div class="row"><span>Active Order:</span><span class="val" id="hud-order">ORD-1042 / PKG-8841</span></div>
+  <div class="row"><span>Hero Carrier:</span><span class="val" id="hud-hero" style="color:var(--gold)">R-B04 (Active)</span></div>
+  <div class="row"><span>Fast Safety Layer:</span><span class="val" id="hud-fastlayer" style="color:var(--green)">100Hz &bull; Deterministic</span></div>
+  <div class="row"><span>Deliveries / Transit:</span><span class="val" id="hud-counter">0 Delivered &bull; 1 Transit</span></div>
+</div>
+
+<div class="hud-card" id="hud-event">
+  <span class="badge info" id="evt-badge">COORDINATOR</span>
+  <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;" id="evt-title">Order Received: ORD-1042</div>
+  <div style="color: #b5c6d6; font-size: 12px; line-height: 1.4;" id="evt-desc">Assigns WH-A &gt; WH-B &gt; WH-C urgent logistics transfer.</div>
+</div>
+
+<div id="subtitles">Three cells, thirty robots, trucks and packages.</div>
+
+<!-- EVIDENCE CARD: three verified tables on one slide -->
+<div id="evidence-card">
+  <h2>Measured Evidence</h2>
+  <p class="source">Only numbers verified in committed result files. Development seeds.</p>
+  <div class="tables">
+    <table>
+      <caption>Experiments</caption>
+      <tr><th>Exp.</th><th>Condition</th><th>Result</th></tr>
+      <tr><td>E2 S03</td><td>Without admission</td><td>0 of 5 arrive</td></tr>
+      <tr><td>E2 S03</td><td>With admission</td><td>5 of 5, 0 collisions</td></tr>
+      <tr><td>E8</td><td>Detector + lidar</td><td>18.0 s &rarr; 5.7 s</td></tr>
+      <tr><td>E9</td><td>4 planted defects</td><td>4 of 4 caught</td></tr>
+    </table>
+    <table>
+      <caption>Cloud suite, Nov 4</caption>
+      <tr><th>Suite</th><th class="num">Tests</th><th class="num">Failures</th></tr>
+      <tr><td>heavy dev</td><td class="num">184</td><td class="num">0</td></tr>
+      <tr><td>llm dev and held-out</td><td class="num">green</td><td class="num">0</td></tr>
+      <tr><td>e1, e2, e8, postgres, viewer</td><td class="num">green</td><td class="num">0</td></tr>
+    </table>
+  </div>
+  <p class="notes">Small development samples (E2: 5 seeds). E8 is speed on the CI machine, not a hardware guarantee. Planted E9 is a local regression check; the cloud campaign runs separately. E4 has no results yet.</p>
+</div>
+
+<!-- CLOSING ATTRIBUTION CARD (SHOT 8) -->
+<div id="closing-card">
+  <svg width="84" height="92" viewBox="0 0 104 112" style="margin-bottom: 16px;">
+    <path d="M52 5 98 31v50l-46 26L6 81V31Z" fill="none" stroke="#ffcf67" stroke-width="5" stroke-linejoin="round"/>
+    <path d="m25 40 12 33 15-24 15 24 12-33" fill="none" stroke="#ffcf67" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="52" cy="26" r="4" fill="#8ad6dc"/>
+  </svg>
+  <h1>Waggle <span>Hive</span></h1>
+  <p class="tagline">Safety and reliability control plane for LLM-directed robot fleets</p>
+  <div class="badge-meta">
+    <img src="assets/meta-logo.svg" alt="Meta">
+    <span>Built with <strong>Muse Spark Open</strong> &bull; Powered by Meta Muse</span>
+  </div>
+  <div class="author-box">
+    <strong>Agustin Diaz Cano</strong><br>
+    <small>MS Candidate, Systems Engineering</small><br>
+    <span style="font-size: 13px; color:#8fa4b6; margin-top:8px; display:inline-block;">github.com/agustindiazcano/waggle-agents-meta-muse</span>
+  </div>
+</div>
+
+<!-- BOTTOM DOCK CONTROLS -->
+<div id="controls-dock">
+  <div class="timeline-bar">
+    <button class="btn btn-play" id="btn-play">▶ Play</button>
+    <button class="btn" id="btn-restart">↺ Restart</button>
+    <div class="time-display" id="time-display">00:00 / 03:00</div>
+    <input type="range" id="scrub" min="0" max="180" step="0.1" value="0">
+    <select class="speed-select" id="speed-select">
+      <option value="0.5">0.5x Speed</option>
+      <option value="1.0" selected>1.0x Speed</option>
+      <option value="1.5">1.5x Speed</option>
+      <option value="2.0">2.0x Speed</option>
+    </select>
+    <button class="btn" id="btn-clean" title="Toggle Clean Mode for Screen Recording (Hotkey: H)">👁 Clean Mode</button>
+  </div>
+  
+  <div class="scenes-selector">
+    <div class="scenes-list">
+      <button class="scene-btn active" data-t="0"><span class="num">1</span> The Warehouse &amp; Advisors</button>
+      <button class="scene-btn" data-t="25"><span class="num">2</span> Director &amp; Planner (Muse Wonder)</button>
+      <button class="scene-btn" data-t="50"><span class="num">3</span> The Court (3 Reviewers)</button>
+      <button class="scene-btn" data-t="90"><span class="num">4</span> Organizer &amp; MCP</button>
+      <button class="scene-btn" data-t="130"><span class="num">5</span> Crisis E10 &amp; Maintenance E6</button>
+      <button class="scene-btn" data-t="155"><span class="num">6</span> Technical Evidence</button>
+      <button class="scene-btn" data-t="165"><span class="num">7</span> Global Coordinator (mock)</button>
+    </div>
+  </div>
+</div>
+
+<!-- THREE.JS IMPORTMAP -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.min.js",
+    "three/addons/": "./vendor/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'three/addons/SkeletonUtils.js';
+
+// ================= CONSTANTS & SHOT DATA =================
+const DURATION = 180;
+const ORDER = 'ORD-1042';
+const PKG = 'PKG-8841';
+
+const SUBS = [
+  [0, 8, 'Three cells, thirty robots, trucks and packages.'],
+  [8, 17, 'Every robot carries its advisor: Meta Muse Spark Open, a fast model that can only ask for caution, never accelerate.'],
+  [17, 25, 'No message reaches a model without the guard filter: Meta Muse Glimmer screens every input first.'],
+  [25, 37, 'When replanning is needed, the director and the planner, Meta Muse Wonder, the most capable model, propose routes.'],
+  [37, 50, 'Five simulated route variants, K equals 5, are checked before any motion is allowed.'],
+  [50, 62, 'Nothing executes without a verdict. Three independent reviewers vote: Meta Muse Spark, Meta Muse Spark Open, and Meta Muse Glimmer.'],
+  [62, 78, 'Case E4-DEV-05: a package label tries a prompt injection. The court denies it. A false approval would be the dangerous error.'],
+  [78, 90, 'Case E4-DEV-04: a human in the bay. Deny. The court can stop a plan; it can never invent motion.'],
+  [90, 105, 'One organizer per warehouse, Meta Muse Spark Open, assigns tasks C0 to C4 with its own MCP identity.'],
+  [105, 120, 'Every tool call checks token, zone and audit. What the court did not approve, the organizer cannot request.'],
+  [120, 130, 'The fast safety layer is deterministic code at 100 hertz. Fencing and the MCP boundary are code, with no model inside.'],
+  [130, 145, 'If a human blocks the only aisle, crisis replanning E10 proposes a new route, reviewed the same way.'],
+  [145, 165, 'Predictive maintenance E6 diagnoses vibration and opens a ticket before the failure. Demonstrated in simulation.'],
+  [165, 180, 'Between warehouses, a global coordinator will move custody by truck. Today it is a labeled mock: global logistics is designed, not implemented. Waggle Hive. Models propose. Deterministic code disposes.']
+];
+
+const EVENTS = [
+  [0, 'COORDINATOR', 'Order Received: ' + ORDER, 'Priority transfer of ' + PKG + ' across warehouses', 'info'],
+  [15, 'COORDINATOR', 'Assigns Transfer Flow', 'Routing: WH-A > WH-B > WH-C dispatched to 3 organizers', 'info'],
+  [35, 'ORGANIZER WH-B', 'Pickup Assigned to R-B04', 'Carrier R-B04 dispatched to aisle rack B-02', 'warning'],
+  [48, 'FAST LAYER 100Hz', 'HUMAN DETECTED IN ENVELOPE', 'Deterministic estop commanded! Motion locked (0 m/s)', 'alert'],
+  [58, 'FAST LAYER 100Hz', 'Envelope Cleared: Safe', 'Resume verified corridor velocity inside boundary', 'success'],
+  [62, 'COURT - E4-DEV-05', 'Prompt Injection Denied', 'Package label injection voted down by Spark, Spark Open and Glimmer', 'alert'],
+  [78, 'COURT - E4-DEV-04', 'Human in Bay: Deny', 'The court can stop a plan; it can never invent motion', 'alert'],
+  [90, 'MAINTENANCE', 'Machine M-B2 Overheating', 'Ticket T-331 opened & spare parts reserved', 'warning'],
+  [105, 'COURT REVIEW', 'Ghost Routes Checked', 'Evaluated 3 rollout alternatives; verified collision-free path', 'info'],
+  [120, 'COORDINATOR', 'TRK-07 Delayed: Reassigned', 'Dynamic handoff rerouted to TRK-12 at loading bay', 'warning'],
+  [138, 'DELIVERY COMPLETED', PKG + ' Safely Delivered', 'Transfer order ' + ORDER + ' fulfilled without incident', 'success'],
+  [155, 'TECHNICAL AUDIT', 'Evidence Benchmark', 'E1 Fast Layer: 13/90 collisions vs 62/90 baseline', 'info'],
+  [165, 'CONTROL PLANE', 'Waggle Hive Fleet Active', 'Reliability and safety guaranteed by architecture', 'success']
+];
+
+// Camera positions [time, posX, posY, posZ, lookX, lookY, lookZ]
+const CAM = [
+  [0,   0, 115, 155,   0, 0, 0],
+  [15,  0, 90, 115,   0, 0, 0],
+  [20, -15, 40, 55,   0, 0, 0],
+  [28,  5, 16, 26,    0, 2, 0],
+  [35, 16, 7, -12,   -2, 1.5, -4],
+  [48, 14, 4.2, -3.5, 3.6, 1.2, -4],
+  [58, 16, 6.5, -10,  4, 1.5, -4],
+  [65, 12, 3.8, -7,   3.6, 1.2, -4],
+  [90, -10, 15, 24,  -4, 1.5, -6],
+  [105, 0, 26, 42,    0, 2, 0],
+  [120, 0, 105, 135,  0, 0, 0],
+  [138, 75, 26, 48,  92, 1.5, 12],
+  [155, 0, 115, 155,  0, 0, 0],
+  [165, 0, 115, 155,  0, 0, 0],
+  [180, 0, 115, 155,  0, 0, 0]
+];
+
+// ================= THREE.JS SETUP =================
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0e16);
+scene.fog = new THREE.Fog(0x0a0e16, 160, 480);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 800);
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xc8d8ec, 0.95);
+scene.add(ambientLight);
+
+const sun = new THREE.DirectionalLight(0xffffff, 1.7);
+sun.position.set(70, 110, 50);
+sun.castShadow = true;
+sun.shadow.mapSize.width = 2048;
+sun.shadow.mapSize.height = 2048;
+sun.shadow.camera.near = 10;
+sun.shadow.camera.far = 400;
+sun.shadow.camera.left = -160;
+sun.shadow.camera.right = 160;
+sun.shadow.camera.top = 160;
+sun.shadow.camera.bottom = -160;
+scene.add(sun);
+
+const hemiLight = new THREE.HemisphereLight(0x4a6d88, 0x16202c, 0.6);
+scene.add(hemiLight);
+
+// ================= GROUND & INFRASTRUCTURE =================
+const M = (c, r = 0.6, m = 0.1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(550, 360), M(0x131820, 0.95, 0.05));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Main asphalt roads
+for (const z of [-42, 42]) {
+  const road = new THREE.Mesh(new THREE.BoxGeometry(420, 0.12, 16), M(0x1a212a, 0.9, 0.1));
+  road.position.set(0, 0.06, z);
+  road.receiveShadow = true;
+  scene.add(road);
+  
+  for (let x = -190; x <= 190; x += 12) {
+    const dash = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.4), new THREE.MeshBasicMaterial({ color: 0xffe680 }));
+    dash.rotation.x = -Math.PI / 2;
+    dash.position.set(x, 0.14, z);
+    scene.add(dash);
+  }
+}
+
+// Access roads between warehouses
+for (const x of [-95, 0, 95]) {
+  const road = new THREE.Mesh(new THREE.BoxGeometry(16, 0.12, 100), M(0x1a212a, 0.9, 0.1));
+  road.position.set(x, 0.06, 0);
+  road.receiveShadow = true;
+  scene.add(road);
+}
+
+// Green grass strips
+for (const z of [-62, 62]) {
+  const grass = new THREE.Mesh(new THREE.BoxGeometry(440, 0.25, 20), M(0x182c20, 0.95, 0.0));
+  grass.position.set(0, 0.1, z);
+  scene.add(grass);
+}
+
+// ================= META LOGO ON FLOOR (OFFICIAL SVG IN HIGH RES) =================
+const metaFloorCanvas = document.createElement('canvas');
+metaFloorCanvas.width = 1024;
+metaFloorCanvas.height = 512;
+const metaFloorTexture = new THREE.CanvasTexture(metaFloorCanvas);
+const metaFloorMat = new THREE.MeshBasicMaterial({ map: metaFloorTexture, transparent: true, depthWrite: false });
+
+const metaImg = new Image();
+metaImg.src = 'assets/meta-logo.svg';
+metaImg.onload = () => {
+  const ctx = metaFloorCanvas.getContext('2d');
+  ctx.clearRect(0, 0, 1024, 512);
+  
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(30, 30, 964, 452, 36);
+  else ctx.rect(30, 30, 964, 452);
+  ctx.fill();
+  
+  ctx.strokeStyle = 'rgba(74, 144, 226, 0.55)';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  
+  const imgW = 440;
+  const imgH = (metaImg.height / metaImg.width) * imgW;
+  ctx.drawImage(metaImg, (1024 - imgW) / 2, (512 - imgH) / 2 - 28, imgW, imgH);
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '2px';
+  ctx.fillText('POWERED BY META MUSE', 512, 420);
+  
+  metaFloorTexture.needsUpdate = true;
+};
+
+// Warehouse building definitions
+const WAREHOUSES = [
+  { x: -95, z: 0, id: 'WH-A', name: 'West Warehouse A' },
+  { x: 0,   z: 0, id: 'WH-B', name: 'Central Warehouse B' },
+  { x: 95,  z: 0, id: 'WH-C', name: 'East Warehouse C' }
+];
+
+// Warehouse floors, structural frames and loading docks
+for (const w of WAREHOUSES) {
+  const group = new THREE.Group();
+  group.position.set(w.x, 0, w.z);
+  
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(60, 0.35, 44), M(0x283340, 0.85, 0.15));
+  floor.position.set(0, 0.175, 0);
+  floor.receiveShadow = true;
+  group.add(floor);
+  
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffcf67 });
+  const pL1 = new THREE.Mesh(new THREE.BoxGeometry(56, 0.05, 0.3), lineMat);
+  pL1.position.set(0, 0.36, -20); group.add(pL1);
+  const pL2 = new THREE.Mesh(new THREE.BoxGeometry(56, 0.05, 0.3), lineMat);
+  pL2.position.set(0, 0.36, 20); group.add(pL2);
+  
+  // Pedestrian walkways & crossings
+  for (let z = -7; z <= 7; z += 2.0) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.04, 1.0), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    stripe.position.set(6, 0.37, z);
+    group.add(stripe);
+  }
+  
+  for (const cx of [-28, 0, 28]) {
+    for (const cz of [-20, 20]) {
+      const col = new THREE.Mesh(new THREE.BoxGeometry(1.2, 14, 1.2), M(0x3e4f63, 0.6, 0.3));
+      col.position.set(cx, 7, cz);
+      col.castShadow = true;
+      group.add(col);
+    }
+  }
+  
+  const dock = new THREE.Mesh(new THREE.BoxGeometry(22, 1.4, 7), M(0x333e4b, 0.8, 0.2));
+  dock.position.set(0, 0.7, 24.5);
+  dock.castShadow = true;
+  dock.receiveShadow = true;
+  group.add(dock);
+  
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(22, 11), metaFloorMat);
+  decal.rotation.x = -Math.PI / 2;
+  decal.position.set(0, 0.38, 11);
+  group.add(decal);
+  
+  scene.add(group);
+}
+
+// ================= PROCEDURAL HIGH-QUALITY WAREHOUSE RACKS & LABELED BOXES =================
+const steelMat = new THREE.MeshStandardMaterial({ color: 0x2b5fcf, roughness: 0.55, metalness: 0.2 });
+const beamMat = new THREE.MeshStandardMaterial({ color: 0xe0752a, roughness: 0.55, metalness: 0.2 });
+const shelfMat = new THREE.MeshStandardMaterial({ color: 0x2a2f38, roughness: 0.9, metalness: 0 });
+const palletMat = new THREE.MeshStandardMaterial({ color: 0x9a7b4f, roughness: 0.95, metalness: 0 });
+
+function createBoxTexture(code, colorHex = '#caa06d') {
+  const cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 256;
+  const ctx = cv.getContext('2d');
+  
+  ctx.fillStyle = colorHex;
+  ctx.fillRect(0, 0, 256, 256);
+  
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  for (let x = 0; x < 256; x += 6) ctx.fillRect(x, 0, 3, 256);
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(24, 30, 150, 115);
+  ctx.strokeStyle = '#222222';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(24, 30, 150, 115);
+  
+  ctx.fillStyle = '#111111';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('WAGGLE HIVE', 32, 48);
+  
+  const barY = 56;
+  for (let b = 0; b < 24; b++) {
+    const w = (b % 3 === 0 || b % 5 === 0) ? 4 : 2;
+    ctx.fillRect(32 + b * 5, barY, w, 28);
+  }
+  
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText(code, 32, 102);
+  ctx.font = '9px sans-serif';
+  ctx.fillText('PRIORITY LOGISTICS', 32, 126);
+  
+  ctx.fillStyle = '#d63031';
+  ctx.fillRect(182, 30, 52, 24);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('HANDLE', 186, 46);
+  
+  return new THREE.CanvasTexture(cv);
+}
+
+// Rack design follows the index (1) cell mockup: blue uprights, orange beams,
+// four shelf levels, dark boards, labeled cardboard boxes and pallets.
+const SHELF_Y = [0.25, 1.2, 2.15, 3.1];
+const BOX_CODES = ['Z89', 'A17', 'K03', 'M42', 'R58', 'B76'];
+function buildProceduralRack(bays = 4, bayWidth = 2.8, depth = 1.0) {
+  const group = new THREE.Group();
+  const totalW = bays * bayWidth;
+  const totalH = 4.0;
+  for (let b = 0; b <= bays; b++) {
+    const x = -totalW / 2 + b * bayWidth;
+    for (const z of [-depth / 2 + 0.04, depth / 2 - 0.04]) {
+      const col = new THREE.Mesh(new THREE.BoxGeometry(0.07, totalH, 0.07), steelMat);
+      col.position.set(x, totalH / 2, z);
+      col.castShadow = true;
+      group.add(col);
+    }
+  }
+  let boxCounter = 0;
+  for (let l = 0; l < SHELF_Y.length; l++) {
+    const y = SHELF_Y[l];
+    for (const z of [-depth / 2 + 0.04, depth / 2 - 0.04]) {
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(totalW, 0.1, 0.05), beamMat);
+      beam.position.set(0, y, z);
+      beam.castShadow = true;
+      group.add(beam);
+    }
+    for (let b = 0; b < bays; b++) {
+      const shelfX = -totalW / 2 + b * bayWidth + bayWidth / 2;
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(bayWidth - 0.08, 0.025, depth - 0.1), shelfMat);
+      shelf.position.set(shelfX, y + 0.0625, 0);
+      shelf.receiveShadow = true;
+      group.add(shelf);
+      const n = (b * 2 + l) % 3; // deterministic 0, 1 or 2 boxes per bay and level
+      if ((b + l) % 4 === 0) {
+        const pallet = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.12, 0.8), palletMat);
+        pallet.position.set(shelfX, y + 0.075 + 0.06, 0);
+        group.add(pallet);
+      }
+      for (let q = 0; q < n; q++) {
+        boxCounter++;
+        const bw = 0.7 + (boxCounter % 3) * 0.15;
+        const bh = 0.35 + (boxCounter % 2) * 0.16;
+        const bd = 0.5 + (boxCounter % 3) * 0.1;
+        const boxMat = new THREE.MeshStandardMaterial({
+          map: createBoxTexture(BOX_CODES[boxCounter % BOX_CODES.length], boxCounter % 2 === 0 ? '#caa06d' : '#be9364'),
+          roughness: 0.85, metalness: 0.05
+        });
+        const pBox = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), boxMat);
+        pBox.position.set(shelfX + (n === 1 ? 0 : (q ? 0.68 : -0.68)), y + 0.075 + bh / 2, (boxCounter % 2 === 0 ? 0.1 : -0.1));
+        pBox.castShadow = true;
+        group.add(pBox);
+      }
+    }
+  }
+  return group;
+}
+
+// Populate racks in warehouses: four rows of two blocks per cell, with the
+// hero aisle at z=-4 and the robot perimeter kept clear, plus a yellow
+// safety frame around each rack base and translucent perimeter walls.
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x1b222c, roughness: 0.9, transparent: true, opacity: 0.22, depthWrite: false });
+for (const w of WAREHOUSES) {
+  for (const rz of [-16, -10, 2, 8]) {
+    for (const rx of [-15, 14]) {
+      const rack = buildProceduralRack(4, 2.8, 1.0);
+      rack.position.set(w.x + rx, 0.35, w.z + rz);
+      scene.add(rack);
+      const fw = 11.2 + 0.5, fd = 1.0 + 0.5;
+      const frameMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+      for (const [sx, sz, sw, sd] of [[0, -fd / 2, fw, 0.12], [0, fd / 2, fw, 0.12], [-fw / 2, 0, 0.12, fd], [fw / 2, 0, 0.12, fd]]) {
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(sw, 0.04, sd), frameMat);
+        strip.position.set(w.x + rx + sx, 0.4, w.z + rz + sz);
+        scene.add(strip);
+      }
+    }
+  }
+  for (const [ww, dd, px, pz] of [[60, 0.3, 0, -22], [60, 0.3, 0, 22], [0.3, 44, -30, 0], [0.3, 44, 30, 0]]) {
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(ww, 5, dd), wallMat);
+    wall.position.set(w.x + px, 2.5, w.z + pz);
+    scene.add(wall);
+  }
+}
+
+// ================= 3D GLTF ASSETS LOADER =================
+const gltfLoader = new GLTFLoader();
+const mixers = [];
+
+function loadGLTF(url) {
+  return new Promise(resolve => {
+    gltfLoader.load(url, gltf => resolve(gltf), undefined, () => resolve(null));
+  });
+}
+
+function normalizeMesh(src, targetSize) {
+  let skinned = false;
+  src.traverse(o => { if (o.isSkinnedMesh) skinned = true; });
+  const clone = skinned ? cloneSkeleton(src) : src.clone(true);
+  const bb = new THREE.Box3().setFromObject(clone);
+  const sz = bb.getSize(new THREE.Vector3());
+  const maxDim = Math.max(sz.x, sz.y, sz.z) || 1;
+  const scale = targetSize / maxDim;
+  clone.scale.setScalar(scale);
+  const center = bb.getCenter(new THREE.Vector3());
+  clone.position.set(-center.x * scale, -bb.min.y * scale, -center.z * scale);
+  
+  const wrap = new THREE.Group();
+  wrap.add(clone);
+  wrap.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+      if (o.material) o.material.roughness = 0.65;
+    }
+  });
+  return wrap;
+}
+
+function createFallbackCarrier(color = 0xd7dde3) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 0.9), M(color, 0.4, 0.3));
+  body.position.y = 0.3; body.castShadow = true; g.add(body);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.25, 16), M(0x1a222c, 0.3, 0.5));
+  top.position.y = 0.65; top.castShadow = true; g.add(top);
+  return g;
+}
+
+function createFallbackForklift() {
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.0, 2.4), M(0xf39c12, 0.5, 0.3));
+  base.position.y = 0.6; base.castShadow = true; g.add(base);
+  const mast = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.6, 0.6), M(0x2c3e50, 0.5, 0.4));
+  mast.position.set(0, 1.4, 1.3); g.add(mast);
+  const fork = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 1.1), M(0x7f8c8d, 0.3, 0.6));
+  fork.position.set(0, 0.2, 1.8); g.add(fork);
+  return g;
+}
+
+function createFallbackTree() {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.45, 3), M(0x5c4033, 0.9, 0));
+  trunk.position.y = 1.5; trunk.castShadow = true; g.add(trunk);
+  const foliage = new THREE.Mesh(new THREE.ConeGeometry(2.2, 5.5, 8), M(0x27ae60, 0.8, 0));
+  foliage.position.y = 5.2; foliage.castShadow = true; g.add(foliage);
+  return g;
+}
+
+let rawAssets = {};
+async function init3DAssets() {
+  const files = {
+    carrier: 'assets/carrier_bot.glb',
+    forklift: 'assets/heavy_forklift_bot.glb',
+    partsBot: 'assets/parts_runner_bot.glb',
+    repairBot: 'assets/tech_repair_bot.glb',
+    tree: 'assets/tree.glb',
+    truck: 'assets/Blue_Delivery_Truck.glb',
+    container: 'assets/Shipping_Container.glb',
+    worker1: 'assets/worker-1.glb',
+    worker2: 'assets/worker-2.glb',
+    worker3: 'assets/worker-3.glb',
+    worker4: 'assets/worker-4.glb'
+  };
+  
+  const entries = Object.entries(files);
+  const loaded = await Promise.all(entries.map(async ([key, url]) => [key, await loadGLTF(url)]));
+  for (const [key, gltf] of loaded) rawAssets[key] = gltf;
+  
+  populateSceneWithAssets();
+}
+
+// Warehouse floor top is at y=0.35 (robots use the same). Workers are
+// grounded per model below, because skinned meshes need their real
+// bounding box after the first animation update.
+const FLOOR_FEET_Y = 0.35;
+function groundOnFloor(obj) {
+  // normalizeMesh already grounds the model at its local origin, and the
+  // warehouse floor top is FLOOR_FEET_Y. Skinned bounding boxes after
+  // skeleton cloning are unreliable, so no extra offset is applied.
+  obj.userData.dy = 0;
+}
+
+const ambientWorkers = [];
+let workerCrossing = null;
+// Workers are hidden for the video: the GLB rigs render oversized.
+const SHOW_WORKERS = false;
+
+function populateSceneWithAssets() {
+  // 1. POPULATE TREES
+  const treeCoords = [
+    [-170, -75], [-140, -75], [-110, -75], [-80, -75], [-50, -75], [-20, -75],
+    [10, -75], [40, -75], [70, -75], [100, -75], [130, -75], [160, -75],
+    [-170, 75], [-130, 75], [-90, 75], [-50, 75], [-10, 75], [30, 75], [70, 75], [110, 75], [150, 75],
+    [-48, -25], [-48, 0], [-48, 25],
+    [48, -25], [48, 0], [48, 25],
+    [-185, -20], [-185, 20], [185, -20], [185, 20]
+  ];
+  
+  for (const [tx, tz] of treeCoords) {
+    let treeObj;
+    if (rawAssets.tree && rawAssets.tree.scene) {
+      treeObj = normalizeMesh(rawAssets.tree.scene, 7.5 + Math.random() * 2.5);
+    } else {
+      treeObj = createFallbackTree();
+    }
+    treeObj.position.set(tx, 0, tz);
+    treeObj.rotation.y = Math.random() * Math.PI * 2;
+    scene.add(treeObj);
+  }
+
+  // 2. SHIPPING CONTAINERS IN DOCKS
+  for (const w of WAREHOUSES) {
+    if (rawAssets.container && rawAssets.container.scene) {
+      const c1 = normalizeMesh(rawAssets.container.scene, 12);
+      c1.position.set(w.x - 22, 0, 32);
+      c1.rotation.y = Math.PI / 2;
+      scene.add(c1);
+      
+      const c2 = normalizeMesh(rawAssets.container.scene, 12);
+      c2.position.set(w.x + 22, 0, 32);
+      c2.rotation.y = Math.PI / 2;
+      scene.add(c2);
+    }
+  }
+
+  // 3. HEAVY FORKLIFTS
+  for (let i = 0; i < 3; i++) {
+    const w = WAREHOUSES[i];
+    let fk;
+    if (rawAssets.forklift && rawAssets.forklift.scene) {
+      fk = normalizeMesh(rawAssets.forklift.scene, 2.5);
+    } else {
+      fk = createFallbackForklift();
+    }
+    fk.rotation.y = Math.PI / 2;
+    fk.position.set(w.x + 14, 0, 27);
+    scene.add(fk);
+  }
+
+  // 4. ANIMATED WALKING WORKERS
+  if (rawAssets.worker1 && rawAssets.worker1.scene) {
+    const w1 = normalizeMesh(rawAssets.worker1.scene, 1.8);
+    w1.position.set(-90, FLOOR_FEET_Y, 15);
+    scene.add(w1);
+    const mx1 = new THREE.AnimationMixer(w1);
+    const clip1 = rawAssets.worker1.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker1.animations[0];
+    if (clip1) mx1.clipAction(clip1).play();
+    mixers.push(mx1); mx1.update(0.05); groundOnFloor(w1); w1.visible = SHOW_WORKERS;
+    ambientWorkers.push({ obj: w1, baseX: -90, baseZ: 15, range: 6, axis: 'x', speed: 0.5 });
+  }
+
+  if (rawAssets.worker2 && rawAssets.worker2.scene) {
+    const w2 = normalizeMesh(rawAssets.worker2.scene, 1.8);
+    w2.position.set(6, FLOOR_FEET_Y, -12);
+    scene.add(w2);
+    const mx2 = new THREE.AnimationMixer(w2);
+    const clip2 = rawAssets.worker2.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker2.animations[0];
+    if (clip2) mx2.clipAction(clip2).play();
+    mixers.push(mx2); mx2.update(0.05); groundOnFloor(w2); w2.visible = SHOW_WORKERS;
+    workerCrossing = w2;
+  }
+
+  if (rawAssets.worker3 && rawAssets.worker3.scene) {
+    const w3 = normalizeMesh(rawAssets.worker3.scene, 1.8);
+    w3.position.set(-20, FLOOR_FEET_Y, 14);
+    w3.rotation.y = Math.PI / 4;
+    scene.add(w3);
+    const mx3 = new THREE.AnimationMixer(w3);
+    const clip3 = rawAssets.worker3.animations.find(a => a.name === 'Idle_11') || rawAssets.worker3.animations[0];
+    if (clip3) mx3.clipAction(clip3).play();
+    mixers.push(mx3); mx3.update(0.05); groundOnFloor(w3); w3.visible = SHOW_WORKERS;
+  }
+
+  if (rawAssets.worker4 && rawAssets.worker4.scene) {
+    const w4 = normalizeMesh(rawAssets.worker4.scene, 1.8);
+    w4.position.set(95, FLOOR_FEET_Y, 21);
+    w4.rotation.y = Math.PI;
+    scene.add(w4);
+    const mx4 = new THREE.AnimationMixer(w4);
+    const clip4 = rawAssets.worker4.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker4.animations[0];
+    if (clip4) mx4.clipAction(clip4).play();
+    mixers.push(mx4); mx4.update(0.05); groundOnFloor(w4); w4.visible = SHOW_WORKERS;
+    ambientWorkers.push({ obj: w4, baseX: 95, baseZ: 21, range: 4.5, axis: 'z', speed: 0.45 });
+  }
+
+  replaceRobotsWithGLTF();
+  replaceTrucksWithGLB();
+}
+
+// Trucks are created before the async GLB load finishes, so they start as
+// procedural placeholders; swap in the Blue_Delivery_Truck GLB once loaded.
+function replaceTrucksWithGLB() {
+  if (!rawAssets.truck || !rawAssets.truck.scene) return;
+  for (const t of trucks) {
+    while (t.obj.children.length) t.obj.remove(t.obj.children[0]);
+    t.obj.add(normalizeMesh(rawAssets.truck.scene, 10));
+  }
+}
+
+// ================= COMPACT FLEET (~1.12m) + CARGO BOXES =================
+const robots = [];
+let heroRobot = null;
+const heroSafetyRingMat = new THREE.MeshBasicMaterial({ color: 0x35d07f, transparent: true, opacity: 0.85 });
+
+function createRobotEntity(cellIdx, robotIdx) {
+  const isOrganizer = robotIdx === 0;
+  const isHero = cellIdx === 1 && robotIdx === 4;
+  
+  const root = new THREE.Group();
+  
+  const color = isHero ? 0xffcf67 : (isOrganizer ? 0xffb84d : 0xd7dde3);
+  const visual = createFallbackCarrier(color);
+  root.add(visual);
+  
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(isHero ? 1.5 : 1.15, 0.035, 8, 36), isHero ? heroSafetyRingMat : new THREE.MeshBasicMaterial({ color: 0x35d07f, transparent: true, opacity: 0.35 }));
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.38;
+  root.add(ring);
+  
+  let carriedBox = null;
+  if (!isHero && (robotIdx % 2 === 1 || isOrganizer)) {
+    const cBoxMat = new THREE.MeshStandardMaterial({
+      map: createBoxTexture(`PKG-${2000 + cellIdx * 100 + robotIdx}`, robotIdx % 3 === 0 ? '#caa06d' : '#be9364'),
+      roughness: 0.75, metalness: 0.05
+    });
+    carriedBox = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 0.55), cBoxMat);
+    carriedBox.position.set(0, 0.65, 0);
+    carriedBox.castShadow = true;
+    root.add(carriedBox);
+  }
+  
+  const w = WAREHOUSES[cellIdx];
+  const loopWidth = 44;
+  const loopDepth = 30;
+  
+  root.userData = {
+    cell: cellIdx,
+    idx: robotIdx,
+    code: `R-${'ABC'[cellIdx]}${String(robotIdx + 1).padStart(2, '0')}`,
+    isOrganizer,
+    isHero,
+    ring,
+    visual,
+    carriedBox,
+    baseX: w.x,
+    baseZ: w.z,
+    loopWidth,
+    loopDepth
+  };
+  
+  scene.add(root);
+  robots.push(root);
+  if (isHero) heroRobot = root;
+}
+
+// 30 robots
+for (let c = 0; c < 3; c++) {
+  for (let i = 0; i < 10; i++) {
+    createRobotEntity(c, i);
+  }
+}
+
+function replaceRobotsWithGLTF() {
+  if (!rawAssets.carrier || !rawAssets.carrier.scene) return;
+  for (const r of robots) {
+    const isHero = r.userData.isHero;
+    const isOrg = r.userData.isOrganizer;
+    
+    let gltfModel = rawAssets.carrier.scene;
+    if (r.userData.idx === 8 && rawAssets.partsBot) gltfModel = rawAssets.partsBot.scene;
+    if (r.userData.idx === 9 && rawAssets.repairBot) gltfModel = rawAssets.repairBot.scene;
+    
+    const newMesh = normalizeMesh(gltfModel, isHero ? 1.25 : 1.12);
+    newMesh.rotation.y = -Math.PI / 2;
+    
+    if (isHero || isOrg) {
+      newMesh.traverse(child => {
+        if (child.isMesh && child.material) {
+          child.material = child.material.clone();
+          child.material.color.setHex(isHero ? 0xffcf67 : 0xffb84d);
+        }
+      });
+    }
+    
+    r.remove(r.userData.visual);
+    r.add(newMesh);
+    r.userData.visual = newMesh;
+    
+    if (r.userData.carriedBox) {
+      r.userData.carriedBox.position.y = 0.58;
+    }
+  }
+}
+
+// Hero Package PKG-8841
+const heroPackageMat = new THREE.MeshStandardMaterial({
+  map: createBoxTexture('PKG-8841-URGENT', '#ffcf67'),
+  roughness: 0.6, metalness: 0.1
+});
+const heroPackage = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.65), heroPackageMat);
+heroPackage.castShadow = true;
+scene.add(heroPackage);
+
+// Blue Delivery Trucks
+function createTruck(colorHex) {
+  const g = new THREE.Group();
+  if (rawAssets.truck && rawAssets.truck.scene) {
+    const mesh = normalizeMesh(rawAssets.truck.scene, 10);
+    g.add(mesh);
+  } else {
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.2, 3.2), M(colorHex, 0.4, 0.3));
+    cab.position.set(0, 1.8, 3.8); cab.castShadow = true; g.add(cab);
+    const trailer = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.6, 7.8), M(0xe0e6ed, 0.5, 0.2));
+    trailer.position.set(0, 2.1, -1.8); trailer.castShadow = true; g.add(trailer);
+  }
+  return g;
+}
+
+const trucks = [
+  { id: 'TRK-07', obj: createTruck(0x2980b9), lane: -42, speed: 0.7, phase: 0.1 },
+  { id: 'TRK-12', obj: createTruck(0x27ae60), lane: 42,  speed: 0.65, phase: 0.5 },
+  { id: 'TRK-21', obj: createTruck(0xd35400), lane: 42,  speed: 0.7, phase: 0.85 }
+];
+trucks.forEach(t => scene.add(t.obj));
+
+// Ghost Rollout Paths (Shot 5)
+const ghostLines = [];
+const ghostMat = new THREE.LineBasicMaterial({ color: 0x8ad6dc, transparent: true, opacity: 0, linewidth: 2 });
+for (let k = 0; k < 3; k++) {
+  const pts = [];
+  for (let i = 0; i <= 32; i++) {
+    const s = i / 32;
+    const arcX = THREE.MathUtils.lerp(-16, 12, s);
+    const arcZ = -4 + Math.sin(s * Math.PI) * (3.5 + k * 2.8);
+    pts.push(new THREE.Vector3(arcX, 0.38, arcZ));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const line = new THREE.Line(geo, ghostMat.clone());
+  scene.add(line);
+  ghostLines.push(line);
+}
+
+// ================= COLLISION-FREE KINEMATICS ENGINE =================
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function updateSceneAt(t) {
+  // 1. COLLISION-FREE SINGLE FILE AISLE LOOPS FOR FLEET
+  const speed = 0.12;
+  
+  robots.forEach(r => {
+    const u = r.userData;
+    if (r === heroRobot) return;
+    
+    const slotIndex = u.idx > 4 ? u.idx - 1 : u.idx;
+    const phaseOffset = slotIndex * (4.0 / 9.0);
+    const progress = (t * speed + phaseOffset) % 4;
+    
+    let lx = 0, lz = 0, heading = 0;
+    const halfW = 21;
+    const halfD = 14;
+    
+    if (progress < 1) {
+      lx = lerp(-halfW, halfW, progress); lz = -halfD; heading = Math.PI / 2;
+    } else if (progress < 2) {
+      lx = halfW; lz = lerp(-halfD, halfD, progress - 1); heading = 0;
+    } else if (progress < 3) {
+      lx = lerp(halfW, -halfW, progress - 2); lz = halfD; heading = -Math.PI / 2;
+    } else {
+      lx = -halfW; lz = lerp(halfD, -halfD, progress - 3); heading = Math.PI;
+    }
+    
+    r.position.set(u.baseX + lx, 0.35, u.baseZ + lz);
+    r.rotation.y = heading;
+  });
+
+  // 2. HERO ROBOT (R-B04) PATH IN CENTRAL AISLE
+  const isStoppedByHuman = (t >= 48 && t < 58);
+  
+  let heroX = -16, heroZ = -4, heroRot = Math.PI / 2;
+  
+  if (t < 35) {
+    heroX = -16; heroZ = -4; heroRot = Math.PI / 2;
+  } else if (t < 65) {
+    const s = clamp((t - 35) / 28, 0, 1);
+    heroX = isStoppedByHuman ? 2.4 : lerp(-16, 12, s);
+    heroZ = -4;
+    heroRot = Math.PI / 2;
+  } else if (t < 95) {
+    heroX = 12; heroZ = -4; heroRot = Math.PI / 2;
+  } else if (t < 120) {
+    const s = clamp((t - 95) / 22, 0, 1);
+    heroX = 12;
+    heroZ = lerp(-4, 21, s);
+    heroRot = 0;
+  } else {
+    heroX = 12; heroZ = 21; heroRot = 0;
+  }
+  
+  heroRobot.position.set(heroX, 0.35, heroZ);
+  heroRobot.rotation.y = heroRot;
+  
+  if (isStoppedByHuman) {
+    const pulse = 0.6 + 0.4 * Math.sin(t * 12);
+    heroSafetyRingMat.color.setHex(0xff3344);
+    heroSafetyRingMat.opacity = pulse;
+  } else if (t >= 35 && t < 120) {
+    heroSafetyRingMat.color.setHex(0x35d07f);
+    heroSafetyRingMat.opacity = 0.85;
+  } else {
+    heroSafetyRingMat.opacity = 0.3;
+  }
+
+  // 3. HUMAN WORKER CROSSING IN AISLE (SHOT 3)
+  if (workerCrossing) {
+    const crossProgress = clamp((t - 45) / 14, 0, 1);
+    const workerZ = lerp(-12, 5, crossProgress);
+    workerCrossing.position.set(6, FLOOR_FEET_Y + (workerCrossing.userData.dy || 0), workerZ);
+    workerCrossing.rotation.y = 0;
+    workerCrossing.visible = SHOW_WORKERS && (t >= 40 && t < 65);
+  }
+
+  ambientWorkers.forEach(w => {
+    const offset = Math.sin(t * w.speed) * w.range;
+    if (w.axis === 'x') {
+      w.obj.position.x = w.baseX + offset;
+      w.obj.position.y = FLOOR_FEET_Y + (w.obj.userData.dy || 0);
+      w.obj.rotation.y = offset >= 0 ? Math.PI / 2 : -Math.PI / 2;
+    } else {
+      w.obj.position.z = w.baseZ + offset;
+      w.obj.position.y = FLOOR_FEET_Y + (w.obj.userData.dy || 0);
+      w.obj.rotation.y = offset >= 0 ? 0 : Math.PI;
+    }
+  });
+
+  // 4. HERO PACKAGE PKG-8841 CARRIER & TRANSFER
+  heroPackage.visible = (t >= 38);
+  if (t < 40) {
+    heroPackage.position.set(heroRobot.position.x, 0.95, heroRobot.position.z);
+  } else if (t < 120) {
+    heroPackage.position.set(heroRobot.position.x, 0.95, heroRobot.position.z);
+  } else if (t < 138) {
+    const s = (t - 120) / 18;
+    heroPackage.position.set(lerp(12, 95, s), 3.2, lerp(27, 24, s));
+  } else {
+    heroPackage.position.set(95, 1.4, 12);
+  }
+
+  // 5. HIGHWAY TRUCKS
+  trucks.forEach(tr => {
+    let trkX;
+    if (tr.id === 'TRK-07' && t >= 120) {
+      trkX = -35;
+      tr.obj.position.set(trkX, 0, tr.lane);
+    } else {
+      const p = (t * 0.015 * tr.speed + tr.phase) % 1;
+      trkX = lerp(-180, 180, p);
+      tr.obj.position.set(trkX, 0, tr.lane);
+    }
+    tr.obj.rotation.y = Math.PI; // trucks travel along +X, cab facing forward
+  });
+
+  // 6. GHOST ROLLOUT PATHS (SHOT 5)
+  ghostLines.forEach((line, i) => {
+    if (t >= 95 && t < 120) {
+      line.material.opacity = 0.5 + 0.3 * Math.sin(t * 4 + i);
+    } else {
+      line.material.opacity = 0;
+    }
+  });
+
+  interpolateCamera(t);
+  updateHUD(t);
+}
+
+function interpolateCamera(t) {
+  let a = CAM[0], b = CAM[CAM.length - 1];
+  for (let i = 0; i < CAM.length - 1; i++) {
+    if (t >= CAM[i][0] && t <= CAM[i + 1][0]) {
+      a = CAM[i]; b = CAM[i + 1]; break;
+    }
+  }
+  const factor = (t - a[0]) / Math.max(0.001, (b[0] - a[0]));
+  const ease = factor * factor * (3 - 2 * factor);
+  
+  camera.position.set(
+    lerp(a[1], b[1], ease),
+    lerp(a[2], b[2], ease),
+    lerp(a[3], b[3], ease)
+  );
+  camera.lookAt(
+    lerp(a[4], b[4], ease),
+    lerp(a[5], b[5], ease),
+    lerp(a[6], b[6], ease)
+  );
+}
+
+// UI Elements
+const hudOrder = document.getElementById('hud-order');
+const hudHero = document.getElementById('hud-hero');
+const hudFastLayer = document.getElementById('hud-fastlayer');
+const hudCounter = document.getElementById('hud-counter');
+const evtBadge = document.getElementById('evt-badge');
+const evtTitle = document.getElementById('evt-title');
+const evtDesc = document.getElementById('evt-desc');
+const subtitlesEl = document.getElementById('subtitles');
+const evidenceCard = document.getElementById('evidence-card');
+const closingCard = document.getElementById('closing-card');
+const timeDisplay = document.getElementById('time-display');
+const scrubBar = document.getElementById('scrub');
+const sceneBtns = document.querySelectorAll('.scene-btn');
+
+function updateHUD(t) {
+  const isDelivered = t >= 138;
+  const isTransit = t >= 15 && !isDelivered;
+  hudCounter.textContent = `${isDelivered ? 1 : 0} Delivered \u2022 ${isTransit ? 1 : 0} Transit`;
+
+  if (t >= 48 && t < 58) {
+    hudHero.textContent = 'R-B04 (ESTOP ACTIVATED)';
+    hudHero.style.color = 'var(--red)';
+    hudFastLayer.textContent = 'ESTOP COMMANDED (0 m/s)';
+    hudFastLayer.style.color = 'var(--red)';
+  } else {
+    hudHero.textContent = t >= 35 ? 'R-B04 (Carrying PKG-8841)' : 'R-B04 (Active)';
+    hudHero.style.color = 'var(--gold)';
+    hudFastLayer.textContent = '100Hz \u2022 Deterministic Safe';
+    hudFastLayer.style.color = 'var(--green)';
+  }
+
+  let activeEvt = EVENTS[0];
+  for (const e of EVENTS) {
+    if (t >= e[0]) activeEvt = e;
+  }
+  evtBadge.className = `badge ${activeEvt[4]}`;
+  evtBadge.textContent = activeEvt[1];
+  evtTitle.textContent = activeEvt[2];
+  evtDesc.textContent = activeEvt[3];
+
+  let subText = '';
+  for (const s of SUBS) {
+    if (t >= s[0] && t < s[1]) subText = s[2];
+  }
+  subtitlesEl.textContent = subText;
+  subtitlesEl.style.display = subText ? 'block' : 'none';
+
+  evidenceCard.style.display = (t >= 155 && t < 165) ? 'flex' : 'none';
+  closingCard.style.display = (t < 4 || t >= 165) ? 'flex' : 'none';
+
+  const mins = Math.floor(t / 60);
+  const secs = Math.floor(t % 60);
+  timeDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} / 03:00`;
+  
+  if (!isDraggingScrub) {
+    scrubBar.value = t;
+  }
+  
+  sceneBtns.forEach((btn, idx) => {
+    const startT = parseFloat(btn.dataset.t);
+    const nextBtn = sceneBtns[idx + 1];
+    const endT = nextBtn ? parseFloat(nextBtn.dataset.t) : DURATION;
+    if (t >= startT && t < endT) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+// ================= CONTROLS & TIMELINE WIRING =================
+let currentTime = 0;
+let isPlaying = false;
+let playbackSpeed = 1.0;
+let isDraggingScrub = false;
+
+const btnPlay = document.getElementById('btn-play');
+const btnRestart = document.getElementById('btn-restart');
+const speedSelect = document.getElementById('speed-select');
+const btnClean = document.getElementById('btn-clean');
+
+function setPlayState(playing) {
+  isPlaying = playing;
+  if (isPlaying) {
+    btnPlay.textContent = '⏸ Pause';
+    btnPlay.classList.add('playing');
+  } else {
+    btnPlay.textContent = '▶ Play';
+    btnPlay.classList.remove('playing');
+  }
+}
+
+btnPlay.addEventListener('click', () => setPlayState(!isPlaying));
+btnRestart.addEventListener('click', () => {
+  currentTime = 0;
+  updateSceneAt(0);
+});
+
+speedSelect.addEventListener('change', e => {
+  playbackSpeed = parseFloat(e.target.value);
+});
+
+scrubBar.addEventListener('input', e => {
+  isDraggingScrub = true;
+  currentTime = parseFloat(e.target.value);
+  updateSceneAt(currentTime);
+});
+
+scrubBar.addEventListener('change', e => {
+  isDraggingScrub = false;
+  currentTime = parseFloat(e.target.value);
+  updateSceneAt(currentTime);
+});
+
+sceneBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = parseFloat(btn.dataset.t);
+    currentTime = t;
+    updateSceneAt(currentTime);
+  });
+});
+
+btnClean.addEventListener('click', () => {
+  document.body.classList.toggle('clean-mode');
+});
+
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    setPlayState(!isPlaying);
+  } else if (e.code === 'KeyH') {
+    document.body.classList.toggle('clean-mode');
+  } else if (e.key >= '1' && e.key <= '8') {
+    const btn = sceneBtns[parseInt(e.key) - 1];
+    if (btn) btn.click();
+  }
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ================= MAIN RENDER LOOP =================
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.1);
+  
+  mixers.forEach(mx => mx.update(delta));
+  
+  if (isPlaying) {
+    currentTime += delta * playbackSpeed;
+    if (currentTime >= DURATION) {
+      currentTime = DURATION;
+      setPlayState(false);
+    }
+    updateSceneAt(currentTime);
+  }
+  
+  renderer.render(scene, camera);
+}
+
+// Start
+window.__demo = { SUBS, stateAt: (t) => { currentTime = t; updateSceneAt(t); }, workers: () => [workerCrossing, ...ambientWorkers.map(w => w.obj)].filter(Boolean) };
+window.__assetsReady = init3DAssets().then(() => {
+  updateSceneAt(0);
+  animate();
+  console.log('Waggle Hive 3D Presentation initialized in English.');
+  return 'glb';
+});
+</script>
+</body>
+</html>

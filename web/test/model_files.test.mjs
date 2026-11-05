@@ -34,6 +34,9 @@ test("copies only verified models and refuses a mismatch before writing any file
       sha256: createHash("sha256").update(bytes).digest("hex"), clips: [] };
     syncModels([entry], source, dest);
     assert.deepEqual(readFileSync(join(dest, "worker.glb")), bytes);
+    writeFileSync(join(source, "Worker-1.glb"), bytes);
+    syncModels([{ ...entry, file: "Worker-1.glb" }], source, dest);
+    assert.deepEqual(readFileSync(join(dest, "Worker-1.glb")), bytes);
     syncModels([entry], source, dest);
     assert.throws(() => syncModels([{ ...entry, sha256: "0".repeat(64) }], source, dest), /hash/);
     assert.throws(() => syncModels([{ ...entry, file: "../worker.glb" }], source, dest), /file/);
