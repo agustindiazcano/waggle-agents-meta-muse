@@ -19,6 +19,7 @@ viewer demo runs without provider credentials. It does not demonstrate the compl
 voice-to-robot workflow.
 
 [Try the viewer locally](#run-the-viewer) |
+[Live site](https://agustindiazcano.github.io/waggle-agents-meta-muse/) |
 [Architecture](docs/ARCHITECTURE.md) |
 [Measured results](#measured-results) |
 [Hackathon](#hackathon) |
@@ -113,6 +114,15 @@ The three primary court members are related Meta models. Unanimity does not impl
 independent errors. E4 must report false approvals first and reviewer correlation.
 Fallbacks are logged and disabled in held-out evaluations so the measured court
 composition matches the declared configuration.
+
+### Use of Meta products (submission statement)
+
+Meta models are the intelligence layer of every decision. Muse Spark (via Meta
+Model API) powers the guard role that screens every untrusted input and the court_1 reviewer; Muse Spark Open (via
+Baseten) and Muse Glimmer (via Modal) serve the fast tier: per-robot advisors, the warehouse organizer, and court
+members 2 and 3. Muse Wonder (via Meta Model API) handles the planning tier: director, planner and diagnosis roles
+that propose routes and explain failures. Voice transcription and vision roles are routed to Meta models but deferred
+in this build; the global multi-warehouse coordinator is presented as a mock.
 
 The `mock` provider supports tests without network access or spend. Real calls
 require configured credentials, verified pricing and spending limits. Missing or
