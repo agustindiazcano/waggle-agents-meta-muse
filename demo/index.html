@@ -848,8 +848,27 @@ async function init3DAssets() {
   populateSceneWithAssets();
 }
 
-// Elevated so shoe soles stay cleanly above concrete floor
-const FLOOR_FEET_Y = 1.05;
+// Warehouse floor top is at y=0.35 (robots use the same). Workers are
+// grounded per model below, because skinned meshes need their real
+// bounding box after the first animation update.
+const FLOOR_FEET_Y = 0.35;
+function groundOnFloor(obj) {
+  obj.updateMatrixWorld(true);
+  let minY = Infinity;
+  const v = new THREE.Vector3();
+  obj.traverse(o => {
+    if (o.isSkinnedMesh) {
+      o.computeBoundingBox();
+      const b = o.boundingBox;
+      for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) {
+        v.set(x, y, z).applyMatrix4(o.matrixWorld);
+        if (v.y < minY) minY = v.y;
+      }
+    }
+  });
+  obj.userData.dy = isFinite(minY) ? (FLOOR_FEET_Y - minY) : 0;
+  obj.position.y += obj.userData.dy;
+}
 
 const ambientWorkers = [];
 let workerCrossing = null;
@@ -914,7 +933,7 @@ function populateSceneWithAssets() {
     const mx1 = new THREE.AnimationMixer(w1);
     const clip1 = rawAssets.worker1.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker1.animations[0];
     if (clip1) mx1.clipAction(clip1).play();
-    mixers.push(mx1);
+    mixers.push(mx1); mx1.update(0.05); groundOnFloor(w1);
     ambientWorkers.push({ obj: w1, baseX: -90, baseZ: 15, range: 6, axis: 'x', speed: 0.5 });
   }
 
@@ -925,7 +944,7 @@ function populateSceneWithAssets() {
     const mx2 = new THREE.AnimationMixer(w2);
     const clip2 = rawAssets.worker2.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker2.animations[0];
     if (clip2) mx2.clipAction(clip2).play();
-    mixers.push(mx2);
+    mixers.push(mx2); mx2.update(0.05); groundOnFloor(w2);
     workerCrossing = w2;
   }
 
@@ -937,7 +956,7 @@ function populateSceneWithAssets() {
     const mx3 = new THREE.AnimationMixer(w3);
     const clip3 = rawAssets.worker3.animations.find(a => a.name === 'Idle_11') || rawAssets.worker3.animations[0];
     if (clip3) mx3.clipAction(clip3).play();
-    mixers.push(mx3);
+    mixers.push(mx3); mx3.update(0.05); groundOnFloor(w3);
   }
 
   if (rawAssets.worker4 && rawAssets.worker4.scene) {
@@ -948,7 +967,7 @@ function populateSceneWithAssets() {
     const mx4 = new THREE.AnimationMixer(w4);
     const clip4 = rawAssets.worker4.animations.find(a => a.name === 'walking_2_inplace' || a.name === 'Walking') || rawAssets.worker4.animations[0];
     if (clip4) mx4.clipAction(clip4).play();
-    mixers.push(mx4);
+    mixers.push(mx4); mx4.update(0.05); groundOnFloor(w4);
     ambientWorkers.push({ obj: w4, baseX: 95, baseZ: 21, range: 4.5, axis: 'z', speed: 0.45 });
   }
 
@@ -1184,7 +1203,7 @@ function updateSceneAt(t) {
   if (workerCrossing) {
     const crossProgress = clamp((t - 45) / 14, 0, 1);
     const workerZ = lerp(-12, 5, crossProgress);
-    workerCrossing.position.set(6, FLOOR_FEET_Y, workerZ);
+    workerCrossing.position.set(6, FLOOR_FEET_Y + (workerCrossing.userData.dy || 0), workerZ);
     workerCrossing.rotation.y = 0;
     workerCrossing.visible = (t >= 40 && t < 65);
   }
@@ -1193,11 +1212,11 @@ function updateSceneAt(t) {
     const offset = Math.sin(t * w.speed) * w.range;
     if (w.axis === 'x') {
       w.obj.position.x = w.baseX + offset;
-      w.obj.position.y = FLOOR_FEET_Y;
+      w.obj.position.y = FLOOR_FEET_Y + (w.obj.userData.dy || 0);
       w.obj.rotation.y = offset >= 0 ? Math.PI / 2 : -Math.PI / 2;
     } else {
       w.obj.position.z = w.baseZ + offset;
-      w.obj.position.y = FLOOR_FEET_Y;
+      w.obj.position.y = FLOOR_FEET_Y + (w.obj.userData.dy || 0);
       w.obj.rotation.y = offset >= 0 ? 0 : Math.PI;
     }
   });
