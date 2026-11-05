@@ -44,6 +44,14 @@ jobs:
           mkdir -p public/models
           cp ../demo/assets/worker-1.glb ../demo/assets/worker-2.glb ../demo/assets/worker-3.glb ../demo/assets/worker-4.glb ../demo/assets/Shipping_Container.glb public/models/
           ls -la public/models
+      - name: Copy the maintainer demo page into the site
+        working-directory: web
+        run: |
+          mkdir -p public/demo/assets
+          cp ../demo/index.html public/demo/index.html
+          cp -r ../demo/vendor ../demo/utils public/demo/
+          cp ../demo/assets/carrier_bot.glb ../demo/assets/heavy_forklift_bot.glb ../demo/assets/parts_runner_bot.glb ../demo/assets/tech_repair_bot.glb ../demo/assets/tree.glb ../demo/assets/Blue_Delivery_Truck.glb ../demo/assets/Shipping_Container.glb ../demo/assets/worker-1.glb ../demo/assets/worker-2.glb ../demo/assets/worker-3.glb ../demo/assets/worker-4.glb ../demo/assets/meta-logo.svg public/demo/assets/
+          ls -la public/demo public/demo/assets
       - name: Build site
         working-directory: web
         run: npm run build
