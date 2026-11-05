@@ -1239,7 +1239,7 @@ function updateSceneAt(t) {
       trkX = lerp(-180, 180, p);
       tr.obj.position.set(trkX, 0, tr.lane);
     }
-    tr.obj.rotation.y = tr.lane < 0 ? Math.PI / 2 : -Math.PI / 2;
+    tr.obj.rotation.y = 0; // trucks travel along +X; length stays aligned with motion
   });
 
   // 6. GHOST ROLLOUT PATHS (SHOT 5)
