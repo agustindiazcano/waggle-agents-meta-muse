@@ -1,59 +1,56 @@
-1
+﻿1
 00:00:00,000 --> 00:00:08,000
-Three warehouses. Thirty robots. One urgent order.
+Three cells, thirty robots, trucks and packages.
 
 2
-00:00:08,000 --> 00:00:15,000
-ORD-1042: transfer PKG-8841 from WH-A to WH-C. Priority: urgent.
+00:00:08,000 --> 00:00:17,000
+Every robot carries its advisor: Meta Muse Spark Open, a fast model that can only ask for caution, never accelerate.
 
 3
-00:00:15,000 --> 00:00:25,000
-One global coordinator assigns the transfer to three cell organizers.
+00:00:17,000 --> 00:00:25,000
+No message reaches a model without the guard filter: Meta Muse Glimmer screens every input first.
 
 4
-00:00:25,000 --> 00:00:35,000
-Each organizer directs ten robots. Thirty advisors add caution; deterministic code decides.
+00:00:25,000 --> 00:01:37,000
+When replanning is needed, the director and the planner, Meta Muse Wonder, the most capable model, propose routes.
 
 5
-00:00:35,000 --> 00:00:48,000
-WH-B organizer assigns pickup. PKG-8841 attaches to carrier R-B04.
+00:01:37,000 --> 00:01:50,000
+Five simulated route variants, K equals 5, are checked before any motion is allowed.
 
 6
-00:00:48,000 --> 00:00:58,000
-A human crosses the aisle. The fast layer commands a stop. No model is in this loop.
+00:01:50,000 --> 00:01:02,000
+Nothing executes without a verdict. Three independent reviewers vote: Meta Muse Spark, Meta Muse Spark Open, and Meta Muse Glimmer.
 
 7
-00:00:58,000 --> 00:01:05,000
-Clear. Motion resumes inside the allowed envelope.
+00:01:02,000 --> 00:01:18,000
+Case E4-DEV-05: a package label tries a prompt injection. The court denies it. A false approval would be the dangerous error.
 
 8
-00:01:05,000 --> 00:01:18,000
-A package label tries to add an override instruction.
+00:01:18,000 --> 00:02:30,000
+Case E4-DEV-04: a human in the bay. Deny. The court can stop a plan; it can never invent motion.
 
 9
-00:01:18,000 --> 00:01:30,000
-Screening, strict schema and tool permissions reject it. The order is unchanged.
+00:02:30,000 --> 00:02:45,000
+One organizer per warehouse, Meta Muse Spark Open, assigns tasks C0 to C4 with its own MCP identity.
 
 10
-00:01:30,000 --> 00:01:45,000
-Machine M-B2 reports overheating. Ticket, diagnosis and part reservation open.
+00:02:45,000 --> 00:02:00,000
+Every tool call checks token, zone and audit. What the court did not approve, the organizer cannot request.
 
 11
-00:01:45,000 --> 00:02:00,000
-Simulated route variants are reviewed. One safe alternative is selected.
+00:02:00,000 --> 00:02:10,000
+The fast safety layer is deterministic code at 100 hertz. Fencing and the MCP boundary are code, with no model inside.
 
 12
-00:02:00,000 --> 00:02:18,000
-Truck TRK-07 is delayed. The coordinator reassigns the transfer to TRK-12.
+00:02:10,000 --> 00:02:25,000
+If a human blocks the only aisle, crisis replanning E10 proposes a new route, reviewed the same way.
 
 13
-00:02:18,000 --> 00:02:35,000
-PKG-8841 is loaded, moved and delivered. ORD-1042 is complete.
+00:02:25,000 --> 00:03:45,000
+Predictive maintenance E6 diagnoses vibration and opens a ticket before the failure. Demonstrated in simulation.
 
 14
-00:02:35,000 --> 00:02:45,000
-Measured evidence, from committed result files. Development seeds only.
+00:03:45,000 --> 00:03:00,000
+Between warehouses, a global coordinator will move custody by truck. Today it is a labeled mock: global logistics is designed, not implemented. Waggle Hive. Models propose. Deterministic code disposes.
 
-15
-00:02:45,000 --> 00:03:00,000
-Waggle Hive. Models propose. Deterministic code disposes.

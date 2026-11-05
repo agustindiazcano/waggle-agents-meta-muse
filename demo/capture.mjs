@@ -14,7 +14,7 @@ const offset = shotMode ? parseFloat(process.argv[3]) : 0;
 const seconds = parseFloat(shotMode ? process.argv[4] : (process.argv[2] || '5'));
 const out = resolve(shotMode ? process.argv[5] : (process.argv[3] || 'proof.webm'));
 const W = parseInt((shotMode ? process.argv[6] : process.argv[4]) || '1920', 10), H = parseInt((shotMode ? process.argv[7] : process.argv[5]) || '1080', 10);
-const require2 = createRequire('C:/projects/projects-github-agustindiazcano/waggle-viewer-capture/web/package.json');
+const require2 = createRequire(process.env.WAGGLE_PLAYWRIGHT_PACKAGE || 'C:/projects/projects-github-agustindiazcano/waggle-viewer-capture/web/package.json');
 const { chromium } = require2('playwright-core');
 
 const withAudio = (shotMode ? process.argv[8] : process.argv[6]) === 'audio';
@@ -27,8 +27,11 @@ const server = createServer((req, res) => {
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const port = server.address().port;
-const exe = process.env.WAGGLE_BROWSER_EXECUTABLE || 'C:/Users/agusd/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe';
-const browser = await chromium.launch({ headless: true, executablePath: exe, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl', '--mute-audio'] });
+const launchOpts = { headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl', '--mute-audio'] };
+if (process.env.WAGGLE_BROWSER_EXECUTABLE) launchOpts.executablePath = process.env.WAGGLE_BROWSER_EXECUTABLE;
+else if (process.env.WAGGLE_BROWSER_CHANNEL) launchOpts.channel = process.env.WAGGLE_BROWSER_CHANNEL;
+else if (process.platform === 'win32') launchOpts.executablePath = 'C:/Users/agusd/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe';
+const browser = await chromium.launch(launchOpts);
 try {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
   const errors = [];

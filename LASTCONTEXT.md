@@ -23,8 +23,10 @@ G-GLOBAL and other unmerged worktrees remain outside the estimate.
   beside each dock, and four distinct workers (worker-2 crosses the WH-B aisle
   on its Walking clip; the others play Idle_11). Verified with fixed-time
   stills at t=8 and t=50: all six load, no page errors beyond a favicon 404.
-  Not done: recording the eight shots and assembling the final MP4. Videos are
-  written to output/ in this worktree (git-ignored). Reuse of the same models
+  The eight shots were recorded in GitHub Actions (workflow "Waggle Hive demo
+  video shots", run 41936582563, all jobs passed) and downloaded to
+  output/cloud/shot-<n>/shot-<n>.mp4 in this worktree (git-ignored). Not done:
+  assembling the final MP4 and merging the maintainer-recorded audio. Reuse of the same models
   in the production viewer web/ is PENDING row 137, not built here.
 - Video handoff is in ../waggle-video-demo-plan, branch docs/video-demo-plan.
   Read docs/VIDEO_DEMO_PLAN.md there. The maintainer wants a three-minute

@@ -1,0 +1,70 @@
+name: Waggle Hive demo video shots
+
+on:
+  workflow_dispatch:
+    inputs:
+      shot:
+        description: "Shot number 1-8, or all"
+        required: false
+        default: "all"
+  push:
+    branches: [feat/video-demo]
+    paths:
+      - "demo/**"
+      - "web/package.json"
+      - "web/package-lock.json"
+      - ".github/workflows/demo-video.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Shot ${{ matrix.n }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { n: 1, start: 0, seconds: 15 }
+          - { n: 2, start: 15, seconds: 20 }
+          - { n: 3, start: 35, seconds: 30 }
+          - { n: 4, start: 65, seconds: 25 }
+          - { n: 5, start: 90, seconds: 30 }
+          - { n: 6, start: 120, seconds: 35 }
+          - { n: 7, start: 155, seconds: 10 }
+          - { n: 8, start: 165, seconds: 15 }
+    steps:
+      - name: Check out with LFS models
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install viewer dependencies and Chrome
+        working-directory: web
+        run: |
+          npm ci
+          npx playwright install --with-deps chrome
+      - name: Record shot
+        if: github.event_name == 'push' || inputs.shot == 'all' || inputs.shot == format('{0}', matrix.n)
+        env:
+          WAGGLE_PLAYWRIGHT_PACKAGE: ${{ github.workspace }}/web/package.json
+          WAGGLE_BROWSER_CHANNEL: chrome
+        run: |
+          mkdir -p output
+          node demo/capture.mjs shot ${{ matrix.start }} ${{ matrix.seconds }} output/shot-${{ matrix.n }}.mp4 1920 1080 audio
+          ls -la output
+      - name: Upload shot artifact
+        if: github.event_name == 'push' || inputs.shot == 'all' || inputs.shot == format('{0}', matrix.n)
+        uses: actions/upload-artifact@v4
+        with:
+          name: shot-${{ matrix.n }}
+          path: |
+            output/shot-${{ matrix.n }}.mp4
+            output/still-*.png
+          if-no-files-found: error
+          retention-days: 14

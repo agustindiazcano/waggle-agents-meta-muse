@@ -60,7 +60,9 @@ and keep the banner clear of counters, event panels and important scene action.
 
 | Position | Copy | Treatment |
 |---|---|---|
-| Left | Powered by Meta Muse | Small, readable brand line |
+| Left, first line | Waggle Hive | Small, readable product name (maintainer request 2026-11-04) |
+| Left, second line | Agentic robot fleet for logistics | Smaller tagline; corrected English for the maintainer wording |
+| Center | Powered by Meta Muse | Small, readable brand line |
 | Right, first line | Agustin Diaz Cano | Small author credit |
 | Right, second line | MS Candidate, Systems Engineering | Smaller secondary line |
 
