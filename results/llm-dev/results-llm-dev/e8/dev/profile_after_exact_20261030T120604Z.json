@@ -1,0 +1,200 @@
+{
+  "experiment": "e8",
+  "kind": "profile",
+  "seed_set": "dev",
+  "label": "code speed on this machine, profiler overhead included, not a real-time guarantee",
+  "run_label": "after",
+  "commit": "3ce1c3e9f461a92ae5b279c761836a17a4e9670c",
+  "date": "2026-10-30T12:05:51+00:00",
+  "numpy_version": "2.5.4",
+  "platform": "Windows-11-10.0.22631-SP0",
+  "scenario": "S14",
+  "seed": 1,
+  "ticks": 1800,
+  "lidar_mode": "exact",
+  "seconds_per_rollout_unprofiled_clock": 12.90867320029065,
+  "profiled_total_seconds": 12.956255599999995,
+  "top_functions": [
+    {
+      "function": "sensors.py:82(_cross)",
+      "component": "lidar",
+      "calls": 13590,
+      "own_seconds": 3.2938316000000003,
+      "cumulative_seconds": 3.3121196000000004
+    },
+    {
+      "function": "sensors.py:86(segment_hits)",
+      "component": "lidar",
+      "calls": 4530,
+      "own_seconds": 1.2898781000000001,
+      "cumulative_seconds": 4.9029021
+    },
+    {
+      "function": "sensors.py:114(lidar_scan)",
+      "component": "lidar",
+      "calls": 4530,
+      "own_seconds": 0.8601764000000001,
+      "cumulative_seconds": 7.581542700000001
+    },
+    {
+      "function": "robots.py:136(footprint_corners)",
+      "component": "core",
+      "calls": 40770,
+      "own_seconds": 0.7049723,
+      "cumulative_seconds": 1.0706727
+    },
+    {
+      "function": "~:0(<built-in method numpy.array>)",
+      "component": "other",
+      "calls": 145863,
+      "own_seconds": 0.5590536,
+      "cumulative_seconds": 0.5590536
+    },
+    {
+      "function": "~:0(<method 'reduce' of 'numpy.ufunc' objects>)",
+      "component": "other",
+      "calls": 25955,
+      "own_seconds": 0.5173960000000001,
+      "cumulative_seconds": 0.5173960000000001
+    },
+    {
+      "function": "sensors.py:101(_disc_hits)",
+      "component": "lidar",
+      "calls": 4530,
+      "own_seconds": 0.49248100000000006,
+      "cumulative_seconds": 0.7646804
+    },
+    {
+      "function": "detector.py:264(_robot_contacts)",
+      "component": "detector",
+      "calls": 1810,
+      "own_seconds": 0.42222020000000005,
+      "cumulative_seconds": 1.9337248
+    },
+    {
+      "function": "sensors.py:146(finish_scan)",
+      "component": "lidar",
+      "calls": 4530,
+      "own_seconds": 0.3335543,
+      "cumulative_seconds": 0.46554110000000004
+    },
+    {
+      "function": "sim_speed.py:81(step)",
+      "component": "other",
+      "calls": 1810,
+      "own_seconds": 0.3219214,
+      "cumulative_seconds": 9.0487888
+    },
+    {
+      "function": "humans.py:61(_edge_distance)",
+      "component": "core",
+      "calls": 21640,
+      "own_seconds": 0.2650899,
+      "cumulative_seconds": 0.44261370000000005
+    },
+    {
+      "function": "hullgap.py:38(_edges)",
+      "component": "detector",
+      "calls": 1759,
+      "own_seconds": 0.2523397,
+      "cumulative_seconds": 0.3844905
+    },
+    {
+      "function": "shape_base.py:378(stack)",
+      "component": "other",
+      "calls": 15084,
+      "own_seconds": 0.2378039,
+      "cumulative_seconds": 0.27667230000000004
+    },
+    {
+      "function": "robots.py:112(_step)",
+      "component": "core",
+      "calls": 1810,
+      "own_seconds": 0.19172180000000003,
+      "cumulative_seconds": 0.30852860000000004
+    },
+    {
+      "function": "scripted.py:67(_drive)",
+      "component": "core",
+      "calls": 1810,
+      "own_seconds": 0.1710115,
+      "cumulative_seconds": 0.422823
+    },
+    {
+      "function": "hullgap.py:24(corners)",
+      "component": "detector",
+      "calls": 3518,
+      "own_seconds": 0.16434200000000002,
+      "cumulative_seconds": 0.36005410000000004
+    },
+    {
+      "function": "detector.py:229(_human_gaps)",
+      "component": "detector",
+      "calls": 1810,
+      "own_seconds": 0.1412938,
+      "cumulative_seconds": 0.2142098
+    },
+    {
+      "function": "hullgap.py:83(_clearance)",
+      "component": "detector",
+      "calls": 1759,
+      "own_seconds": 0.1400383,
+      "cumulative_seconds": 0.26748900000000003
+    },
+    {
+      "function": "humans.py:143(_walk)",
+      "component": "core",
+      "calls": 7240,
+      "own_seconds": 0.13055940000000002,
+      "cumulative_seconds": 0.7472599000000001
+    },
+    {
+      "function": "~:0(<built-in method numpy.asarray>)",
+      "component": "other",
+      "calls": 122806,
+      "own_seconds": 0.11631240000000001,
+      "cumulative_seconds": 0.11631240000000001
+    },
+    {
+      "function": "detector.py:304(_record)",
+      "component": "detector",
+      "calls": 7240,
+      "own_seconds": 0.11513640000000001,
+      "cumulative_seconds": 0.1354108
+    },
+    {
+      "function": "sensors.py:67(_polygon_segments)",
+      "component": "lidar",
+      "calls": 40774,
+      "own_seconds": 0.1065016,
+      "cumulative_seconds": 0.1065016
+    },
+    {
+      "function": "robots.py:90(issue)",
+      "component": "core",
+      "calls": 1810,
+      "own_seconds": 0.09392110000000001,
+      "cumulative_seconds": 0.1579145
+    },
+    {
+      "function": "hullgap.py:34(_cross)",
+      "component": "detector",
+      "calls": 3518,
+      "own_seconds": 0.09303220000000001,
+      "cumulative_seconds": 0.0976863
+    },
+    {
+      "function": "fromnumeric.py:66(_wrapreduction)",
+      "component": "other",
+      "calls": 17108,
+      "own_seconds": 0.0891112,
+      "cumulative_seconds": 0.5519953000000001
+    }
+  ],
+  "own_seconds_by_component": {
+    "core": 1.8058406,
+    "detector": 1.6963968,
+    "lidar": 6.378028300000001,
+    "other": 3.0759899
+  }
+}

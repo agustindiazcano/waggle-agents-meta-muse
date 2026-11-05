@@ -1,0 +1,29 @@
+{
+  "experiment": "e8",
+  "seed_set": "benchmark",
+  "commit": "96158a253d6f254f352cda5103b8205dadc0b6b7",
+  "date": "2026-11-04T23:16:04.367722+00:00",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "model_ids": [],
+  "prompt_versions": {},
+  "extrapolation": null,
+  "fast_layer": {
+    "configuration": "envelope_occlusion_cpa_lidar_beacons",
+    "scenario": "S01",
+    "seed": 20261027,
+    "robots": 1,
+    "ticks": 200,
+    "warmup_ticks": 20,
+    "control_calls": 200,
+    "latency_s": {
+      "count": 200,
+      "min": 0.000713467,
+      "max": 0.004300167000000001,
+      "p50": 0.00085421,
+      "p95": 0.00342098,
+      "p99": 0.004010805
+    },
+    "scope": "code latency of production control_step inside the simulator; excludes sensor generation, simulator physics and networking; not a hardware real-time bound or a representative scenario sweep"
+  },
+  "llm_calls": null
+}
