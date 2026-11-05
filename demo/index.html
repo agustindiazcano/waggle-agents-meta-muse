@@ -1057,7 +1057,7 @@ function replaceRobotsWithGLTF() {
     if (r.userData.idx === 8 && rawAssets.partsBot) gltfModel = rawAssets.partsBot.scene;
     if (r.userData.idx === 9 && rawAssets.repairBot) gltfModel = rawAssets.repairBot.scene;
     
-    const newMesh = normalizeMesh(gltfModel, isHero ? 1.25 : 1.12);
+    const newMesh = normalizeMesh(gltfModel, isHero ? 2.6 : 2.2);
     newMesh.rotation.y = -Math.PI / 2;
     
     if (isHero || isOrg) {
