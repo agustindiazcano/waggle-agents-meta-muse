@@ -1,6 +1,8 @@
 """Cloud mutation campaign contract and failure reporting."""
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -180,3 +182,44 @@ def test_workflow_is_manual_and_installs_only_cloud_tool() -> None:
 def test_copy_inside_repository_is_refused(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="outside repository"):
         prepare_campaign(tmp_path, tmp_path / "copy", "control")
+
+
+def test_prepare_campaign_writes_robust_fork_shim(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    (root / "src/waggle/control").mkdir(parents=True)
+    (root / "src/waggle/validation").mkdir()
+    (root / "tests/unit/control").mkdir(parents=True)
+    (root / "tests/support").mkdir()
+    (root / "src/waggle/control/rule.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (root / "src/waggle/validation/rule.py").write_text("VALUE = 2\n", encoding="utf-8")
+    (root / "pyproject.toml").write_text("[project]\nname = 'toy'\n", encoding="utf-8")
+    dest = tmp_path / "copy"
+    prepare_campaign(root, dest, "control")
+
+    shim = dest / "sitecustomize.py"
+    assert shim.is_file()
+
+    code = (
+        "import sitecustomize\n"
+        "import multiprocessing as mp\n"
+        "mp.set_start_method('fork')\n"
+        "mp.set_start_method('fork')\n"
+        "mp.set_start_method('fork', force=True)\n"
+        "mp.set_start_method('fork')\n"
+        "assert mp.get_start_method() == 'fork'\n"
+        "try:\n"
+        "    mp.set_start_method('spawn')\n"
+        "except RuntimeError:\n"
+        "    pass\n"
+        "else:\n"
+        "    raise AssertionError('expected RuntimeError on start method change')\n"
+    )
+    res = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=dest,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert "RuntimeError" not in res.stderr
+    assert res.returncode == 0, f"stdout: {res.stdout}\nstderr: {res.stderr}"
