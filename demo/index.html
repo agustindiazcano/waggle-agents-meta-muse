@@ -844,11 +844,16 @@ async function init3DAssets() {
     worker4: 'assets/worker-4.glb'
   };
   
-  const entries = Object.entries(files);
-  const loaded = await Promise.all(entries.map(async ([key, url]) => [key, await loadGLTF(url)]));
+  // Load everything except the 71 MB truck first so robots, containers and
+  // workers appear quickly; the truck swaps in when it arrives.
+  const light = Object.entries(files).filter(([key]) => key !== 'truck');
+  const loaded = await Promise.all(light.map(async ([key, url]) => [key, await loadGLTF(url)]));
   for (const [key, gltf] of loaded) rawAssets[key] = gltf;
-  
+
   populateSceneWithAssets();
+
+  rawAssets.truck = await loadGLTF(files.truck);
+  replaceTrucksWithGLB();
 }
 
 // Warehouse floor top is at y=0.35 (robots use the same). Workers are
