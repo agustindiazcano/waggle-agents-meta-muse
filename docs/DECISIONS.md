@@ -1,4 +1,4 @@
-# Waggle Hive: Architecture Decision Records
+﻿# Waggle Hive: Architecture Decision Records
 
 Format: context, decision, consequences. Status: accepted unless noted.
 
@@ -1191,3 +1191,32 @@ New branches compare against the default branch on their first push. Initial
 default-branch pushes, manual viewer runs and scope-detection failures run suites.
 Code-changing PRs retain existing lint, types, coverage, imports and browser checks.
 Protected-path reporting remains enabled. No safety or runtime check is removed.
+
+## ADR-099: Vision label pipeline reads with vision-v1 and resolves in code
+
+Status: implemented, not evaluated, 2026-11-04.
+
+Decision: The vision model is a reader only. `waggle.llm.vision_adapter`
+sends one image through the `vision` role and returns the raw model text
+or a typed error. `waggle.multimodal.vision_schema` parses that text
+against `vision-v1`: exactly `label_text`, `obstruction_class` (closed
+enum) and `legibility`, extra fields forbidden. The schema has no package
+id field, so a model can never name the package it claims to see.
+`waggle.multimodal.vision` then sanitizes the label text as an untrusted
+package label, screens it with the guard (fail closed, escalation on any
+non-pass), applies a legibility threshold from configuration, and resolves
+the sanitized text against the trusted set of known package ids in code.
+Exactly one match identifies the package. Zero or several matches, low
+legibility, a guard rejection or an invalid report give `unknown` or
+`rejected` with escalation, never a guess.
+
+Consequences: Vision is not in the control loop. The outcome may carry
+`obstruction_class` as data for the planner; it has no order, motion or
+execution field, and instruction-like label text is data only. The E7
+vision mock runner (`waggle.experiments.e7_vision`) reports false accepts
+first against a trust-the-label baseline, with fixtures pending maintainer
+review. No paid call was made, no result file exists, and no accuracy is
+claimed. Still missing: a real Meta vision call, synthetic FPV rendering,
+the multimodal UI and a real E7 run, all behind maintainer caps and label
+review.
+

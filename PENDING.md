@@ -1,4 +1,4 @@
-# Waggle Hive: Pending
+﻿# Waggle Hive: Pending
 
 README banner task (2026-11-04): HTML source and 1600 by 500 Chrome capture added
 on docs/readme-brand-header. Project code estimate remains 95% plus/minus 2 points
@@ -39,7 +39,7 @@ historical task rows. G-GLOBAL remains outside the denominator until authorized.
 | P2 | Validate MCP with a real SDK client | A, M | 100% | Official SDK client passed on main 2026-11-04 (2 tests, production LineServer, fake dispatcher, no database); no broader conformity claim |
 | P2 | Finish technical viewer map geometry, envelopes, lidar shadows, rollout ghosts and live connection | A, M | 100% | Overlays now fed from simulator state in PR 189 (ADR-093 contract); maintainer visual review remains |
 | P2 | Integrate database-backed E6 diagnosis and production maintenance orchestration | A | 100% | Production assembly merged in PR 181; real PostgreSQL run remains |
-| P3 | Add real transcription/vision integration and UI (Vertex discarded, ADR-097) | A, M | 75% | Deferred by maintainer decision 2026-11-04; voice-intent and mock E7 exist; vision is the first nice-to-have after the global demo |
+| P3 | Add real transcription/vision integration and UI (Vertex discarded, ADR-097) | A, M | 85% | Voice-intent, E7 voice mock, vision-v1 schema, vision adapter, label pipeline and E7 vision mock implemented on feat/vision-label (ADR-099, mock only, not evaluated); real Meta vision call, FPV rendering, UI and real E7 run remain pending maintainer caps and label review |
 | P2 | Close package motion-order foreign key and registry/simulator equality checks | A | 100% | Revision 15 FK and packages_match equality merged in PR 188; heavy PostgreSQL tests run in the cloud workflow |
 | P2 | Diagnose remaining E1 stops/collisions without lowering safety limits | A, M | 100% | Diagnosed 2026-11-04 with fresh per-tick traces: S03 is head-on deadlock (corridor locking), S06/S11 are a human stopped on the only route (safe stop, E10 recovery); one ghost estop episode remains and needs a maintainer ADR decision (static-structure filter outside occlusion, human-at-rack test first). No limit was changed |
 | P2 | Complete E8 production collection and calibration | A, M | 75% | Report runner, cloud control benchmark and extrapolation implemented; database export automation remains; measurements pending |

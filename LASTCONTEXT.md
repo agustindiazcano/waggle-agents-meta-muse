@@ -13,6 +13,16 @@ no product code or experiment result changed.
 
 ## Done last
 
+- Implemented the vision nice-to-have on branch feat/vision-label in
+  .worktrees/vision-label (ADR-099): vision-v1 strict schema with no package
+  id field, vision adapter in waggle.llm, label pipeline in waggle.multimodal
+  (sanitizer, guard fail closed, legibility threshold, registry lookup in
+  code) and the E7 vision mock runner with a trust-the-label baseline.
+  Mock only, not evaluated: no paid call, no result file, fixtures pending
+  maintainer label review. Verified locally: 145 targeted tests passed
+  (vision, voice, attachments, providers), ruff and mypy --strict clean,
+  style 23 passed. PR opened at the maintainer order; no test was run for
+  the PR step. The maintainer reviews and merges.
 - Maintainer explicitly disabled application suites for documentation-only PRs.
   Added a shared change-scope action and conditional Python/viewer jobs (ADR-098).
   Code changes retain checks; unknown paths and detection failures run suites.
