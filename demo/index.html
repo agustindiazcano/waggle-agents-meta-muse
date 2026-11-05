@@ -415,6 +415,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'three/addons/SkeletonUtils.js';
 
 // ================= CONSTANTS & SHOT DATA =================
 const DURATION = 180;
@@ -775,7 +776,9 @@ function loadGLTF(url) {
 }
 
 function normalizeMesh(src, targetSize) {
-  const clone = src.clone(true);
+  let skinned = false;
+  src.traverse(o => { if (o.isSkinnedMesh) skinned = true; });
+  const clone = skinned ? cloneSkeleton(src) : src.clone(true);
   const bb = new THREE.Box3().setFromObject(clone);
   const sz = bb.getSize(new THREE.Vector3());
   const maxDim = Math.max(sz.x, sz.y, sz.z) || 1;
@@ -1449,7 +1452,7 @@ function animate() {
 }
 
 // Start
-window.__demo = { SUBS, stateAt: (t) => { currentTime = t; updateSceneAt(t); } };
+window.__demo = { SUBS, stateAt: (t) => { currentTime = t; updateSceneAt(t); }, workers: () => [workerCrossing, ...ambientWorkers.map(w => w.obj)].filter(Boolean) };
 window.__assetsReady = init3DAssets().then(() => {
   updateSceneAt(0);
   animate();
