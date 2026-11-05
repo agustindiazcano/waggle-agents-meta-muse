@@ -37,7 +37,7 @@ test("gallery lists all models, builds modular equipment and reports a missing a
   await page.route("**/models/*.glb", (route) => route.fulfill({ status: 404, body: "missing" }));
   await page.goto("/?gallery=1");
   const model = page.locator("#gallery-model");
-  await expect(model.locator("option")).toHaveCount(20);
+  await expect(model.locator("option")).toHaveCount(25);
   for (const id of ["modular-rack", "dock", "conveyor"]) {
     await model.selectOption(id);
     await expect(page.locator("#gallery-status")).toContainText(/preview/i);
@@ -59,10 +59,8 @@ test("unknown replay fields produce a visible error", async ({ page }) => {
   const lines = (await response.text()).trim().split("\n");
   const frame = JSON.parse(lines[1]); frame.unknown = true;
   lines[1] = JSON.stringify(frame);
-  await page.goto("/");
-  await page.locator("#file").setInputFiles({
-    name: "invalid.jsonl", mimeType: "text/plain", buffer: Buffer.from(lines.join("\n") + "\n"),
-  });
+  await page.route("**/demo.jsonl", (route) => route.fulfill({ status: 200, contentType: "text/plain", body: lines.join("\n") + "\n" }));
+  await page.goto("/?demo=1");
   await expect(page.locator("#error")).toBeVisible();
   await expect(page.locator("#viewer")).toBeHidden();
 });

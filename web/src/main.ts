@@ -30,8 +30,6 @@ function el<T extends HTMLElement>(id: string): T {
 const errorBox = el<HTMLElement>("error");
 const viewer = el<HTMLElement>("viewer");
 const canvasHost = el<HTMLElement>("canvas");
-const filePicker = el<HTMLInputElement>("file");
-const worldFilePicker = el<HTMLInputElement>("world-file");
 const playButton = el<HTMLButtonElement>("play");
 const slider = el<HTMLInputElement>("scrub");
 const entitySelect = el<HTMLSelectElement>("entity");
@@ -49,8 +47,6 @@ const zoneList = el<HTMLElement>("zones");
 const eventList = el<HTMLElement>("events");
 const gallery = el<HTMLElement>("gallery");
 const home = el<HTMLElement>("home");
-const galleryButton = el<HTMLButtonElement>("gallery-toggle");
-const scopeNote = el<HTMLElement>("scope-note");
 let galleryInitialized = false;
 
 let scene: Scene | null = null;
@@ -139,8 +135,6 @@ function frame_loop(now: number): void {
 function open(next: Replay): void {
   home.hidden = true;
   gallery.hidden = true;
-  galleryButton.textContent = "Models gallery";
-  scopeNote.textContent = "Replay draws recorded frames and decides nothing.";
   errorBox.hidden = true;
   viewer.hidden = false;
   replay = next;
@@ -167,45 +161,11 @@ async function openBlob(blob: Blob): Promise<void> {
   }
 }
 
-async function openWorldBlob(blob: Blob): Promise<void> {
-  if (replay === null) {
-    showError("open a replay file before loading map geometry");
-    return;
-  }
-  try {
-    const raw: unknown = JSON.parse(await blob.text());
-    const world = parseWorld(raw, replay.header.world_hash);
-    if (scene === null) {
-      scene = new Scene(canvasHost);
-    }
-    scene.setWorld(world);
-    scene.fit(replay.frames);
-    worldStatus.textContent = `Map geometry: ${world.name}`;
-    render();
-  } catch (err) {
-    showError(err instanceof Error ? err.message : "invalid map file");
-  }
-}
-
 function flipOverlay(layer: OverlayLayer, button: HTMLButtonElement): void {
   overlayVisibility = toggleOverlayLayer(overlayVisibility, layer);
   button.setAttribute("aria-pressed", String(overlayVisibility[layer]));
   scene?.setOverlayVisibility(overlayVisibility);
 }
-
-filePicker.addEventListener("change", () => {
-  const file = filePicker.files?.[0];
-  if (file !== undefined) {
-    void openBlob(file);
-  }
-});
-
-worldFilePicker.addEventListener("change", () => {
-  const file = worldFilePicker.files?.[0];
-  if (file !== undefined) {
-    void openWorldBlob(file);
-  }
-});
 
 toggleEnvelopesButton.addEventListener("click", () => {
   flipOverlay("envelopes", toggleEnvelopesButton);
@@ -219,17 +179,12 @@ toggleGhostsButton.addEventListener("click", () => {
   flipOverlay("ghosts", toggleGhostsButton);
 });
 
-galleryButton.addEventListener("click", () => {
-  const showGallery = gallery.hidden;
-  if (showGallery && player.playing) player = togglePlay(player);
-  home.hidden = showGallery ? true : replay === null;
-  gallery.hidden = !showGallery;
-  viewer.hidden = showGallery || replay === null;
-  galleryButton.textContent = showGallery ? "Back to replay" : "Models gallery";
-  scopeNote.textContent = showGallery
-    ? "Model previews are independent from the replay."
-    : "Replay draws recorded frames and decides nothing.";
-  if (showGallery && !galleryInitialized) {
+function showGallery(): void {
+  if (player.playing) player = togglePlay(player);
+  home.hidden = true;
+  gallery.hidden = false;
+  viewer.hidden = true;
+  if (!galleryInitialized) {
     galleryInitialized = true;
     openGallery(
       gallery,
@@ -242,8 +197,7 @@ galleryButton.addEventListener("click", () => {
       el<HTMLInputElement>("rack-levels"),
     );
   }
-  if (!showGallery) render();
-});
+}
 
 playButton.addEventListener("click", () => {
   if (replay === null) {
@@ -302,7 +256,6 @@ function connectLive(scenarioId: string): void {
   if (scene === null) {
     scene = new Scene(canvasHost);
   }
-  scopeNote.textContent = "Live stream draws simulator frames and decides nothing.";
   metaValue.textContent = `live scenario ${scenarioId}`;
   let fitted = false;
   ws.addEventListener("message", (ev) => {
@@ -335,7 +288,6 @@ function openDemo3d(): void {
   gallery.hidden = true; viewer.hidden = true; errorBox.hidden = true;
   const host = el<HTMLElement>("demo3d");
   host.hidden = false;
-  scopeNote.textContent = "Interactive demo: presentation mock, not simulator ground truth. Truck is procedural (71 MB GLB exceeds the 25 MB importer cap).";
   const hud = el<HTMLElement>("demo3d-hud"); const evBox = el<HTMLElement>("demo3d-event");
   const subs = el<HTMLElement>("demo3d-subs"); const timeLabel = el<HTMLElement>("demo3d-time");
   const notice = el<HTMLElement>("demo3d-notice"); const scrub = el<HTMLInputElement>("demo3d-scrub");
@@ -383,6 +335,6 @@ if (searchParams.get("demo3d") === "1") {
 } else if (searchParams.get("demo") === "1") {
   void loadDemo();
 } else if (searchParams.get("gallery") === "1") {
-  galleryButton.click();
+  showGallery();
 }
 requestAnimationFrame(frame_loop);
