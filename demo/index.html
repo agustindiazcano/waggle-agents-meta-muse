@@ -1442,11 +1442,12 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// Start
+// Start: render and play immediately; GLB models populate when loaded.
 window.__demo = { SUBS, stateAt: (t) => { currentTime = t; updateSceneAt(t); }, workers: () => [workerCrossing, ...ambientWorkers.map(w => w.obj)].filter(Boolean) };
+updateSceneAt(0);
+animate();
 window.__assetsReady = init3DAssets().then(() => {
-  updateSceneAt(0);
-  animate();
+  updateSceneAt(currentTime);
   console.log('Waggle Hive 3D Presentation initialized in English.');
   return 'glb';
 });
