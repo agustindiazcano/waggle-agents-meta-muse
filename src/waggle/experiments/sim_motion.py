@@ -22,6 +22,24 @@ from waggle.sim.packages import PackageModel
 from waggle.sim.scripted import WaypointDriver
 
 
+class PackageRegistryPort(Protocol):
+    """The id listing of ``PackageRegistry``."""
+
+    def ids(self) -> tuple[str, ...]:
+        """Every registered package id."""
+        ...
+
+
+def packages_match(registry: PackageRegistryPort, packages: PackageModel) -> bool:
+    """True only when the registry and the simulator hold exactly the same package ids.
+
+    Order does not matter; a missing, extra or duplicated id on either side is a mismatch.
+    """
+    registry_ids = registry.ids()
+    simulator_ids = packages.package_ids
+    return sorted(registry_ids) == sorted(simulator_ids)
+
+
 class OrderQueue(Protocol):
     """The read and resolve side of ``MotionOrderRepository``."""
 

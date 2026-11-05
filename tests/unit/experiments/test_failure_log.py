@@ -178,7 +178,7 @@ def test_failure_case_refuses_invalid_fields() -> None:
     # Bad case_id
     with pytest.raises(ValueError) as exc_cid:
         FailureCase(
-            bad_marker,
+            bad_marker + "@illegal",
             "pump",
             FailureMode.BEARING_WEAR,
             10,

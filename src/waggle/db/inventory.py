@@ -84,6 +84,14 @@ class InventoryRepository:
                 (part_number, on_hand),
             )
 
+    def part_numbers(self) -> frozenset[str]:
+        """Every part number in the catalog. The transaction closes before return."""
+        with self._database.transaction() as connection:
+            found = connection.execute(
+                "SELECT part_number FROM spare_parts ORDER BY part_number"
+            ).fetchall()
+        return frozenset(cast(str, row[0]) for row in found)
+
     def get(self, part_number: str) -> PartStock | None:
         """The counts for a catalog part, or None when it is not in the catalog."""
         _part(part_number)

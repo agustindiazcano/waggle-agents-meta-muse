@@ -11,6 +11,7 @@ from starlette.websockets import WebSocketDisconnect
 from waggle.api import app as api_app
 from waggle.api import sources
 from waggle.api.config import ApiConfig
+from waggle.replay import overlay_data
 from waggle.replay.recorder import ReplayRecorder
 from waggle.sim import frame, scenarios
 
@@ -30,11 +31,13 @@ class FakeSleep:
 def _direct_frames(scenario_id: str, seed: int, ticks: int) -> list[str]:
     scenario = scenarios.generate(scenario_id, seed)
     sim, _ = scenarios.build_engine(scenario)
+    box = scenarios.load_map(scenario.map_name)
     run = frame.RunInfo(COMMIT, seed, scenario_id, "live")
     out: list[str] = []
     for _ in range(ticks):
         sim.step()
-        out.append(frame.encode_frame(frame.export_frame(sim, run)))
+        overlays = overlay_data.build_overlays(sim, scenario, box)
+        out.append(frame.encode_frame(frame.export_frame(sim, run, overlays=overlays)))
     return out
 
 

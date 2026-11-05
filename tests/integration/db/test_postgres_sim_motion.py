@@ -6,6 +6,7 @@ import pytest
 from waggle.coordination.task_model import TaskDefinition, TaskState
 from waggle.db.connection import Database
 from waggle.db.motion import MotionOrderRepository, NewOrder
+from waggle.db.packages import PackageRegistry
 from waggle.db.tasks import TaskRepository
 from waggle.experiments.sim_motion import MotionExecutor
 from waggle.sim import engine, robots, scripted
@@ -34,6 +35,7 @@ def _sim(queue: MotionOrderRepository) -> engine.Engine:
 
 def test_a_queued_move_is_executed_and_frees_the_robot(database: Database) -> None:
     _live_task(database)
+    PackageRegistry(database).add("pk-1")
     queue = MotionOrderRepository(database)
     first = queue.enqueue("carrier-0", NewOrder("move_waypoint", "job", x=8.0, y=0.0, speed=1.0), 0)
     assert first.queued and first.order_id is not None
@@ -51,6 +53,7 @@ def test_a_queued_move_is_executed_and_frees_the_robot(database: Database) -> No
 
 def test_a_queued_pick_fails_in_the_simulator(database: Database) -> None:
     _live_task(database)
+    PackageRegistry(database).add("pk-1")
     queue = MotionOrderRepository(database)
     queued = queue.enqueue("carrier-0", NewOrder("pick_package", "job", package_id="pk-1"), 0)
     _sim(queue).run(3)

@@ -11,8 +11,8 @@ Configurations:
 - C2: Safety advisor off, organizer on.
 - C3: Safety advisor on, organizer on.
 - C3_REPLAY: Deterministic replay of the recorded caution log from C3.
-Configuration C4 requires the optional fleet planner, which is not implemented, and is refused
-with UnsupportedConfigurationError.
+- C4: Both robot roles plus one fleet MOVE plan on explicitly supplied topology.
+Non-MOVE actions, dependencies and lease-requiring routes are refused.
 """
 
 import json
@@ -33,6 +33,12 @@ from waggle.experiments.advisor_bridge import AdvisorBridge
 from waggle.experiments.e1_config import BY_NAME, E1Config
 from waggle.experiments.e1_rig import streams_for
 from waggle.experiments.e5_caller import AdvisorCaller
+from waggle.experiments.e5_fleet import (
+    apply_fleet_plan,
+    fleet_context,
+    fleet_record,
+    propose_fleet_plan,
+)
 from waggle.experiments.e5_rig import E5Rig
 from waggle.governance.advisor_input import AdvisorInputLimits
 from waggle.governance.caution import CautionConfig
@@ -57,14 +63,19 @@ from waggle.llm.providers import MockProvider, Provider, ScriptedProvider
 from waggle.llm.routing import load_routes
 from waggle.sim import robots, scenarios
 from waggle.sim.params import DT
+from waggle.validation.path_compiler import StaticMap
+from waggle.validation.plan_rollout import RolloutConfig
 
 logger = logging.getLogger("waggle.experiments.e5")
 
 SEEDS_PATH: Final = Path("data/seeds.json")
 TARGET_LAYER: Final = "fast-layer extra-cap input and organizer boundary"
-RUNNABLE_CONFIGS: Final = frozenset({"C0", "C1", "C1_REPLAY", "C2", "C3", "C3_REPLAY"})
+RUNNABLE_CONFIGS: Final = frozenset({"C0", "C1", "C1_REPLAY", "C2", "C3", "C3_REPLAY", "C4"})
 REPLAY_CONFIGS: Final = frozenset({"C1_REPLAY", "C3_REPLAY"})
-UNSUPPORTED_CONFIGS: Final = frozenset({"C4"})
+VALID_FLEET_JSON: Final = (
+    '{"nodes":[],"rationale":"no scripted plan","escalate":true,'
+    '"escalation_reason":"needs_operator"}'
+)
 VALID_NONE_JSON: Final = '{"action":"none","speed_cap":null,"duration_ticks":null,"code":null}'
 VALID_ORGANIZER_NONE_JSON: Final = (
     '{"action":"none","duration_ticks":null,"tool":null,'
@@ -99,7 +110,7 @@ REQUIRED_RESULT_FIELDS: Final[frozenset[str]] = frozenset(
 
 
 class UnsupportedConfigurationError(ValueError):
-    """Raised when a requested configuration requires unimplemented components (e.g. C2-C4)."""
+    """Raised for unknown configurations or missing fleet planning inputs."""
 
 
 class ResultValidationError(ValueError):
@@ -146,7 +157,11 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
     if isinstance(raw, str):
         inner = ScriptedProvider(
             "baseten",
-            by_role={"advisor": raw, "organizer": VALID_ORGANIZER_NONE_JSON},
+            by_role={
+                "advisor": raw,
+                "organizer": VALID_ORGANIZER_NONE_JSON,
+                "planner": VALID_FLEET_JSON,
+            },
         )
     elif isinstance(raw, Mapping):
         by_role: dict[str, Any] = {}
@@ -161,6 +176,7 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
                     "organizer",
                     "guard",
                     "director",
+                    "planner",
                     "court_1",
                     "court_2",
                     "court_3",
@@ -172,13 +188,19 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
             by_role["advisor"] = VALID_NONE_JSON
         if "organizer" not in by_role and not by_request:
             by_role["organizer"] = VALID_ORGANIZER_NONE_JSON
+        if "planner" not in by_role and not by_request:
+            by_role["planner"] = VALID_FLEET_JSON
         inner = ScriptedProvider("baseten", by_role=by_role, by_request=by_request)
     elif isinstance(raw, ScriptedProvider):
         inner = raw
     else:
         inner = ScriptedProvider(
             "baseten",
-            by_role={"advisor": VALID_NONE_JSON, "organizer": VALID_ORGANIZER_NONE_JSON},
+            by_role={
+                "advisor": VALID_NONE_JSON,
+                "organizer": VALID_ORGANIZER_NONE_JSON,
+                "planner": VALID_FLEET_JSON,
+            },
         )
 
     if spec.failure_window is not None:
@@ -187,7 +209,7 @@ def _build_provider(spec: RunSpec, current_tick_holder: list[int]) -> Provider:
 
 
 class E5Runner:
-    """Configures and runs E5 experiment configurations (C0, C1, C1_REPLAY, C2, C3, C3_REPLAY)."""
+    """Run E5 configurations, including bounded MOVE-only C4 on supplied topology."""
 
     def __init__(
         self,
@@ -204,6 +226,8 @@ class E5Runner:
         call_log: CallLog | None = None,
         organizer_limits: OrganizerLimits | None = None,
         tool_dispatch: McpToolDispatch | None = None,
+        fleet_static: StaticMap | None = None,
+        fleet_rollout: RolloutConfig | None = None,
     ) -> None:
         if not math.isfinite(near_threshold_m) or near_threshold_m <= 0.0:
             raise ValueError("near_threshold_m must be finite and positive")
@@ -238,6 +262,8 @@ class E5Runner:
             h_max_ticks=caution_config.h_max_ticks,
         )
         self._tool_dispatch = tool_dispatch
+        self.fleet_static = fleet_static
+        self.fleet_rollout = fleet_rollout
 
     def _make_client(self, provider: Provider) -> LlmClient:
         """Client over the scripted provider for the primary advisor route. Fallbacks are off.
@@ -249,6 +275,7 @@ class E5Runner:
         primary_names = {
             table.get("advisor").primary.provider,
             table.get("organizer").primary.provider,
+            table.get("planner").primary.provider,
             provider.name,
         }
         override = {p: provider if p in primary_names else MockProvider(p) for p in PROVIDERS}
@@ -285,17 +312,18 @@ class E5Runner:
         if spec.seed not in seeds:
             raise ValueError(f"unknown seed {spec.seed} for scenario {spec.scenario}")
 
-        # Refuse C4 (fleet planner) or unknown configurations
-        if spec.config in UNSUPPORTED_CONFIGS:
-            raise UnsupportedConfigurationError(
-                f"Configuration {spec.config} requires the fleet planner, which is not implemented"
-            )
         if spec.config not in RUNNABLE_CONFIGS:
             raise UnsupportedConfigurationError(f"unknown configuration {spec.config}")
 
         scenario = scenarios.generate(spec.scenario, spec.seed)
         box = scenarios.load_map(scenario.map_name)
         robot_ids = tuple(f"robot-{i}" for i in range(len(scenario.robots)))
+        fleet_result = None
+        fleet_routes: dict[str, list[list[float]]] = {}
+        if spec.config == "C4":
+            if self.fleet_static is None or self.fleet_rollout is None:
+                raise UnsupportedConfigurationError("C4 requires fleet topology and rollout policy")
+            context = fleet_context(scenario, self.fleet_static, self.fleet_rollout)
 
         caution_log: CautionLog
         bridge: AdvisorBridge | None = None
@@ -313,7 +341,7 @@ class E5Runner:
             bridge = AdvisorBridge(caution_log, robot_ids)
             provider = _build_provider(spec, current_tick_holder)
             client = self._make_client(provider)
-            if spec.config in ("C1", "C3"):
+            if spec.config in ("C1", "C3", "C4"):
                 runtime = AdvisorRuntime(
                     client=client,
                     caution_log=caution_log,
@@ -324,7 +352,7 @@ class E5Runner:
                     classifier=self.classifier,
                     input_limits=self.input_limits,
                 )
-            if spec.config in ("C2", "C3"):
+            if spec.config in ("C2", "C3", "C4"):
                 org_runtime = OrganizerRuntime(
                     client=client,
                     caution_log=caution_log,
@@ -337,6 +365,19 @@ class E5Runner:
                     tool_dispatch=self._tool_dispatch,
                 )
 
+        if spec.config == "C4":
+            assert self.fleet_static is not None and self.fleet_rollout is not None
+            fleet_result = propose_fleet_plan(
+                client,
+                scenario=scenario,
+                mission_id=f"fleet-{spec.scenario}-{spec.seed}",
+                context=context,
+                static=self.fleet_static,
+                config=self.fleet_rollout,
+                timeout_s=self.timeout_s,
+                max_response_chars=self.max_response_chars,
+            )
+
         sim, det = scenarios.build_engine(
             scenario, streams_for(self.base_config, len(scenario.robots))
         )
@@ -344,6 +385,8 @@ class E5Runner:
             [r.kind for r in scenario.robots],
             load_raised=[r.load_raised for r in scenario.robots],
         )
+        if fleet_result is not None:
+            fleet_routes = apply_fleet_plan(fleet_result, sim, scenario)
         rig = E5Rig(self.base_config, fleet, box, advisor=bridge)
         sim.systems.insert(1, rig.system())
 
@@ -395,6 +438,7 @@ class E5Runner:
             "cautions_rejected": {} if caller is None else dict(caller.rejected),
             "advisor_calls": 0 if caller is None else caller.advisor_calls,
             "organizer_calls": 0 if caller is None else caller.organizer_calls,
+            **fleet_record(fleet_result, fleet_routes),
             "messages_sent": 0 if org_runtime is None else len(org_runtime.outbound_messages),
             "event_log_digest": caution_log.digest(),
             "caution_log_jsonl": caution_log.to_jsonl(),
@@ -414,6 +458,8 @@ def run_one(
     base_config: E1Config | None = None,
     client_environ: Mapping[str, str] | None = None,
     call_log: CallLog | None = None,
+    fleet_static: StaticMap | None = None,
+    fleet_rollout: RolloutConfig | None = None,
 ) -> dict[str, Any]:
     """Module-level runner function running one spec."""
     runner = E5Runner(
@@ -427,6 +473,8 @@ def run_one(
         base_config=base_config,
         client_environ=client_environ,
         call_log=call_log,
+        fleet_static=fleet_static,
+        fleet_rollout=fleet_rollout,
     )
     return runner.run_one(spec)
 
@@ -454,7 +502,11 @@ def _commit() -> str:
         return "unknown"
     try:
         out = subprocess.run(
-            [git, "rev-parse", "HEAD"], capture_output=True, text=True, check=False, timeout=10
+            [git, "-c", "safe.directory=*", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
         )
         return out.stdout.strip() or "unknown"
     except (OSError, subprocess.TimeoutExpired):

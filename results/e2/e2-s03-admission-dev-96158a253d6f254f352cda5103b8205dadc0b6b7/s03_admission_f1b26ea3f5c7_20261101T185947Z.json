@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "experiment": "E2",
+  "scope": "simulator admission component only; not the database chaos protocol",
+  "scenario_variant": "s03-admission-v1",
+  "commit": "f1b26ea3f5c73508b3a7c9002fda434c1dceb9d4",
+  "date": "2026-11-01T18:59:47.569083+00:00",
+  "seed_set": "dev",
+  "seeds": [
+    830106457,
+    883949663,
+    414186736,
+    230355215,
+    130524517
+  ],
+  "configurations": [
+    "admission_disabled",
+    "admission_enabled"
+  ],
+  "fast_layer": "envelope_oracle",
+  "horizon_ticks": 3200,
+  "lease_ticks": 4000,
+  "progress_distance_m": 0.05,
+  "stall_ticks": 400,
+  "stall_definition": "unfinished robot with no 0.05 m displacement or waypoint change in the final 400 ticks; includes planned waits, not proof of deadlock",
+  "occupancy_definition": "closed footprint bounding boxes against lane_1 after each dynamics tick; discrete occupancy, not continuous swept zone occupancy",
+  "not_measured": [
+    "cycle-proven deadlocks",
+    "S13-S18 density",
+    "double assignments",
+    "stale-token database writes",
+    "worker recovery",
+    "database delays",
+    "handoff chaos",
+    "full control-rig snapshot replay"
+  ],
+  "model_ids": [],
+  "prompt_versions": [],
+  "llm_calls": 0,
+  "sampling_note": "fixed geometry and routes; seed variation is sensor and odometry noise, not independent warehouse layouts",
+  "python": "3.12.3",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "runs": [
+    {
+      "seed": 830106457,
+      "admission_enabled": false,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 1,
+      "completed_waypoints": 1,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 1,
+      "fault_occupied_ticks": null,
+      "final_hash": "c9a64f371c9b66e86513637d90bbd95f6130c22919a7cc28ea68678731268e28"
+    },
+    {
+      "seed": 883949663,
+      "admission_enabled": false,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 1,
+      "completed_waypoints": 1,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 1,
+      "fault_occupied_ticks": null,
+      "final_hash": "1df13cac2e38fe3cee2b4560c658a06804cd0a597059213b8422b31fcbf7f119"
+    },
+    {
+      "seed": 414186736,
+      "admission_enabled": false,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 1,
+      "completed_waypoints": 1,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 1,
+      "fault_occupied_ticks": null,
+      "final_hash": "3eb9e3df011207b75295d84b89e2be87b75ca5c8a1e3060ea65eb90efb876860"
+    },
+    {
+      "seed": 230355215,
+      "admission_enabled": false,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 1,
+      "completed_waypoints": 1,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 1,
+      "fault_occupied_ticks": null,
+      "final_hash": "e6df0ce0da30ec18ff0ce0c4a9689ce2cceb7efa278d448b44c85e7877a71e49"
+    },
+    {
+      "seed": 130524517,
+      "admission_enabled": false,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 1,
+      "completed_waypoints": 1,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 1,
+      "fault_occupied_ticks": null,
+      "final_hash": "538d93ad61ebaac82ec3c74cf57291b11f50d51bc1a28560074cb2bf10d121cf"
+    },
+    {
+      "seed": 830106457,
+      "admission_enabled": true,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 2,
+      "completed_waypoints": 2,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 0,
+      "fault_occupied_ticks": 0,
+      "final_hash": "d8217ae6ff58e5baf6f9e7db9bfdece7a5c48ab42a4ef5b2c63e8ca457db6ee5"
+    },
+    {
+      "seed": 883949663,
+      "admission_enabled": true,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 2,
+      "completed_waypoints": 2,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 0,
+      "fault_occupied_ticks": 0,
+      "final_hash": "d87435b9bb68105af4b44a836c3ebcc9dff7ce67d7c154246ae8ef4b27ddc683"
+    },
+    {
+      "seed": 414186736,
+      "admission_enabled": true,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 2,
+      "completed_waypoints": 2,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 0,
+      "fault_occupied_ticks": 0,
+      "final_hash": "a10f27aca8089151b6356bd519b74cd9485fb6ef68045010183b365df1987788"
+    },
+    {
+      "seed": 230355215,
+      "admission_enabled": true,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 2,
+      "completed_waypoints": 2,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 0,
+      "fault_occupied_ticks": 0,
+      "final_hash": "60acf8ccbd737d2457bd7c0254be64bd10ebf4fe1501d7f67e1d58d204d81854"
+    },
+    {
+      "seed": 130524517,
+      "admission_enabled": true,
+      "ticks": 3200,
+      "robot_count": 2,
+      "completed_routes": 2,
+      "completed_waypoints": 2,
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "stalled_unfinished_robots": 0,
+      "fault_occupied_ticks": 0,
+      "final_hash": "6517694938e91d6b9359b3e293804121b77ef898110519636f756b04d8e37fce"
+    }
+  ],
+  "summaries": [
+    {
+      "admission_enabled": false,
+      "completed_runs": {
+        "successes": 0,
+        "total": 5,
+        "low": 0.0,
+        "high": 0.43448246478317476
+      },
+      "occupancy_violation_runs": {
+        "successes": 0,
+        "total": 5,
+        "low": 0.0,
+        "high": 0.43448246478317476
+      },
+      "robot_collision_runs": {
+        "successes": 0,
+        "total": 5,
+        "low": 0.0,
+        "high": 0.43448246478317476
+      },
+      "stalled_runs": {
+        "successes": 5,
+        "total": 5,
+        "low": 0.5655175352168251,
+        "high": 1.0
+      },
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "failing_seeds": [
+        830106457,
+        883949663,
+        414186736,
+        230355215,
+        130524517
+      ],
+      "small_sample": true
+    },
+    {
+      "admission_enabled": true,
+      "completed_runs": {
+        "successes": 5,
+        "total": 5,
+        "low": 0.5655175352168251,
+        "high": 1.0
+      },
+      "occupancy_violation_runs": {
+        "successes": 0,
+        "total": 5,
+        "low": 0.0,
+        "high": 0.43448246478317476
+      },
+      "robot_collision_runs": {
+        "successes": 0,
+        "total": 5,
+        "low": 0.0,
+        "high": 0.43448246478317476
+      },
+      "stalled_runs": {
+        "successes": 0,
+        "total": 5,
+        "low": 0.0,
+        "high": 0.43448246478317476
+      },
+      "double_occupancy_ticks": 0,
+      "robot_collisions": 0,
+      "failing_seeds": [],
+      "small_sample": true
+    }
+  ]
+}

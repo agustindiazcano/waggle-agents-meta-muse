@@ -16,6 +16,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import NoReturn, TextIO
 
+from waggle.replay import overlay_data
 from waggle.replay.recorder import ReplayRecorder
 from waggle.sim import frame, scenarios
 
@@ -52,12 +53,17 @@ def generate(path: Path, scenario_id: str, seed: int, ticks: int, commit: str) -
     if not 1 <= ticks <= scenario.duration_ticks:
         raise ValueError(f"ticks must be between 1 and {scenario.duration_ticks}")
     sim, _detector = scenarios.build_engine(scenario)
-    world = frame.world_hash(scenarios.load_map(scenario.map_name))
+    box = scenarios.load_map(scenario.map_name)
+    world = frame.world_hash(box)
     run = frame.RunInfo(commit, seed, scenario.id, "replay")
     with ReplayRecorder(path, run, world, resimulable=True) as recorder:
         for _ in range(ticks):
             sim.step()
-            recorder.add(frame.export_frame(sim, run))
+            recorder.add(
+                frame.export_frame(
+                    sim, run, overlays=overlay_data.build_overlays(sim, scenario, box)
+                )
+            )
     return ticks
 
 

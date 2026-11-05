@@ -10,7 +10,7 @@ on:
     branches: [main, feat/web-interactive-demo]
     paths:
       - "web/**"
-      - "demo/assets/**"
+      - "demo/**"
       - ".github/workflows/pages.yml"
 
 permissions:

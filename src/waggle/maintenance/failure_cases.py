@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
-_CASE_ID_RE = re.compile(r"^fl-\d+$")
+_CASE_ID_RE = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 _PART_NUMBER_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
 _MACHINE_CLASSES = frozenset({"conveyor", "pump", "lift"})
 
