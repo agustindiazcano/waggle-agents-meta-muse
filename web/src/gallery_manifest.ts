@@ -27,6 +27,11 @@ export const galleryModels: readonly GalleryModel[] = [
   { id: "extinguisher", label: "Fire extinguisher", file: "fire_extinguisher.glb", kind: "equipment" },
   { id: "tree", label: "Tree", file: "tree.glb", kind: "equipment" },
   { id: "dock", label: "Loading dock", file: null, kind: "equipment" },
+  { id: "worker-1", label: "Construction worker 1", file: "worker-1.glb", kind: "human" },
+  { id: "worker-2", label: "Construction worker 2 (aisle crossing)", file: "worker-2.glb", kind: "human" },
+  { id: "worker-3", label: "Construction worker 3", file: "worker-3.glb", kind: "human" },
+  { id: "worker-4", label: "Construction worker 4", file: "worker-4.glb", kind: "human" },
+  { id: "shipping-container", label: "Shipping container", file: "Shipping_Container.glb", kind: "equipment" },
 ];
 
 /** Return a known model or null for an unknown identifier. */

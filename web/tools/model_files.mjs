@@ -47,7 +47,7 @@ export function syncModels(models, source, destination) {
   if (!Array.isArray(models) || models.length === 0) throw new Error("Empty model manifest");
   const names = new Set();
   const checked = models.map((model) => {
-    if (!/^[a-z0-9_]+\.glb$/.test(model.file) || names.has(model.file)) {
+    if (!/^[a-zA-Z0-9_-]+\.glb$/.test(model.file) || names.has(model.file)) {
       throw new Error("Invalid or duplicate model file");
     }
     names.add(model.file);

@@ -40,6 +40,8 @@ const ALLOWED_IMPORTS = new Set([
   "./player.ts",
   "./scene.ts",
   "./world_schema.ts",
+  "./demo3d.ts",
+  "./demo3d_state.ts",
 ]);
 
 test("web/src has files to check", () => {

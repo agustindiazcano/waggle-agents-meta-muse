@@ -16,6 +16,7 @@ import {
   type OverlayVisibility,
 } from "./overlays.ts";
 import { Scene } from "./scene.ts";
+import { Demo3D, drawDemoMaps } from "./demo3d.ts";
 import { parseWorld } from "./world_schema.ts";
 
 function el<T extends HTMLElement>(id: string): T {
@@ -47,6 +48,7 @@ const overlayList = el<HTMLElement>("overlays");
 const zoneList = el<HTMLElement>("zones");
 const eventList = el<HTMLElement>("events");
 const gallery = el<HTMLElement>("gallery");
+const home = el<HTMLElement>("home");
 const galleryButton = el<HTMLButtonElement>("gallery-toggle");
 const scopeNote = el<HTMLElement>("scope-note");
 let galleryInitialized = false;
@@ -135,6 +137,7 @@ function frame_loop(now: number): void {
 }
 
 function open(next: Replay): void {
+  home.hidden = true;
   gallery.hidden = true;
   galleryButton.textContent = "Models gallery";
   scopeNote.textContent = "Replay draws recorded frames and decides nothing.";
@@ -219,6 +222,7 @@ toggleGhostsButton.addEventListener("click", () => {
 galleryButton.addEventListener("click", () => {
   const showGallery = gallery.hidden;
   if (showGallery && player.playing) player = togglePlay(player);
+  home.hidden = showGallery ? true : replay === null;
   gallery.hidden = !showGallery;
   viewer.hidden = showGallery || replay === null;
   galleryButton.textContent = showGallery ? "Back to replay" : "Models gallery";
@@ -288,6 +292,7 @@ async function loadDemo(): Promise<void> {
 }
 
 function connectLive(scenarioId: string): void {
+  home.hidden = true;
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
   const url = `${proto}//${window.location.host}/ws/live?scenario=${encodeURIComponent(scenarioId)}`;
   const ws = new WebSocket(url);
@@ -325,9 +330,55 @@ function connectLive(scenarioId: string): void {
   });
 }
 
+function openDemo3d(): void {
+  home.hidden = true;
+  gallery.hidden = true; viewer.hidden = true; errorBox.hidden = true;
+  const host = el<HTMLElement>("demo3d");
+  host.hidden = false;
+  scopeNote.textContent = "Interactive demo: presentation mock, not simulator ground truth. Truck is procedural (71 MB GLB exceeds the 25 MB importer cap).";
+  const hud = el<HTMLElement>("demo3d-hud"); const evBox = el<HTMLElement>("demo3d-event");
+  const subs = el<HTMLElement>("demo3d-subs"); const timeLabel = el<HTMLElement>("demo3d-time");
+  const notice = el<HTMLElement>("demo3d-notice"); const scrub = el<HTMLInputElement>("demo3d-scrub");
+  const playBtn = el<HTMLButtonElement>("demo3d-play");
+  const mm = document.getElementById("demo3d-minimap") as HTMLCanvasElement | null;
+  const cm = document.getElementById("demo3d-cellmap") as HTMLCanvasElement | null;
+  let demo: Demo3D | null = null;
+  demo = new Demo3D(el<HTMLElement>("demo3d-canvas"), (s) => {
+    hud.textContent = "";
+    const b = document.createElement("b"); b.textContent = "WAGGLE HIVE";
+    hud.append(b, document.createElement("br"), "Warehouses: 3  Robots: 30", document.createElement("br"),
+      `Order ${s.orderId}  ${s.package.id}`, document.createElement("br"),
+      `Delivered: ${s.counters.delivered}  In transit: ${s.counters.inTransit}  Delayed trucks: ${s.counters.delayedTrucks}`);
+    evBox.textContent = `${s.event.tag}: ${s.event.text}`;
+    subs.textContent = s.subtitle; subs.style.display = s.subtitle ? "block" : "none";
+    timeLabel.textContent = `t=${s.time.toFixed(1)}s`;
+    if (document.activeElement !== scrub) scrub.value = String(s.time);
+    if (cm) cm.style.display = s.time >= 25 && s.time < 120 ? "block" : "none";
+    drawDemoMaps(s, mm, cm);
+    playBtn.textContent = demo?.playing ? "Pause" : "Play";
+  }, (msg) => { notice.textContent = msg; });
+  const wanted = new URLSearchParams(window.location.search).get("t");
+  if (wanted !== null && Number.isFinite(Number(wanted))) demo.setTime(Number(wanted));
+  playBtn.addEventListener("click", () => { if (demo) demo.playing = !demo.playing; });
+  scrub.addEventListener("input", () => { demo?.setTime(Number(scrub.value)); });
+  host.querySelectorAll<HTMLButtonElement>("[data-focus]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!demo) return;
+      const f = btn.dataset.focus;
+      if (f === "global") demo.focusGlobal();
+      else if (f === "hero") demo.focusHero();
+      else if (f === "WH-A") demo.focusCell(0);
+      else if (f === "WH-B") demo.focusCell(1);
+      else if (f === "WH-C") demo.focusCell(2);
+    });
+  });
+}
+
 const searchParams = new URLSearchParams(window.location.search);
 const liveScenario = searchParams.get("live");
-if (liveScenario !== null && liveScenario.length > 0) {
+if (searchParams.get("demo3d") === "1") {
+  openDemo3d();
+} else if (liveScenario !== null && liveScenario.length > 0) {
   connectLive(liveScenario);
 } else if (searchParams.get("demo") === "1") {
   void loadDemo();

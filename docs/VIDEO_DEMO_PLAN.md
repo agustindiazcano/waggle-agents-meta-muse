@@ -1,8 +1,6 @@
 # Waggle Hive: three-minute product demo plan
 
-Updated: 2026-11-04. Implementation in progress on branch feat/video-demo:
-the demo scene, minimaps, narration, subtitles and per-shot capture are built;
-the eight shots and the final montage are not yet recorded.
+Updated: 2026-11-04. Planning only; video production has not started.
 
 ## Direction
 
@@ -46,27 +44,6 @@ and resolution (thirty-five seconds), with additional hierarchy shots as needed.
   global network again, incident, reassignment and delivery.
 - Keep order, package and truck ids consistent across local and global views.
   Fleet, package and order counters must match the same demo-state sequence.
-
-Capture is per shot, not a single take: each storyboard segment is recorded as a
-separate file with a repeatable start time, reviewed independently, and only the
-failed shot is re-recorded. The final MP4 is assembled from those shots in the
-browser over the same deterministic demo state, because no MP4 muxer is
-installed locally. Shot files and the reproducible capture command are kept.
-
-## Minimap and unit maps (demo viewer)
-
-Added by maintainer request on 2026-11-04. The demo viewer shows a persistent
-global minimap (lower left, above the banner) with the three warehouses, streets,
-all thirty robots as live dots and unit codes R-A01 to R-C10, the organizer of
-each cell highlighted, trucks, and the active order/package ids. When the camera
-is inside a cell, a second map (lower right) shows that warehouse enlarged with
-every unit code and status (including the fast-layer STOP state). Both maps read
-the same deterministic demo state as the 3D scene and the HUD counters, so ids
-and counts cannot disagree between views.
-
-The production viewer in web/ does not get this feature in the demo task. A live
-minimap with real simulator unit positions and codes in web/ is intended future
-work, recorded in PENDING.md as a separate task. It is not built or claimed here.
 
 Implement missing global behavior as synchronized demo mocks. The film presents
 the intended finished-product experience while implementation continues; do not
@@ -160,39 +137,21 @@ Project code remains approximately 88 percent, plus or minus four points, by eye
 This planning task adds no product code. Mock presentation progress is tracked
 separately and must not increase the core project estimate.
 
-## Status on 2026-11-04 (branch feat/video-demo)
+## Handoff and next actions
 
-Worktree: .worktrees/video-demo. Built and verified with fixed-time stills:
-deterministic 180 s demo state, three warehouses with thirty robots, trucks,
-hero package, global minimap and WH-B cell map with live unit codes, persistent
-banner, subtitles, synthetic narration (15 WAV lines), a five-second MP4 export
-proof and per-shot capture (demo/capture.mjs shot <start> <seconds>).
+Planning worktree: C:/projects/projects-github-agustindiazcano/waggle-video-demo-plan.
+Branch: docs/video-demo-plan, based on main ae83dab. The plan and context updates
+are in this worktree, not in the main checkout. Inspect Git status before continuing.
 
-Models supplied by the maintainer and stored in the repository with Git LFS
-under demo/assets/ (see demo/ASSETS.md for sha256): Blue_Delivery_Truck.glb on
-the TRK-12 truck, Shipping_Container.glb beside each dock, and four
-distinct construction workers (worker-1 to worker-4). worker-2 crosses the WH-B
-aisle on its Walking clip and replaces the red box figure; the other three play
-Idle_11 at the WH-A dock, the WH-B dock and machine M-B2. Robots remain
-procedural. All six GLBs load in the capture page with no page errors.
+Completed: repository/asset inventory, three-minute storyboard, mock presentation
+scope, required global scene, banner specification, floor-logo approach and handoff.
+Not completed: new global environment, demo-state runner, camera animation, banner,
+logo placement, capture/export proof, narration, montage or final MP4. Do not report
+these as built. No new implementation tests, paid calls or production changes.
 
-Not done: recording the eight shots, reviewing them, assembling the final
-180 s MP4, and the maintainer review before publication. Shot files and the
-final MP4 are written to output/ in this worktree (git-ignored). Capture
-command per shot: node demo/capture.mjs shot <start> <duration>
-output/shot-<n>.mp4 1920 1080 audio, run from the worktree root.
-
-## Reuse in the production viewer (web/)
-
-The demo and web/ already share three 0.170.0 and the GLTFLoader pattern, so
-judges can see the same models on the web version through the existing viewer
-machinery. Reusable as-is: the four worker GLBs and the container GLB (each
-under the 25 MB cap of web/tools/model_files.mjs), registered in
-web/models.json with sha256 and clips, added to web/src/gallery_manifest.ts
-and imported with npm run models:sync. Not reusable without a decision: the
-71 MB truck exceeds that importer cap and needs compression or a cap change,
-and web GLBs are excluded from Git by the web policy while the demo copies
-are in Git LFS. The demo warehouse layout, camera path, minimaps and mock
-demo state are presentation-only and are not ported; web/src/scene.ts owns
-the production geometry and the live minimap is PENDING row 136. This reuse
-is recorded as PENDING row 137 and is not built in the demo task.
+Next agent: first inspect browser/encoder availability and make the five-second MP4
+proof. Inspect the separate GLB pack and review the dirty viewer-capture draft
+without overwriting it. Build the global environment and demo sequence in an isolated
+implementation worktree, then create the silent rough cut before voice and polishing.
+Use this plan as the current video brief; the maintainer's follow-up requests about
+global action and branding are incorporated above. Deliver the full three minutes.

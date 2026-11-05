@@ -548,6 +548,91 @@
         ],
         "visual_review": "pending with maintainer"
       }
+    },
+    {
+      "id": "worker-1",
+      "label": "Construction worker 1",
+      "file": "worker-1.glb",
+      "bytes": 10463944,
+      "sha256": "3556ed28a371a90ab15e1c05ea23d5444b79f27fa67b119bc1489825546a52e4",
+      "clips": [
+        "Running",
+        "Walking",
+        "Idle_11",
+        "walking_2_inplace"
+      ],
+      "provenance": {
+        "tool": "Maintainer supplied",
+        "source": "demo/assets (Git LFS)",
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "worker-2",
+      "label": "Construction worker 2 (aisle crossing)",
+      "file": "worker-2.glb",
+      "bytes": 10968892,
+      "sha256": "c5ff97fa7901846be57a985afb7afd94f325cfec8359fc56edd54735de5a91b2",
+      "clips": [
+        "Running",
+        "Walking",
+        "Idle_11",
+        "walking_2_inplace"
+      ],
+      "provenance": {
+        "tool": "Maintainer supplied",
+        "source": "demo/assets (Git LFS)",
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "worker-3",
+      "label": "Construction worker 3",
+      "file": "worker-3.glb",
+      "bytes": 10679552,
+      "sha256": "2293fa7647e23576f65878fd02d9f6b7fe56124331e9ada9bd62bbbe3eb49c63",
+      "clips": [
+        "Running",
+        "Walking",
+        "Idle_11",
+        "walking_2"
+      ],
+      "provenance": {
+        "tool": "Maintainer supplied",
+        "source": "demo/assets (Git LFS)",
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "worker-4",
+      "label": "Construction worker 4",
+      "file": "worker-4.glb",
+      "bytes": 9923436,
+      "sha256": "7b9f09153740fcfbc66dca785fd6e5906a4bb16afc20fcea8507fde4c325f078",
+      "clips": [
+        "Running",
+        "Walking",
+        "Idle_11",
+        "walking_2_inplace"
+      ],
+      "provenance": {
+        "tool": "Maintainer supplied",
+        "source": "demo/assets (Git LFS)",
+        "visual_review": "pending with maintainer"
+      }
+    },
+    {
+      "id": "shipping-container",
+      "label": "Shipping container",
+      "file": "Shipping_Container.glb",
+      "bytes": 15934184,
+      "sha256": "c505aec026bf1bf4ff9f86aa28653d13227df7484fb57f6c54e2072646654ff6",
+      "clips": [],
+      "provenance": {
+        "tool": "Maintainer supplied",
+        "source": "demo/assets (Git LFS)",
+        "visual_review": "pending with maintainer"
+      }
     }
   ]
 }

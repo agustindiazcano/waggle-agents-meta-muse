@@ -15,6 +15,19 @@
       #viewer[hidden], #error[hidden] { display: none; }
       #gallery { flex: 1; display: flex; flex-direction: column; min-height: 0; }
       #gallery[hidden] { display: none; }
+      #demo3d[hidden] { display: none; }
+      #demo3d { flex: 1; position: relative; min-height: 0; background:#0b0e13; }
+      #demo3d-canvas { position:absolute; inset:0; }
+      #demo3d-canvas canvas { display:block; }
+      .d3panel { position:absolute; background:rgba(10,14,20,.85); border:1px solid #2b3a4a; border-radius:8px; padding:10px 12px; font-size:14px; }
+      #demo3d-hud { top:12px; left:12px; }
+      #demo3d-event { top:12px; right:12px; width:320px; }
+      #demo3d-subs { position:absolute; left:50%; transform:translateX(-50%); bottom:15%; max-width:78%; text-align:center; font-size:20px; font-weight:600; background:rgba(0,0,0,.45); padding:6px 14px; border-radius:6px; }
+      #demo3d-banner { position:absolute; left:0; right:0; bottom:34px; background:#07090d; border-top:2px solid #1c69d4; display:flex; justify-content:space-between; padding:6px 18px; }
+      #demo3d-controls { position:absolute; left:0; right:0; bottom:0; display:flex; gap:8px; align-items:center; padding:5px 10px; background:#1c222c; }
+      #demo3d-scrub { flex:1; }
+      #demo3d-minimap { position:absolute; left:12px; bottom:19%; }
+      #demo3d-cellmap { position:absolute; right:12px; bottom:19%; }
       #gallery-canvas { flex: 1; min-height: 0; }
       #gallery-controls { display: flex; gap: 12px; align-items: center; padding: 8px 12px; flex-wrap: wrap; }
       #main { flex: 1; display: flex; min-height: 0; }
@@ -27,17 +40,42 @@
       #hashbar { font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; }
       button[aria-pressed="true"] { outline: 1px solid #4aa3ff; }
       .muted { color: #9aa3b2; }
+      #home { flex: 1; overflow: auto; background: #0b111b; padding: 48px 24px; }
+      #home[hidden] { display: none; }
+      .home-inner { max-width: 880px; margin: 0 auto; }
+      .home-wordmark { display: flex; align-items: center; gap: 18px; }
+      .home-wordmark h2 { font-size: 52px; margin: 0; letter-spacing: -1px; }
+      .home-wordmark h2 span { color: #ffcf67; font-weight: 350; }
+      .home-sub { color: #becbd8; font-size: 20px; margin: 10px 0 0 52px; }
+      .home-desc { color: #dbe4ee; font-size: 17px; line-height: 1.6; max-width: 640px; margin-top: 28px; }
+      .home-cta { display: inline-block; margin-top: 26px; background: #ffcf67; color: #0b111b; font-weight: 700; padding: 13px 22px; border-radius: 8px; text-decoration: none; }
+      .home-links { margin-top: 18px; display: flex; gap: 16px; }
+      .home-links a { color: #8ad6dc; }
+      .home-meta { margin-top: 36px; display: flex; align-items: center; gap: 12px; color: #8fa4b6; }
+      .home-meta img { width: 40px; height: 27px; object-fit: contain; background: #fff; border-radius: 4px; }
     </style>
   </head>
   <body>
     <header>
-      <h1>Waggle Hive viewer</h1>
+      <svg width="34" height="37" viewBox="0 0 104 112" aria-hidden="true"><path d="M52 5 98 31v50l-46 26L6 81V31Z" fill="none" stroke="#ffcf67" stroke-width="5" stroke-linejoin="round"/><path d="m25 40 12 33 15-24 15 24 12-33" fill="none" stroke="#ffcf67" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="26" r="4" fill="#8ad6dc"/></svg><h1>Waggle Hive viewer</h1>
       <label>Replay file <input id="file" type="file" accept=".jsonl,.json,.txt" /></label>
       <label>Map file <input id="world-file" type="file" accept=".json" /></label>
       <button id="gallery-toggle" type="button">Models gallery</button>
       <span id="scope-note" class="muted">Replay draws recorded frames and decides nothing.</span>
     </header>
     <div id="error" role="alert" hidden></div>
+    <div id="home">
+      <div class="home-inner">
+        <div class="home-wordmark"><svg width="34" height="37" viewBox="0 0 104 112" aria-hidden="true"><path d="M52 5 98 31v50l-46 26L6 81V31Z" fill="none" stroke="#ffcf67" stroke-width="5" stroke-linejoin="round"/><path d="m25 40 12 33 15-24 15 24 12-33" fill="none" stroke="#ffcf67" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="26" r="4" fill="#8ad6dc"/></svg><h2>Waggle <span>Hive</span></h2></div>
+        <p class="home-sub">Agentic robot fleets for logistics</p>
+        <p class="home-desc">Waggle Hive is a safety and reliability control plane for LLM-directed warehouse robot fleets. Models propose; deterministic code disposes. Hard safety never depends on a model: a fast deterministic layer can only reduce motion, and every tool call passes an authenticated, audited boundary.</p>
+        <p class="home-desc">The interactive demo shows three warehouses, thirty robots, one urgent order and the safety stop that protects a crossing worker. It is a visual presentation only and makes no model calls.</p>
+        <a class="home-cta" href="?demo3d=1">Open the interactive 3D demo</a>
+        <div class="home-links"><a href="?demo=1">Replay viewer</a><a href="?gallery=1">Models gallery</a><a href="waggle-hive-header.html">Header artwork</a></div>
+        <div class="home-meta"><img src="meta-logo.svg" alt="Meta" /><span>Powered by Meta Muse - Agustin Diaz Cano, MS Candidate, Systems Engineering</span></div>
+      </div>
+    </div>
+
     <div id="gallery" hidden>
       <div id="gallery-controls">
         <label>Model <select id="gallery-model"></select></label>
@@ -50,6 +88,26 @@
         <span id="gallery-status" role="status"></span>
       </div>
       <div id="gallery-canvas"></div>
+    </div>
+    <div id="demo3d" hidden>
+      <div id="demo3d-canvas"></div>
+      <div class="d3panel" id="demo3d-hud"></div>
+      <div class="d3panel" id="demo3d-event"></div>
+      <div id="demo3d-subs"></div>
+      <canvas id="demo3d-minimap" width="300" height="180"></canvas>
+      <canvas id="demo3d-cellmap" width="300" height="180"></canvas>
+      <div id="demo3d-banner"><span style="display:flex;align-items:center;gap:10px"><svg width="34" height="37" viewBox="0 0 104 112" aria-hidden="true"><path d="M52 5 98 31v50l-46 26L6 81V31Z" fill="none" stroke="#ffcf67" stroke-width="5" stroke-linejoin="round"/><path d="m25 40 12 33 15-24 15 24 12-33" fill="none" stroke="#ffcf67" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="26" r="4" fill="#8ad6dc"/></svg><span><b>Waggle <span style="color:#ffcf67">Hive</span></b> - Agentic robot fleets for logistics<br><small>Powered by Meta Muse</small></span><img src="meta-logo.svg" alt="Meta" style="width:34px;height:23px;object-fit:contain;background:#fff;border-radius:3px" /></span><span style="text-align:right">Agustin Diaz Cano<br><small>MS Candidate, Systems Engineering</small></span></div>
+      <div id="demo3d-controls">
+        <button id="demo3d-play" type="button">Play</button>
+        <input id="demo3d-scrub" type="range" min="0" max="180" value="8" step="0.1" aria-label="Demo time" />
+        <span id="demo3d-time">t=8.0s</span>
+        <button data-focus="global" type="button">Global</button>
+        <button data-focus="WH-A" type="button">WH-A</button>
+        <button data-focus="WH-B" type="button">WH-B</button>
+        <button data-focus="WH-C" type="button">WH-C</button>
+        <button data-focus="hero" type="button">Hero R-B04</button>
+        <span id="demo3d-notice" role="status"></span>
+      </div>
     </div>
     <div id="viewer" hidden>
       <div id="main">

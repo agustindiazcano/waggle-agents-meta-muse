@@ -4,14 +4,14 @@ import { readFileSync } from "node:fs";
 import { galleryModels, modelById } from "../src/gallery_manifest.ts";
 
 test("lists every requested model and the configurable rack without duplicate ids or paths", () => {
-  assert.equal(galleryModels.length, 20);
-  assert.equal(new Set(galleryModels.map((model) => model.id)).size, 20);
+  assert.equal(galleryModels.length, 25);
+  assert.equal(new Set(galleryModels.map((model) => model.id)).size, 25);
   const files = galleryModels.flatMap((model) => model.file === null ? [] : [model.file]);
-  assert.equal(new Set(files).size, 17);
+  assert.equal(new Set(files).size, 22);
   assert.equal(galleryModels.filter((model) => model.kind === "robot").length, 5);
   assert.equal(modelById("modular-rack")?.file, null);
   for (const id of ["worker-black", "worker-asian-woman", "flat-carrier", "tank", "press",
-    "conveyor", "truck", "extinguisher", "tree", "dock"]) assert.ok(modelById(id), id);
+    "conveyor", "truck", "extinguisher", "tree", "dock", "worker-1", "worker-2", "worker-3", "worker-4", "shipping-container"]) assert.ok(modelById(id), id);
 });
 
 test("selects the new worker model and rejects unknown ids", () => {
