@@ -856,21 +856,10 @@ async function init3DAssets() {
 // bounding box after the first animation update.
 const FLOOR_FEET_Y = 0.35;
 function groundOnFloor(obj) {
-  obj.updateMatrixWorld(true);
-  let minY = Infinity;
-  const v = new THREE.Vector3();
-  obj.traverse(o => {
-    if (o.isSkinnedMesh) {
-      o.computeBoundingBox();
-      const b = o.boundingBox;
-      for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) {
-        v.set(x, y, z).applyMatrix4(o.matrixWorld);
-        if (v.y < minY) minY = v.y;
-      }
-    }
-  });
-  obj.userData.dy = isFinite(minY) ? (FLOOR_FEET_Y - minY) : 0;
-  obj.position.y += obj.userData.dy;
+  // normalizeMesh already grounds the model at its local origin, and the
+  // warehouse floor top is FLOOR_FEET_Y. Skinned bounding boxes after
+  // skeleton cloning are unreliable, so no extra offset is applied.
+  obj.userData.dy = 0;
 }
 
 const ambientWorkers = [];
