@@ -1,4 +1,4 @@
-"""Label reading through the ``vision`` role (ADR-098).
+"""Label reading through the ``vision`` role (ADR-099).
 
 LLM calls live only in ``waggle.llm``. This adapter sends one image to the vision role and
 returns the raw model text as a ``LabelRead``. It never raises for a model or budget failure: a

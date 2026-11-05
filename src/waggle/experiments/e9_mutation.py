@@ -25,6 +25,37 @@ from waggle.experiments.e1_stats import wilson
 
 TOOL_VERSION = "3.3.1"
 TARGETS = ("control", "validation")
+FORK_SHIM = """# Runtime multiprocessing fork start method shim for mutmut campaign subprocesses.
+# Mutmut 3.3.1 calls multiprocessing.set_start_method('fork') unconditionally at import
+# time. When the context is already set, standard multiprocessing raises RuntimeError.
+# This sitecustomize shim ensures fork is active and redundant calls succeed.
+
+import multiprocessing
+import multiprocessing.context
+
+if "fork" not in multiprocessing.context._concrete_contexts:
+    _dummy_fork = multiprocessing.context.BaseContext()
+    _dummy_fork._name = "fork"
+    multiprocessing.context._concrete_contexts["fork"] = _dummy_fork
+
+_orig_set_start_method = multiprocessing.context._default_context.set_start_method
+
+
+def _robust_set_start_method(method=None, force=False):
+    current = multiprocessing.get_start_method(allow_none=True)
+    if current is not None and not force:
+        if method == current:
+            return
+        raise RuntimeError("context has already been set")
+    _orig_set_start_method(method, force=force)
+
+
+multiprocessing.set_start_method = _robust_set_start_method
+multiprocessing.context._default_context.set_start_method = _robust_set_start_method
+
+if multiprocessing.get_start_method(allow_none=True) is None:
+    multiprocessing.set_start_method("fork")
+"""
 STATUS = {
     0: "survived",
     1: "killed",
@@ -96,6 +127,7 @@ def prepare_campaign(root: Path, dest: Path, target: str) -> None:
         "do_not_mutate=\n" + "".join(f"    {p}\n" for p in excluded)
     )
     (dest / "setup.cfg").write_text(config, encoding="utf-8")
+    (dest / "sitecustomize.py").write_text(FORK_SHIM, encoding="utf-8")
 
 
 def summarize(raw: Path, *, target: str, commit: str, date: str) -> Report:
@@ -165,6 +197,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="waggle-e9-") as temp:
         dest = Path(temp) / "tree"
         prepare_campaign(root, dest, args.target)
+        campaign_env = {
+            **os.environ,
+            "PYTHONPATH": f"{dest}{os.pathsep}{os.environ.get('PYTHONPATH', '')}".rstrip(
+                os.pathsep
+            ),
+            "PYTEST_ADDOPTS": "-m 'not heavy and not llm'",
+        }
         with (out / "baseline.log").open("w", encoding="utf-8") as log:
             subprocess.run(
                 [
@@ -181,6 +220,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 stderr=subprocess.STDOUT,
                 timeout=600,
                 check=True,
+                env=campaign_env,
             )
         with (out / "mutmut.log").open("w", encoding="utf-8") as log:
             try:
@@ -191,7 +231,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     stderr=subprocess.STDOUT,
                     timeout=5400,
                     check=False,
-                    env={**os.environ, "PYTEST_ADDOPTS": "-m 'not heavy and not llm'"},
+                    env=campaign_env,
                 )
             finally:
                 if (dest / "mutants").exists():

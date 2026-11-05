@@ -1,4 +1,4 @@
-# Waggle Hive: Architecture Decision Records
+﻿# Waggle Hive: Architecture Decision Records
 
 Format: context, decision, consequences. Status: accepted unless noted.
 
@@ -1173,7 +1173,26 @@ deferred, with vision as the first nice-to-have after the global demo.
 Running the E9 mutation campaign is a nice-to-have; its code is merged.
 The production court needs no further provider work to be complete.
 
-## ADR-098: Vision label pipeline reads with vision-v1 and resolves in code
+## ADR-098: Skip application test suites for documentation updates
+
+Status: maintainer decision, 2026-11-04.
+
+Decision: The maintainer explicitly requested disabling test pipelines for
+documentation-only changes after PR 191 failed a stale literal-text assertion.
+Python and viewer suites now run only when application code, dependencies or
+non-documentation tests change. Markdown, README image/HTML assets, documentation
+assertion files and the CI scope configuration do not trigger application suites.
+This supersedes the unconditional documentation-test requirement in AGENTS.md
+section 3.7 for documentation-only changes. No local tests were requested or run.
+
+Consequences: The workflows still report skipped jobs, so a required check does
+not stay waiting for an absent workflow. Unknown paths trigger the suites.
+New branches compare against the default branch on their first push. Initial
+default-branch pushes, manual viewer runs and scope-detection failures run suites.
+Code-changing PRs retain existing lint, types, coverage, imports and browser checks.
+Protected-path reporting remains enabled. No safety or runtime check is removed.
+
+## ADR-099: Vision label pipeline reads with vision-v1 and resolves in code
 
 Status: implemented, not evaluated, 2026-11-04.
 
@@ -1200,3 +1219,4 @@ review. No paid call was made, no result file exists, and no accuracy is
 claimed. Still missing: a real Meta vision call, synthetic FPV rendering,
 the multimodal UI and a real E7 run, all behind maintainer caps and label
 review.
+

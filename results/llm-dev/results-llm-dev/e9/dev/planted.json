@@ -1,0 +1,33 @@
+{
+  "experiment": "E9",
+  "kind": "planted_defects",
+  "seed_set": "dev",
+  "commit": "0c34b54de3a799d489a6bff7f863a17416819665",
+  "date": "2026-11-04",
+  "planted": 4,
+  "killed": 4,
+  "survived": [],
+  "detector_broken": [],
+  "outcomes": [
+    {
+      "id": "margin_lowered",
+      "status": "killed",
+      "first_detector": "tests/unit/control/test_control_envelope.py::test_separation_distance_matches_the_formula"
+    },
+    {
+      "id": "cap_raises_speed",
+      "status": "killed",
+      "first_detector": "tests/unit/control/test_control_arbiter.py::test_the_smallest_cap_wins_and_names_the_binding_reason"
+    },
+    {
+      "id": "stale_scan_accepted",
+      "status": "killed",
+      "first_detector": "tests/unit/control/test_control_perception.py::test_a_scan_older_than_the_limit_is_stale_and_exactly_the_limit_is_not"
+    },
+    {
+      "id": "fencing_inverted",
+      "status": "killed",
+      "first_detector": "tests/unit/coordination/test_leases.py::test_token_check_fails_closed_on_missing_future_and_expired_values"
+    }
+  ]
+}
