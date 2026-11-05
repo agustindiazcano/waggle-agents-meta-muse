@@ -1,22 +1,57 @@
 # Waggle Hive: Last context
 
-Current delivery state (2026-11-05): PR 199 (branch feat/web-interactive-demo)
-carries the interactive web home, the maintainer 3D presentation page linked
-from its button, and the GitHub Pages deployment. The final video was recorded
-by the maintainer as one take and delivered with synthetic narration muxed in
-(waggle-hive-final.mp4). Demo workers stay hidden for the video (oversized
-GLB rigs). Maintainer reviews and merges PR 199.
-
 Updated: 2026-11-04. README cleanup and banner prepared in .worktrees/readme-cleanup,
 branch docs/readme-cleanup, based on docs/readme-brand-header and main 96158a2.
 The maintainer explicitly requested no tests for this documentation-only task
 and requested a PR when finished. Published against main as PR 191:
 https://github.com/agustindiazcano/waggle-agents-meta-muse/pull/191
 
-Code progress of the project (estimate by eye, code only): 95% on 2026-11-04,
-margin about 2 points, using the current PENDING.md audit. Delivery scope is 98%
-plus/minus 1 point (ADR-097). This banner is presentation work, task Code % is -;
-no product code or experiment result changed.
+Code progress of the project (estimate by eye, code only): 88% on 2026-11-04,
+margin about 4 points, as reviewed in the previous main audit. Live E4 code
+is estimated at 95% on PR 178;
+real evaluation remains pending. This documentation resolution adds no code
+and does not change the project estimate; task Code % is -. Experiments,
+calibration, documents and delivery are excluded.
+G-GLOBAL and other unmerged worktrees remain outside the estimate.
+
+## Current state
+
+- Video demo implementation is in .worktrees/video-demo, branch feat/video-demo.
+  The deterministic 180 s scene (three warehouses, thirty robots, trucks, hero
+  package), global minimap and WH-B cell map, banner, subtitles, synthetic
+  narration and per-shot capture are built. All six maintainer GLBs are in
+  demo/assets/ under Git LFS: Blue_Delivery_Truck on TRK-12, Shipping_Container
+  beside each dock, and four distinct workers (worker-2 crosses the WH-B aisle
+  on its Walking clip; the others play Idle_11). Verified with fixed-time
+  stills at t=8 and t=50: all six load, no page errors beyond a favicon 404.
+  The eight shots were recorded in GitHub Actions (workflow "Waggle Hive demo
+  video shots", run 41936582563, all jobs passed) and downloaded to
+  output/cloud/shot-<n>/shot-<n>.mp4 in this worktree (git-ignored). Not done:
+  assembling the final MP4 and merging the maintainer-recorded audio. Reuse of the same models
+  in the production viewer web/ is PENDING row 137, not built here.
+- Video handoff is in ../waggle-video-demo-plan, branch docs/video-demo-plan.
+  Read docs/VIDEO_DEMO_PLAN.md there. The maintainer wants a three-minute
+  finished-product experience with mocks while implementation continues.
+  Required: full 3D global scene (three cells, ten robots each, trucks, packages,
+  coordinator, delay/reassignment/delivery), about fifty seconds across the film.
+  Small lower banner: left "Powered by Meta Muse" (working brand wording), right
+  "Agustin Diaz Cano" above "MS Candidate, Systems Engineering". One official Meta
+  floor-logo decal per warehouse. Final attribution wording still needs checking.
+  All are planned, not built. MP4 encoding and synthetic voice remain unverified.
+
+- PR 178 implements live E4 A/B/C through build_client with fallbacks disabled
+  (ADR-096). Live mode refuses baseline and D until a verified non-Muse route
+  exists. Caps/model IDs are checked before calls. Results record provider mode,
+  realized model IDs and fallback labels. Local tests use mocks with no spend.
+
+- Main includes PRs 163 to 174: viewer gallery and overlays, CourtRuntime and
+  CrisisRuntime, organizer E5 C2/C3, SDK fake-backed client test, E8 export,
+  E1 diagnosis, scripted E4 CLI and Meta Wonder planning-role routes.
+- Merged PR 176 corrects a false acceptance in validation/plan_rollout.py:
+  robot contact flags do not include robot-pair separation. The rollout now
+  reuses the independent detector's swept robot_robot_gap and existing margin,
+  reporting SEPARATION_VIOLATION once per pair. No simulator experiment counters,
+  fast-layer threshold, fencing, audit, MCP rule or trajectory was modified.
 
 ## Done last
 
