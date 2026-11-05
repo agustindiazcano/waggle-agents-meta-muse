@@ -156,20 +156,21 @@ are code speed on this machine, not a hardware performance claim.
 
 | Experiment | Recorded result | Scope and evidence |
 |---|---|---|
-| E2 admission | Both robot routes complete in 0/5 runs without admission and 5/5 with admission; Wilson 95% intervals 0% to 43.4% and 56.6% to 100% | Small sample, fixed S03 geometry with sensor/odometry noise. Zero robot collisions and occupancy violations in both arms. [Result JSON](results/e2/dev/s03_admission_f1b26ea3f5c7_20261101T185947Z.json). This does not test killed workers or the full database chaos protocol |
+| E2 admission | Both robot routes complete in 0/5 runs without admission and 5/5 with admission; Wilson 95% intervals 0% to 43.4% and 56.6% to 100% | Small sample, fixed S03 geometry with sensor/odometry noise. Zero robot collisions and occupancy violations in both arms. [Result JSON](results/e2/dev/s03_admission_f1b26ea3f5c7_20261101T185947Z.json). Rerun on commit `96158a2` reproduces 0/5 without and 5/5 with admission, zero collisions, zero double occupancy: [Result JSON](results/e2/dev/s03_admission_96158a253d6f_20261104T231651Z.json). This does not test killed workers or the full database chaos protocol |
 | E8 rollout speed | Median 18.0 s before and 5.7 s after, about 3.1x | Four alternating measurements on one machine, 10 robots and 4 humans, 45 simulated seconds. Targets of 2.0 s and 5x were missed. [Result JSON](results/e8/dev/before_after_20261030.json). Simulator code speed, not hardware real-time performance |
+| E8 control latency | 200 control_step calls, p50 0.74 ms, p95 3.20 ms, p99 3.56 ms | Single robot, scenario S01, 200 ticks on commit `96158a2`, three cloud repeats. Code latency inside the simulator, not a hardware bound. [Repeat 1](results/e8/e8-control-repeat-1/control-41932320033-1-1.json) |
 | E9 planted defects | 4/4 declared defects detected; none survived | Lowered margin, speed-raising cap, accepted stale scan and inverted fencing comparison. [Result JSON](results/e9/dev/planted.json). Four selected regressions, not a general mutation score |
 
 | Evaluation | Publication status |
 |---|---|
 | E2 full chaos | Harness/workflow implemented, no full campaign result committed |
 | E3 injection matrix | Layer runners implemented; no live-model result committed |
-| E4 court | Scripted and live harnesses implemented; no live court result committed; cross-family configuration D excluded by ADR-097 |
+| E4 court | Scripted and live harnesses implemented; provisional 8-case reviewed set merged (agent-drafted, disclosed in the file); scripted A/B/C/baseline cloud runs relaunched, no result committed yet; cross-family configuration D excluded by ADR-097 |
 | E5 advisors/organizer | Mock/replay harnesses; no live benefit measurement committed |
 | E6 maintenance | Mock chain and production assembly implemented; no measured predictive benefit committed |
 | E7 multimodal | Mock contracts; no transcription/vision accuracy result committed |
 | E8 provider cost and latency | Report/extrapolation tooling implemented; production collection/calibration pending |
-| E9 mutation-tool campaign | Pending cloud execution |
+| E9 mutation-tool campaign | Multiprocessing fork-context crash fixed on the campaign branch; cloud execution relaunched, no result committed yet |
 | E10 crisis replanning | Loop, proposer, harness and production caller implemented; evaluation pending |
 
 The [E8 runner](docs/E8_RUNNER.md) separates measured control code latency,
