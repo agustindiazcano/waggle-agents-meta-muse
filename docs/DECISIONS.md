@@ -1172,3 +1172,31 @@ Consequences: No code is removed. Voice and vision integrations are
 deferred, with vision as the first nice-to-have after the global demo.
 Running the E9 mutation campaign is a nice-to-have; its code is merged.
 The production court needs no further provider work to be complete.
+
+## ADR-098: Vision label pipeline reads with vision-v1 and resolves in code
+
+Status: implemented, not evaluated, 2026-11-04.
+
+Decision: The vision model is a reader only. `waggle.llm.vision_adapter`
+sends one image through the `vision` role and returns the raw model text
+or a typed error. `waggle.multimodal.vision_schema` parses that text
+against `vision-v1`: exactly `label_text`, `obstruction_class` (closed
+enum) and `legibility`, extra fields forbidden. The schema has no package
+id field, so a model can never name the package it claims to see.
+`waggle.multimodal.vision` then sanitizes the label text as an untrusted
+package label, screens it with the guard (fail closed, escalation on any
+non-pass), applies a legibility threshold from configuration, and resolves
+the sanitized text against the trusted set of known package ids in code.
+Exactly one match identifies the package. Zero or several matches, low
+legibility, a guard rejection or an invalid report give `unknown` or
+`rejected` with escalation, never a guess.
+
+Consequences: Vision is not in the control loop. The outcome may carry
+`obstruction_class` as data for the planner; it has no order, motion or
+execution field, and instruction-like label text is data only. The E7
+vision mock runner (`waggle.experiments.e7_vision`) reports false accepts
+first against a trust-the-label baseline, with fixtures pending maintainer
+review. No paid call was made, no result file exists, and no accuracy is
+claimed. Still missing: a real Meta vision call, synthetic FPV rendering,
+the multimodal UI and a real E7 run, all behind maintainer caps and label
+review.

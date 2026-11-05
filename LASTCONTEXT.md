@@ -13,6 +13,16 @@ no product code or experiment result changed.
 
 ## Done last
 
+- Implemented the vision nice-to-have on branch feat/vision-label in
+  .worktrees/vision-label (ADR-098): vision-v1 strict schema with no package
+  id field, vision adapter in waggle.llm, label pipeline in waggle.multimodal
+  (sanitizer, guard fail closed, legibility threshold, registry lookup in
+  code) and the E7 vision mock runner with a trust-the-label baseline.
+  Mock only, not evaluated: no paid call, no result file, fixtures pending
+  maintainer label review. Verified locally: 145 targeted tests passed
+  (vision, voice, attachments, providers), ruff and mypy --strict clean,
+  style 23 passed. PR opened at the maintainer order; no test was run for
+  the PR step. The maintainer reviews and merges.
 - Diagnosed both failed PR 191 CI jobs: the same stale documentation assertion
   expected E10 harness/caller to remain pending. Both runs had 3914 passing tests
   and this single failure. Updated the existing assertion to require implemented
