@@ -1,0 +1,37 @@
+name: Waggle Hive E9 cloud mutation campaign
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [control, validation]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Install pinned cloud development mutation tool
+        run: uv pip install --python .venv/bin/python mutmut==3.3.1
+      - name: Baseline and isolated mutation campaign
+        env:
+          TARGET: ${{ matrix.target }}
+        run: >-
+          uv run --no-sync python -m waggle.experiments.e9_mutation
+          --target "$TARGET"
+          --out "results/e9/dev/${TARGET}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e9-mutation-${{ matrix.target }}
+          path: results/e9/dev/
+          if-no-files-found: error

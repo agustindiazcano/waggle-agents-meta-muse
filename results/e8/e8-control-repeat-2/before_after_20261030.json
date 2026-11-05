@@ -1,0 +1,45 @@
+{
+  "experiment": "e8",
+  "kind": "before_after",
+  "seed_set": "dev",
+  "label": "code speed on this machine, not a real-time guarantee on hardware",
+  "scenario": "S14",
+  "seed": 1,
+  "ticks": 1800,
+  "robots": 10,
+  "humans": 4,
+  "lidar_scans_per_rollout": 4500,
+  "method": "4 alternating runs, one rollout each, separate processes, same session. before = commit 3ce1c3e (scalar detector, exact lidar), after = batched detector plus fast lidar",
+  "before_seconds": [
+    18.66,
+    17.35,
+    24.57,
+    16.68
+  ],
+  "after_seconds": [
+    5.55,
+    5.76,
+    7.1,
+    5.68
+  ],
+  "before_median": 18.005000000000003,
+  "after_median": 5.72,
+  "speedup_median": 3.1477272727272734,
+  "speedup_min_over_min": 3.0054054054054054,
+  "targets": {
+    "rollout_seconds_target": 2.0,
+    "k5_wall_seconds_target": 5.0,
+    "minimum_speedup": 5.0
+  },
+  "targets_met": false,
+  "noise_note": "the same rollout varied from 3.6 s to 8.9 s within one session on this 4-core laptop; earlier single figures (22.3 s before, 3.9 s after) came from different thermal states and are not comparable",
+  "regression": "e1 no-control dev baseline: counts and per-run final hashes identical on all 90 runs",
+  "parallel_variants": {
+    "k": 5,
+    "workers": 5,
+    "serial_seconds": 23.9,
+    "parallel_seconds": 14.0,
+    "speedup": 1.7,
+    "note": "4 physical cores; workers slow each other down (13 s per job against 4.5 s alone)"
+  }
+}

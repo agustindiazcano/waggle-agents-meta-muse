@@ -50,6 +50,14 @@ class PackageRegistry:
             ).fetchone()
         return row is not None
 
+    def ids(self) -> tuple[str, ...]:
+        """Every registered id, in package_id order."""
+        with self._database.transaction() as connection:
+            rows = connection.execute(
+                "SELECT package_id FROM packages ORDER BY package_id"
+            ).fetchall()
+        return tuple(cast(str, row[0]) for row in rows)
+
     def count(self) -> int:
         """The number of registered ids."""
         with self._database.transaction() as connection:

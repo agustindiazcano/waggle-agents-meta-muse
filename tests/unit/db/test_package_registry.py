@@ -63,3 +63,10 @@ def test_a_malformed_id_or_source_is_refused_before_any_query(
     with pytest.raises(ValueError):
         call(registry)
     assert db.log == []
+
+
+def test_ids_returns_every_registered_id_in_order() -> None:
+    db = FakeDatabase(lambda sql, params: ("pk-1",))
+    registry = PackageRegistry(db)  # type: ignore[arg-type]
+    assert registry.ids() == ("pk-1",)
+    assert "ORDER BY package_id" in db.log[-1]

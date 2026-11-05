@@ -20,7 +20,7 @@ _MODES = ("mock", "http")
 _QUERY = (
     "SELECT request_id, task_id, role, provider, model_id, status, tokens_in, "
     "tokens_out, latency_s, cost_usd, fallback_label FROM llm_calls "
-    "WHERE mode = %s ORDER BY call_id"
+    "WHERE mode = %s"
 )
 
 
@@ -64,12 +64,35 @@ def _provenance(mode: str, commit: str, prompt_versions: Mapping[str, str]) -> d
     return versions
 
 
-def fetch_call_records(database: CallDatabase, *, mode: str) -> list[CallRecord]:
-    """Read metadata rows for one mode in insertion order; prompt text is never selected."""
+def fetch_call_records(
+    database: CallDatabase, *, mode: str, task_ids: Sequence[str] | None = None
+) -> list[CallRecord]:
+    """Read one mode, optionally restricted to explicit tasks, in insertion order.
+
+    A supplied task selection must be nonempty and unique. Every selected task
+    must have rows in this mode, otherwise the export fails instead of silently
+    publishing an incomplete sample. None retains the whole-mode export.
+    """
     if mode not in _MODES:
         raise ValueError("mode must be mock or http")
+    selection: tuple[str, ...] | None = None
+    query = _QUERY
+    params: tuple[object, ...] = (mode,)
+    if task_ids is not None:
+        if isinstance(task_ids, str | bytes):
+            raise ValueError("task_ids must be a sequence of task identifiers")
+        selection = tuple(task_ids)
+        if not selection or any(
+            not isinstance(task, str) or not task.strip() or len(task) > 256 for task in selection
+        ):
+            raise ValueError("task_ids must contain nonempty bounded identifiers")
+        if len(set(selection)) != len(selection):
+            raise ValueError("task_ids must be unique")
+        query += " AND task_id IN (" + ", ".join("%s" for _ in selection) + ")"
+        params += selection
+    query += " ORDER BY call_id"
     with database.transaction() as connection:
-        rows = connection.execute(_QUERY, (mode,)).fetchall()
+        rows = connection.execute(query, params).fetchall()
     records: list[CallRecord] = []
     for row in rows:
         if len(row) != 11:
@@ -89,6 +112,8 @@ def fetch_call_records(database: CallDatabase, *, mode: str) -> list[CallRecord]
                 fallback_label=cast("str | None", row[10]),
             )
         )
+    if selection is not None and {record.task_id for record in records} != set(selection):
+        raise ValueError("task_ids must all have rows in the selected mode")
     return records
 
 
@@ -135,10 +160,11 @@ def export_calls(
     commit: str,
     prompt_versions: Mapping[str, str],
     output: Path,
+    task_ids: Sequence[str] | None = None,
 ) -> dict[str, object]:
     """Export one mode from llm_calls to a new file; existing files are never replaced."""
     document = build_export(
-        fetch_call_records(database, mode=mode),
+        fetch_call_records(database, mode=mode, task_ids=task_ids),
         mode=mode,
         commit=commit,
         prompt_versions=prompt_versions,

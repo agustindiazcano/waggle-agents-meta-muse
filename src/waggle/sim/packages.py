@@ -171,6 +171,11 @@ class PackageModel:
         self._outcomes: dict[int, PackageOutcome] = {}
 
     @property
+    def package_ids(self) -> tuple[str, ...]:
+        """The simulator package ids, in spec order."""
+        return tuple(spec.package_id for spec in self._specs)
+
+    @property
     def count(self) -> int:
         """Number of packages. Constant for the whole run (conservation)."""
         return len(self._specs)

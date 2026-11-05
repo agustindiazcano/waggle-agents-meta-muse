@@ -1,4 +1,4 @@
-# Waggle Hive: Pending
+﻿# Waggle Hive: Pending
 
 Code progress of the project (estimate by eye, code only): 95% on 2026-11-04,
 margin about 2 points, recomputed bottom-up after PRs 180 to 185 merged
@@ -201,3 +201,5 @@ runner are merged. Production integration and experiment gaps remain.
 
 | 134 | P2 | Produce a three-minute finished-product demo with real scenes and mocks for pending behavior | A, M | in progress: maintainer presentation page on feat/video-demo with the six-scene technical narration script, index (1) style cells, GLB trucks and grounded workers; the maintainer records one continuous take on their PC, trims it, and the agent generates the narration audio from demo/SCRIPT.md and merges it into that video; no core code change | - |
 | 135 | P1 | Publish video-plan docs PR against main | A, M | maintainer explicitly requested PR publication with no further tests for this documentation task; earlier 51 docs/style tests passed and plan commit secret scan found no leaks; publication in progress; maintainer reviews and merges | - |
+| 136 | P2 | Add Waggle Hive HTML banner, Meta symbol and rectangular screenshot to README | A, M | published with cleanup in PR 191 against main; visual inspection passed at 1600 by 500; earlier 42 docs/style checks pass; maintainer review and merge remain | - |
+| 137 | P2 | Clean README delivery scaffolding and stale implementation status | A, M | PR 191 merged as 594ac60; CI-only follow-up PR 192 on ci/docs-only-scope implements requested suite skipping under ADR-098; cloud scope jobs passed with Python/viewer skipped; no local tests; review and merge PR 192 remain | - |

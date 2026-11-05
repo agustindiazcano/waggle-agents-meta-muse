@@ -9,7 +9,20 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.scope.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        uses: ./.github/actions/change-scope
+
   viewer:
+    needs: scope
+    if: always() && (needs.scope.result != 'success' || needs.scope.outputs.code == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

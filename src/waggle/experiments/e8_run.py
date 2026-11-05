@@ -193,6 +193,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     export.add_argument("--mode", choices=("mock", "http"), required=True)
     export.add_argument("--commit", required=True)
     export.add_argument("--prompt-version", action="append", required=True)
+    export.add_argument(
+        "--task-id",
+        action="append",
+        help="select a task from the source run; repeat for more tasks",
+    )
     calls = commands.add_parser("calls", help="report a metadata-only llm_calls export")
     calls.add_argument("--input", type=Path, required=True)
     calls.add_argument("--fleet-size", type=int)
@@ -211,6 +216,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             commit=args.commit,
             prompt_versions=_prompt_versions(args.prompt_version),
             output=args.output,
+            task_ids=args.task_id,
         )
         return 0
     report: dict[str, object] = {
